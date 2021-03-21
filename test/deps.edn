@@ -1,9 +1,7 @@
 ;; 2021-01-25: use maven or clojars refs.
-;; used some F3/F4 macro's to translate lein/project.clj format to deps.edn format.
 {:paths [""] ;; so script will be found in current dir, not in src-subdir.
  :deps
- {clojure.java-time/clojure.java-time {:mvn/version "0.3.2"}
-  org.apache.commons/commons-compress {:mvn/version "1.19"}
+ {org.apache.commons/commons-compress {:mvn/version "1.19"}
   org.clojure/clojure {:mvn/version "1.10.1"}
   org.clojure/tools.cli {:mvn/version "1.0.194"}
   org.clojure/data.xml {:mvn/version "0.0.8"}
