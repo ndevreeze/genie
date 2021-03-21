@@ -1,0 +1,3 @@
+#+STARTUP: content indent
+#+title: Genie - Background info
+

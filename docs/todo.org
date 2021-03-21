@@ -1,0 +1,2 @@
+#+STARTUP: content indent
+#+title: Genie - Todo

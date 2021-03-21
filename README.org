@@ -1,0 +1,106 @@
+#+STARTUP: content indent
+#+title: Genie - Run Clojure scripts with a daemon process
+
+* Introduction
+Another way of mitigating the slow startup of Clojure on the JVM, by starting a daemon in the background.
+* Installation
+(currently an ActiveTcl script)
+
+#+begin_src bash :tangle yes
+  cd genied
+  lein uberjar
+  cd ..
+  tclsh install.tcl
+#+end_src
+
+* Usage
+An example script is shown below.
+
+#+begin_src clojure :tangle yes
+  #! /usr/bin/env genie
+
+  (ns test
+    (:require 
+     [ndevreeze.cmdline :as cl]
+     [clojure.data.csv :as csv]))
+
+  (def cli-options
+    [["-c" "--config CONFIG" "Config file"]
+     ["-h" "--help" "Show this help"]])
+
+  (defn data-csv
+    [opt ctx]
+    (println "Parsing csv using data.csv: " (csv/read-csv "abc,123,\"with,comma\"")))
+
+  (defn script [opt arguments ctx]
+    (println "ctx: " ctx)
+    (data-csv opt ctx))
+
+  ;; expect context/ctx now as first parameter, a map.
+  (defn main [ctx args]
+    (cl/check-and-exec "" cli-options script args ctx))
+
+  ;; for use with 'clj -m test-dyn-cl
+  (defn -main
+    "Entry point from clj cmdline script"
+    [& args]
+    (cl/check-and-exec "" cli-options script args {:cwd "."})
+    (System/exit 0))
+
+#+end_src
+
+A deps.edn should be in the same directory:
+#+begin_src clojure :tangle yes
+  {:paths [""] ;; so script will be found in current dir, not in src-subdir.
+   :deps
+   {clojure.java-time/clojure.java-time {:mvn/version "0.3.2"}
+    org.clojure/clojure {:mvn/version "1.10.1"}
+    org.clojure/data.csv {:mvn/version "1.0.0"}}}
+#+end_src
+
+Then execute with clj:
+#+begin_src bash :tangle yes
+clj -m test
+#+end_src
+
+Or with genie:
+#+begin_src bash :tangle yes
+genie test.clj
+#+end_src
+
+* Testing
+See directory test, with these scripts:
+- test.clj - test various parts, including logging and stdout/err handling
+- test_dyn_cl - test dynamic classloading
+* Starting points
+- Every script that can be executed by clj (using deps.edn) should also be able to be executed using genie
+- Fast startup of the script
+- It might help to see the daemon as part of the OS
+* Todo
+- Use a Clojure-like client, e.g. babashka
+- Installer script (also babashka? or Makefile?)
+- Much more, see file:docs/todo.org]] for details.
+- More real world testing
+
+* Related projects
+Some Clojure-like languages having fast startup, but not all Clojure/JVM functionality:
+- Babashka
+- Janet
+- Hy
+- more...
+
+Some earlier projects, which do not seem to be actively maintained:
+- Grenchman
+- Cake
+- more...
+
+* More docs
+[[file:docs/todo.org]]
+[[file:docs/background.org]]
+
+* License
+Copyright © 2021 Nico de Vreeze
+
+Distributed under the Eclipse Public License, the same as Clojure.
+
+See [[file:LICENSE]]
