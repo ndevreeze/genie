@@ -1,9 +1,11 @@
 (ns genied.classloader
   (:gen-class)
   (:require [cemerick.pomegranate :as pom]
+            [clojure.edn :as edn]
             [genied.diagnostics :as diag]
             [genied.sing-loader :as sing]
-            [ndevreeze.logger :as log]))
+            [ndevreeze.logger :as log]
+            [me.raynes.fs :as fs]))
 
 ;; 2021-03-13: this one from discussion in clojure threads.
 (defn ensure-dynamic-classloader
@@ -72,16 +74,40 @@
   ([lib version]
    (load-library lib version (sing/get-classloader)))
   ([lib version classloader]
-   (log/info "Loading library: " lib ", version: " version)
+   (log/debug "Loading library: " lib ", version: " version)
    (log/debug "Using classloader: " classloader)
-   (let [res (pom/add-dependencies :classloader classloader
-                                   :coordinates [[lib version]]
-                                   :repositories (merge cemerick.pomegranate.aether/maven-central
-                                                        {"clojars" "https://clojars.org/repo"}))]
-     (log/debug "Result of add-dependencies: " res))))
+   (let [coord [lib version]]
+     (if (sing/has-dep? coord)
+       (log/debug "Already loaded: " coord)
+       (let [res (pom/add-dependencies :classloader classloader
+                                       :coordinates [coord]
+                                       :repositories (merge
+                                                      cemerick.pomegranate.aether/maven-central
+                                                      {"clojars" "https://clojars.org/repo"}))]
+         (sing/add-dep! coord)
+         (log/info "Loaded library: " lib ", version: " version)
+         (log/debug "Result of add-dependencies: " res)
+         res)))))
 
 ;; TODO - support other (non-maven) coordinates?
-(defn load-startup-libraries [opt]
+(defn load-libraries
+  "Load libraries from a deps.edn file.
+   Either at daemon start time or at script exec time"
+  [opt]
   (doseq [[lib coordinates] (seq (:deps opt))]
     (load-library lib (:mvn/version coordinates))))
+
+(defn load-startup-libraries
+  "Load libraries as given in daemon startup config"
+  [opt]
+  (load-libraries opt))
+
+;; TODO - check ctx if different deps.edn is mentioned.
+(defn load-script-libraries
+  "Load libraries as found in deps.edn in script-dir or ctx"
+  [ctx script]
+  (let [deps-edn (fs/file (fs/parent script) "deps.edn")]
+    (if (fs/exists? deps-edn)
+      (let [script-opt (edn/read-string (slurp deps-edn))]
+        (load-startup-libraries script-opt)))))
 

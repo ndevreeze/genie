@@ -57,6 +57,8 @@
   (print-diagnostic-info {} "start client")
   (set-dynamic-classloader!)
   (print-diagnostic-info {} "after set-dyn3!")
+  (loader/load-script-libraries ctx script)
+  (print-diagnostic-info {} "after loading client libraries")
   (load-file script)
   (log/debug "load-file done: " script)
   ;; main-fn is a symbol as gotten from client. After load-file, eval should work.
