@@ -79,7 +79,7 @@ See directory test, with these scripts:
 * Todo
 - Use a Clojure-like client, e.g. babashka
 - Installer script (also babashka? or Makefile?)
-- Much more, see file:docs/todo.org]] for details.
+- Much more, see [[file:docs/todo.org]] for details.
 - More real world testing
 
 * Related projects
@@ -95,7 +95,7 @@ Some earlier projects, which do not seem to be actively maintained:
 - more...
 
 * More docs
-[[- file:docs/todo.org]]
+- [[file:docs/todo.org]]
 - [[file:docs/background.org]]
 
 * License
