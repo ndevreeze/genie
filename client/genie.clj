@@ -62,10 +62,16 @@
      :script (str script)
      :opt opt}))
 
-
 (defn det-main-fn
+  "Determine main function from the script.
+   read ns-decl from the script-file, add '/main'"
   [opt script]
-  "test/main")
+  (if-let [ns-line
+           (with-open [rdr (clojure.java.io/reader script)]
+             (first (filter #(re-find #"^\(ns " %) (line-seq rdr))))]
+    (let [[_ ns] (re-find #"^\(ns ([^ \(\)]+)" ns-line)]
+      (str ns "/main"))
+    "script/main"))
 
 ;;   set clj_commands "(genied.client/exec-script \"$script2\" '$main_fn $ctx \[$script_params\])"
 (defn exec-expression
