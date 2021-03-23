@@ -33,7 +33,8 @@
         done (and status
                   (= "done" (String. (first status))))]
     (when out-bytes
-      (print (String. out-bytes)))
+      (print (String. out-bytes))
+      (flush))
     (when (not done)
       (recur in))))
 
@@ -56,9 +57,10 @@
      :script (str script)
      :opt opt}))
 
+
 (defn det-main-fn
   [opt script]
-  "test-dyn-cl/main")
+  "test/main")
 
 ;;   set clj_commands "(genied.client/exec-script \"$script2\" '$main_fn $ctx \[$script_params\])"
 (defn exec-expression
@@ -105,9 +107,12 @@
 (defn main
   "Main function"
   [opt args]
+  (println "main, opt=" opt ", args=" args)
   (exec-script opt (first args) (rest args)))
 
 (let [opts (cli/parse-opts *command-line-args* cli-options)]
+  (println "*command-line-args* = " *command-line-args*)
+  (println "opts = " opts)
   (main (:options opts) (:arguments opts)))
   
 
