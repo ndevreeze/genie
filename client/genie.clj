@@ -12,20 +12,20 @@
   (:require [bencode.core :as b]
             [clojure.tools.cli :as cli]
             [clojure.string :as str]
-            [me.raynes.fs :as fs]
-            ;;            [nrepl.core :as nrepl]
-            ))
+            [me.raynes.fs :as fs]))
 
 (def cli-options
   [["-p" "--port PORT" "Genie daemon port number"
     :default 7888
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
+   ["-m" "--main MAIN" "Main function to call, namespaced. Default empty: get from script ns-decl"]
+   [nil "--nocheckserver" "Do not perform server checks when an error occurs"]
    ["-v" "--verbose" "Verbose output"]
    ["-h" "--help"]])
 
-(defn read-result
-  "Read result channel until status is 'done'"
+(defn read-print-result
+  "Read and print result channel until status is 'done'"
   [in]
   (let [result (b/read-bencode in)
         out-bytes (get result "out")
@@ -34,9 +34,6 @@
                   (= "done" (String. (first status))))]
     (when out-bytes
       (print (String. out-bytes)))
-    #_(cond val-bytes (String. val-bytes)
-            result (str "Complete result: " result)
-            :else "No result in value field and complete result")
     (when (not done)
       (recur in))))
 
@@ -46,27 +43,18 @@
         out (.getOutputStream s)
         in (java.io.PushbackInputStream. (.getInputStream s))
         _ (b/write-bencode out {"op" "clone"})
-        _ (read-result in)
+        _ (read-print-result in) ;; should save session-id for later cancellation.
         _ (b/write-bencode out {"op" "eval" "code" expr})]
-    (read-result in)))
-
-#_(defn nrepl-eval [port expr]
-    (let [s (java.net.Socket. "localhost" port)
-          out (.getOutputStream s)
-          in (java.io.PushbackInputStream. (.getInputStream s))
-          _ (b/write-bencode out {"op" "eval" "code" expr})
-          result (b/read-bencode in)
-          bytes (get result "value")
-          out-bytes (get result "out")]
-      (when out-bytes
-        (println "out-bytes:" (String. out-bytes)))
-      (cond bytes (String. bytes)
-            result (str "Complete result: " result)
-            :else "No result in value field and complete result")))
+    (read-print-result in)))
 
 (defn create-context
+  "Create script context, with current working directory (cwd)"
   [opt script]
-  {})
+  (let [script (fs/normalized script)
+        cwd (fs/normalized ".")]
+    {:cwd (str cwd)
+     :script (str script)
+     :opt opt}))
 
 (defn det-main-fn
   [opt script]
@@ -111,6 +99,7 @@
         main-fn (det-main-fn opt script2)
         script-params2 (-> script-params normalize-params quote-params)
         expr (exec-expression ctx script2 main-fn script-params2)]
+    (debug "nrepl-eval: " expr)
     (nrepl-eval "localhost" port expr)))
 
 (defn main
