@@ -29,12 +29,17 @@
   [in]
   (let [result (b/read-bencode in)
         out-bytes (get result "out")
+        err-bytes (get result "err")
         status (get result "status")
         done (and status
                   (= "done" (String. (first status))))]
     (when out-bytes
       (print (String. out-bytes))
       (flush))
+    (when err-bytes
+      (binding [*out* *err*]
+        (print (String. err-bytes))
+        (flush)))
     (when (not done)
       (recur in))))
 
