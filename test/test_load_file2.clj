@@ -9,7 +9,7 @@
    [genied.client :as client]
    [clojure.java.classpath :as cp]))
 
-(client/load-relative-file "../test/test_load_file_lib.clj")
+(client/load-relative-file "test_load_file_lib.clj")
 
 (require '[test-load-file-lib :as lib])
 
