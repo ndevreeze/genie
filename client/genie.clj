@@ -62,18 +62,21 @@
      :script (str script)
      :opt opt}))
 
+;; also test when no namespace is given, root or user namespace
+;; then. And does prb not work with clj itself.
 (defn det-main-fn
   "Determine main function from the script.
    read ns-decl from the script-file, add '/main'"
   [opt script]
-  (if-let [ns-line
-           (with-open [rdr (clojure.java.io/reader script)]
-             (first (filter #(re-find #"^\(ns " %) (line-seq rdr))))]
-    (let [[_ ns] (re-find #"^\(ns ([^ \(\)]+)" ns-line)]
-      (str ns "/main"))
-    "script/main"))
+  (with-open [rdr (clojure.java.io/reader script)]
+    (if-let [namespaces
+             (seq (for [line (line-seq rdr)
+                        :let [[_ ns] (re-find #"^\(ns ([^ \(\)]+)" line)]
+                        :when (re-find #"^\(ns " line)]
+                    ns))]
+      (str (first namespaces) "/main")
+      "main")))
 
-;;   set clj_commands "(genied.client/exec-script \"$script2\" '$main_fn $ctx \[$script_params\])"
 (defn exec-expression
   [ctx script main-fn script-params]
   (str "(genied.client/exec-script \"" script "\" '" main-fn " " ctx " [" script-params "])"))
@@ -121,7 +124,7 @@
   (println "main, opt=" opt ", args=" args)
   (exec-script opt (first args) (rest args)))
 
-(let [opts (cli/parse-opts *command-line-args* cli-options)]
+(let [opts (cli/parse-opts *command-line-args* cli-options :in-order true)]
   (println "*command-line-args* = " *command-line-args*)
   (println "opts = " opts)
   (main (:options opts) (:arguments opts)))
