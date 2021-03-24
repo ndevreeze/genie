@@ -10,17 +10,13 @@
   [["-c" "--config CONFIG" "Config file"]
    ["-h" "--help" "Show this help"]])
 
-(defn divide-by-0
-  [opt ctx]
-  (println "5 / 0 = " (/ 5 0)))
-
 (defn add-numbers
   "Add given numbers, which are given as strings"
   [arguments]
   (apply + (map #(Integer/parseInt %) arguments)))
 
 (defn script [opt arguments ctx]
-;;  (println "ctx: " ctx)
+  ;;  (println "ctx: " ctx)
   (println "The sum of" arguments "is" (add-numbers arguments)))
 
 (defn main [ctx args]
