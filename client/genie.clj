@@ -3,11 +3,6 @@
 ;; for using raynes.fs (clj-commons/fs):
 ;; export BABASHKA_CLASSPATH=$(clojure -Spath -Sdeps '{:deps {clj-commons/fs {:mvn/version "1.6.307"}}}')
 
-;; TODO:
-
-;; * logging: own lib or something babashka specific? or a simple log
-;;   function with 2 levels and one *verbose* option.
-
 (ns genie
   (:require [bencode.core :as b]
             [clojure.tools.cli :as cli]
@@ -23,6 +18,23 @@
    [nil "--nocheckserver" "Do not perform server checks when an error occurs"]
    ["-v" "--verbose" "Verbose output"]
    ["-h" "--help"]])
+
+(def ^:dynamic *verbose*
+  "Dynamic var, set to true when -verbose cmdline option given.
+   Used by function `debug` below"
+  false)
+
+;; some poor man's logging for now
+(defn info
+  "Log always"
+  [& msg]
+  (println (str/join " " msg)))
+
+(defn debug
+  "Log if -verbose is given"
+  [& msg]
+  (when *verbose*
+    (println (str/join " " msg))))
 
 (defn read-print-result
   "Read and print result channel until status is 'done'"
@@ -97,24 +109,6 @@
   [params]
   (str/join " " (map quote-param params)))
 
-(def ^:dynamic *verbose*
-  "Dynamic var, set to true when -verbose cmdline option given.
-   Used by function `debug` below"
-  false)
-
-;; some poor man's logging for now
-(defn info
-  "Log always"
-  [& msg]
-  (println (str/join " " msg)))
-
-(defn debug
-  "Log if -verbose is given"
-  [& msg]
-  (when *verbose*
-    (println (str/join " " msg))))
-
-;; TODO - check how babashka returns result. It could/should also redirect stdin/out/err.
 (defn exec-script
   "Execute given script with opt and script-params"
   [{:keys [port verbose] :as opt} script script-params]
