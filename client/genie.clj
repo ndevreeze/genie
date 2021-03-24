@@ -88,14 +88,19 @@
   [params]
   params)
 
-;; TODO - check if number, maybe not needed.
 (defn quote-param
+  "Quote a parameter with double quotes, for calling exec-script"
   [param]
   (str "\"" param "\""))
 
 (defn quote-params
   [params]
   (str/join " " (map quote-param params)))
+
+(def ^:dynamic *verbose*
+  "Dynamic var, set to true when -verbose cmdline option given.
+   Used by function `debug` below"
+  false)
 
 ;; some poor man's logging for now
 (defn info
@@ -104,9 +109,10 @@
   (println (str/join " " msg)))
 
 (defn debug
-  "Log if verbose is set"
+  "Log if -verbose is given"
   [& msg]
-  (println (str/join " " msg)))
+  (when *verbose*
+    (println (str/join " " msg))))
 
 ;; TODO - check how babashka returns result. It could/should also redirect stdin/out/err.
 (defn exec-script
@@ -123,13 +129,14 @@
 (defn main
   "Main function"
   [opt args]
-  (println "main, opt=" opt ", args=" args)
+  (debug "main, opt=" opt ", args=" args)
   (exec-script opt (first args) (rest args)))
 
 (let [opts (cli/parse-opts *command-line-args* cli-options :in-order true)]
-  (println "*command-line-args* = " *command-line-args*)
-  (println "opts = " opts)
-  (main (:options opts) (:arguments opts)))
+  (binding [*verbose* (-> opts :options :verbose)]
+    (debug "*command-line-args* = " *command-line-args*)
+    (debug "opts = " opts)
+    (main (:options opts) (:arguments opts))))
   
 
 
