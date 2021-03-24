@@ -36,6 +36,7 @@
   (log/debug "init dynamic classloader done: " (sing/get-classloader))
   (diag/print-diagnostic-info "after init-dynamic-classloader!")
 
+  (loader/mark-project-libraries opt)
   (loader/load-startup-libraries opt)
   
   (log/debug "Starting server on port " (:port opt))

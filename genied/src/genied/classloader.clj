@@ -89,6 +89,21 @@
          (log/debug "Result of add-dependencies: " res)
          res)))))
 
+(defn mark-project-libraries
+  "Mark libraries in project.clj as loaded.
+   So they won't be loaded again, either from server or client/script."
+  [opt]
+  ;; copied from project.clj - how to keep in sync?
+  (doseq [coord '[[org.clojure/clojure "1.10.1"]
+                  [org.clojure/tools.cli "1.0.194"]
+                  [clj-commons/fs "1.6.307"]
+                  [nrepl "0.8.3"]
+                  [clj-commons/pomegranate "1.2.0"]
+                  [ndevreeze/logger "0.2.0"]
+                  [ndevreeze/cmdline "0.1.2"]]]
+    (log/info "Mark as loaded from project.clj: " coord)
+    (sing/add-dep! coord)))
+
 ;; TODO - support other (non-maven) coordinates?
 (defn load-libraries
   "Load libraries from a deps.edn file.
@@ -109,5 +124,5 @@
   (let [deps-edn (fs/file (fs/parent script) "deps.edn")]
     (if (fs/exists? deps-edn)
       (let [script-opt (edn/read-string (slurp deps-edn))]
-        (load-startup-libraries script-opt)))))
+        (load-libraries script-opt)))))
 
