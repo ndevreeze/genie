@@ -126,6 +126,9 @@
   [params]
   (str/join " " (map quote-param params)))
 
+;; TODO - maybe need some more error-handling and logging when things
+;; go wrong. E.g. if the server is started and listens on the given port.
+;; TODO - maybe start server when it's not started yet.
 (defn exec-script
   "Execute given script with opt and script-params"
   [{:keys [port verbose] :as opt} script script-params]
