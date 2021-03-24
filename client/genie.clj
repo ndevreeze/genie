@@ -66,16 +66,18 @@
 ;; then. And does prb not work with clj itself.
 (defn det-main-fn
   "Determine main function from the script.
-   read ns-decl from the script-file, add '/main'"
+   read ns-decl from the script-file, add '/main'
+   use the last ns-decl in the script."
   [opt script]
-  (with-open [rdr (clojure.java.io/reader script)]
-    (if-let [namespaces
-             (seq (for [line (line-seq rdr)
-                        :let [[_ ns] (re-find #"^\(ns ([^ \(\)]+)" line)]
-                        :when (re-find #"^\(ns " line)]
-                    ns))]
-      (str (first namespaces) "/main")
-      "main")))
+  (or (:main opt)
+      (with-open [rdr (clojure.java.io/reader script)]
+        (if-let [namespaces
+                 (seq (for [line (line-seq rdr)
+                            :let [[_ ns] (re-find #"^\(ns ([^ \(\)]+)" line)]
+                            :when (re-find #"^\(ns " line)]
+                        ns))]
+          (str (last namespaces) "/main")
+          "main"))))
 
 (defn exec-expression
   [ctx script main-fn script-params]
