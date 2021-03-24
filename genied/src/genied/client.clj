@@ -47,7 +47,7 @@
 
 (def ^:dynamic *script-dir*
   "Dynamic var, set when loading a script-file.
-   Uses by load-relative-file below"
+   Used by load-relative-file below"
   nil)
 
 ;; standard definition of main-function:
