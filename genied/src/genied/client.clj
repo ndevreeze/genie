@@ -45,12 +45,16 @@
 ;; classloader and load-file need to be done. And also exec main,
 ;; maybe want to do pre-loading.
 
+(def ^:dynamic *script-dir*
+  "Dynamic var, set when loading a script-file.
+   Uses by load-relative-file below"
+  nil)
+
 ;; standard definition of main-function:
 ;; (defn main [ctx & args]
 ;;   (cl/check-and-exec "" cli-options script args ctx))
 (defn exec-script
-  "Wrapper around load-file and call-main.
-   Possibly also add-dependencies"
+  "Wrapper around load-script-libraries, load-file, and call-main."
   [script main-fn ctx script-params]
   (log/debug "exec-script - start")
   (log/debug "script=" script ", main-fn=" main-fn ", ctx=" ctx ", script-params=" script-params)
@@ -59,12 +63,14 @@
   (print-diagnostic-info {} "after set-dyn3!")
   (loader/load-script-libraries ctx script)
   (print-diagnostic-info {} "after loading client libraries")
-  (load-file script)
+  (binding [*script-dir* (fs/parent script)]
+    (load-file script))
   (log/debug "load-file done: " script)
   ;; main-fn is a symbol as gotten from client. After load-file, eval should work.
   ((eval main-fn) ctx script-params)
   (log/debug "exec main-fn done: " main-fn))
 
-
-
-
+(defn load-relative-file
+  "Load a file relative to the currently loading script"
+  [path]
+  (load-file (str (fs/file *script-dir* path))))
