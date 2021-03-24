@@ -74,12 +74,11 @@
      :script (str script)
      :opt opt}))
 
-;; also test when no namespace is given, root or user namespace
-;; then. And does prb not work with clj itself.
 (defn det-main-fn
   "Determine main function from the script.
    read ns-decl from the script-file, add '/main'
-   use the last ns-decl in the script."
+   use the last ns-decl in the script.
+   If no ns-decl found, return `main` (root-ns)"
   [opt script]
   (or (:main opt)
       (with-open [rdr (clojure.java.io/reader script)]
@@ -95,10 +94,28 @@
   [ctx script main-fn script-params]
   (str "(genied.client/exec-script \"" script "\" '" main-fn " " ctx " [" script-params "])"))
 
-;; TODO
+;; TODO - prb want a config flag to not do this. It may be a bit too
+;; magical in some circumstances.
+(defn normalize-param
+  "file normalise a parameter, so the server-process can find it, even though it has
+   a different current-working-directory (cwd).
+   - if a param starts with -, it's not a relative path.
+   - if it starts with /, also not relative
+   - if it start with ./, or is a single dot, then it is relative.
+     Also useful when a path does start with a '-'
+   - if it starts with a letter/digit/underscore, it could be relative. Check with file exists then."
+  [param]
+  (let [first-char (first param)]
+    (cond (= \- first-char) param
+          (= \/ first-char) param
+          (= [\. \/] (take 2 param)) (fs/normalized param)
+          (= "." param) (fs/normalized param)
+          (fs/exists? param) (fs/normalized param)
+          :else param)))
+
 (defn normalize-params
   [params]
-  params)
+  (map normalize-param params))
 
 (defn quote-param
   "Quote a parameter with double quotes, for calling exec-script"
