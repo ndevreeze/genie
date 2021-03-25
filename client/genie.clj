@@ -132,6 +132,7 @@
   (let [script (fs/normalized script)
         cwd (fs/normalized ".")]
     {:cwd (str cwd)
+     :client "babashka"
      :script (str script)
      :opt opt}))
 
