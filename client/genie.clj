@@ -186,8 +186,6 @@
   [params]
   (str/join " " (map quote-param params)))
 
-;; TODO - maybe need some more error-handling and logging when things
-;; go wrong. E.g. if the server is started and listens on the given port.
 ;; TODO - maybe start server when it's not started yet.
 (defn exec-script
   "Execute given script with opt and script-params"
@@ -200,19 +198,36 @@
     (debug "nrepl-eval: " expr)
     (nrepl-eval "localhost" port expr)))
 
+(defn print-help
+  "Print help when --help given, or errors, or no script"
+  [{:keys [summary options arguments errors] :as opts}]
+  (println "genie.clj - babashka script to run scripts in Genie daemon")
+  (println summary)
+  (println)
+  (println "Current options:" options)
+  (println "Current arguments:" arguments)
+  (when (empty? arguments)
+    (println "  Need a script to execute"))
+  (when errors
+    (println "Errors:" errors)))
+
 (defn main
   "Main function"
-  [opt args]
-  (debug "main, opt=" opt ", args=" args)
-  (try
-    (exec-script opt (first args) (rest args))
-    (catch Exception e
-      (warn "caught exception: " (.getMessage e)))))
+  []
+  (let [opts (cli/parse-opts *command-line-args* cli-options :in-order true)
+        opt (:options opts)
+        args (:arguments opts)]
+    (binding [*verbose* (-> opts :options :verbose)
+              *logfile* (log-file (:options opts))]
+      ;;      (println "logfile: " (str *logfile*))
+      (debug "*command-line-args* = " *command-line-args*)
+      (debug "opts = " opts)
+      (debug "opt=" opt ", args=" args)
+      (if (or (:help opt) (:errors opt) (empty? args))
+        (print-help opts)
+        (try
+          (exec-script opt (first args) (rest args))
+          (catch Exception e
+            (warn "caught exception: " e)))))))
 
-(let [opts (cli/parse-opts *command-line-args* cli-options :in-order true)]
-  (binding [*verbose* (-> opts :options :verbose)
-            *logfile* (log-file (:options opts))]
-    (println "logfile: " (str *logfile*))
-    (debug "*command-line-args* = " *command-line-args*)
-    (debug "opts = " opts)
-    (main (:options opts) (:arguments opts))))
+(main)
