@@ -7,7 +7,10 @@
   (:require [bencode.core :as b]
             [clojure.tools.cli :as cli]
             [clojure.string :as str]
-            [me.raynes.fs :as fs]))
+            [me.raynes.fs :as fs]
+            ;; [java-time :as time]
+            ;; [ndevreeze.logger :as log] ;; does not work: Message:  Could not resolve symbol: clojure.lang.LockingTransaction/isRunning
+            ))
 
 (def cli-options
   [["-p" "--port PORT" "Genie daemon port number"
@@ -15,29 +18,85 @@
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
    ["-m" "--main MAIN" "Main function to call, namespaced. Default empty: get from script ns-decl"]
+   ["-l" "--logdir LOGDIR" "Directory for client log. Leave empty for no logging"]
+   ["-v" "--verbose" "Verbose output"]
+   ["-h" "--help"]
    [nil "--noload" "Do not load libraries and scripts, assume this has been done before"]
    [nil "--nocheckserver" "Do not perform server checks when an error occurs"]
    [nil "--nosetloader" "Do not set dynamic classloader before loading libraries and script"]
-   [nil "--nomain" "Do not call main function after loading"]
-   ["-v" "--verbose" "Verbose output"]
-   ["-h" "--help"]])
+   [nil "--nomain" "Do not call main function after loading"]])
 
 (def ^:dynamic *verbose*
   "Dynamic var, set to true when -verbose cmdline option given.
    Used by function `debug` below"
   false)
 
+(def ^:dynamic *logfile*
+  "Dynamic var, set to a logfile name when logs should be saved in a file.
+   Used by function `log` below"
+  nil)
+
+;; Using ndevreeze/logger and also java-time in Babashka gives some errors. So use this poor man's version for now.
+(def log-time-pattern (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH-mm-ss.SSS Z"))
+
+(defn current-timestamp
+  "Return current timestamp in a format suitable for a filename.
+   In current timezone"
+  []
+  (.format (java.time.ZonedDateTime/now) log-time-pattern))
+
+(defn log
+  "Log to the dynamically set file.
+   If dynamic var *logfile* is set, append to this file.
+   Also add timestamp."
+  [level msg]
+  (let [msg2 (format "[%s] [%-5s] %s\n" (current-timestamp) level (str/join " " msg))]
+    (binding [*out* *err*]
+      (print msg2)
+      (flush))
+    (when *logfile*
+      (spit *logfile* msg2  :append true))))
+
 ;; some poor man's logging for now
+(defn warn
+  "Log warning, always"
+  [& msg]
+  (log "warn" msg))
+
 (defn info
   "Log always"
   [& msg]
-  (println (str/join " " msg)))
+  (log "info" msg))
 
 (defn debug
   "Log if -verbose is given"
   [& msg]
   (when *verbose*
-    (println (str/join " " msg))))
+    (log "debug" msg)))
+
+(defn log-stderr
+  "Redirect script *err* output to both *err* and log-file"
+  [msg]
+  (binding [*out* *err*]
+    (print msg)
+    (flush))
+  (when *logfile*
+    (spit *logfile* msg :append true)))
+
+(defn current-timestamp-file
+  "Return current timestamp in a format suitable for a filename.
+   In current timezone"
+  []
+  (let [now (java.time.ZonedDateTime/now)
+        pattern (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH-mm-ss")]
+    (.format now pattern)))
+
+(defn log-file
+  "Determine log-file based on --logdir option.
+   Leave empty for no log file"
+  [opt]
+  (when-let [logdir (:logdir opt)]
+    (fs/file logdir (format "genie-%s.log" (current-timestamp-file)))))
 
 (defn read-print-result
   "Read and print result channel until status is 'done'"
@@ -52,9 +111,7 @@
       (print (String. out-bytes))
       (flush))
     (when err-bytes
-      (binding [*out* *err*]
-        (print (String. err-bytes))
-        (flush)))
+      (log-stderr (String. err-bytes)))
     (when (not done)
       (recur in))))
 
@@ -147,14 +204,15 @@
   "Main function"
   [opt args]
   (debug "main, opt=" opt ", args=" args)
-  (exec-script opt (first args) (rest args)))
+  (try
+    (exec-script opt (first args) (rest args))
+    (catch Exception e
+      (warn "caught exception: " (.getMessage e)))))
 
 (let [opts (cli/parse-opts *command-line-args* cli-options :in-order true)]
-  (binding [*verbose* (-> opts :options :verbose)]
+  (binding [*verbose* (-> opts :options :verbose)
+            *logfile* (log-file (:options opts))]
+    (println "logfile: " (str *logfile*))
     (debug "*command-line-args* = " *command-line-args*)
     (debug "opts = " opts)
     (main (:options opts) (:arguments opts))))
-  
-
-
-
