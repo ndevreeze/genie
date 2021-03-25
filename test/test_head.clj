@@ -12,7 +12,6 @@
   [["-c" "--config CONFIG" "Config file"]
    ["-h" "--help" "Show this help"]])
 
-;; maybe need doall here.
 (defn head-file
   "Return the first 5 lines of `path`"
   [path]
