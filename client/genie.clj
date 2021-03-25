@@ -24,7 +24,8 @@
    [nil "--noload" "Do not load libraries and scripts, assume this has been done before"]
    [nil "--nocheckserver" "Do not perform server checks when an error occurs"]
    [nil "--nosetloader" "Do not set dynamic classloader before loading libraries and script"]
-   [nil "--nomain" "Do not call main function after loading"]])
+   [nil "--nomain" "Do not call main function after loading"]
+   [nil "--nonormalize" "Do not normalize parameters to script (e.g. relative paths)"]])
 
 (def ^:dynamic *verbose*
   "Dynamic var, set to true when -verbose cmdline option given.
@@ -174,8 +175,13 @@
           :else param)))
 
 (defn normalize-params
-  [params]
-  (map normalize-param params))
+  "Normalize cmdline parameters.
+   Convert relative paths to absolute paths, so daemon can find the dirs/files.
+   If --nonormalize given, this conversion is not done."
+  [params nonormalize]
+  (if nonormalize
+    params
+    (map normalize-param params)))
 
 (defn quote-param
   "Quote a parameter with double quotes, for calling exec-script"
@@ -189,11 +195,11 @@
 ;; TODO - maybe start server when it's not started yet.
 (defn exec-script
   "Execute given script with opt and script-params"
-  [{:keys [port verbose] :as opt} script script-params]
+  [{:keys [port verbose nonormalize] :as opt} script script-params]
   (let [ctx (create-context opt script)
         script2 (fs/normalized script)
         main-fn (det-main-fn opt script2)
-        script-params2 (-> script-params normalize-params quote-params)
+        script-params2 (-> script-params (normalize-params nonormalize) quote-params)
         expr (exec-expression ctx script2 main-fn script-params2)]
     (debug "nrepl-eval: " expr)
     (nrepl-eval "localhost" port expr)))
