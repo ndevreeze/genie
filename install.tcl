@@ -76,6 +76,8 @@ proc check_crontab {target_sh} {
 proc install_client {opt argv} {
   puts "Installing client/genie.tcl => ~/bin/genie"
   file copy -force "client/genie.tcl" "~/bin/genie"
+  puts "Installing client/genie.clj => ~/bin/genie.clj"
+  file copy -force "client/genie.clj" "~/bin/genie.clj"
 }
 
 # TODO - copy all templates to target-dir, could be more than 1.
