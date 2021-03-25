@@ -15,7 +15,10 @@
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
    ["-m" "--main MAIN" "Main function to call, namespaced. Default empty: get from script ns-decl"]
+   [nil "--noload" "Do not load libraries and scripts, assume this has been done before"]
    [nil "--nocheckserver" "Do not perform server checks when an error occurs"]
+   [nil "--nosetloader" "Do not set dynamic classloader before loading libraries and script"]
+   [nil "--nomain" "Do not call main function after loading"]
    ["-v" "--verbose" "Verbose output"]
    ["-h" "--help"]])
 

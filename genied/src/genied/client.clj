@@ -55,19 +55,22 @@
 ;;   (cl/check-and-exec "" cli-options script args ctx))
 (defn exec-script
   "Wrapper around load-script-libraries, load-file, and call-main."
-  [script main-fn ctx script-params]
+  [script main-fn {:keys [cwd script opt] :as ctx} script-params]
   (log/debug "exec-script - start")
   (log/debug "script=" script ", main-fn=" main-fn ", ctx=" ctx ", script-params=" script-params)
   (print-diagnostic-info {} "start client")
-  (set-dynamic-classloader!)
-  (print-diagnostic-info {} "after set-dyn3!")
-  (loader/load-script-libraries ctx script)
-  (print-diagnostic-info {} "after loading client libraries")
-  (binding [*script-dir* (fs/parent script)]
-    (load-file script))
+  (when-not (:nosetloader opt)
+    (set-dynamic-classloader!)
+    (print-diagnostic-info {} "after set-dyn3!"))
+  (when-not (:noload opt)
+    (loader/load-script-libraries ctx script)
+    (print-diagnostic-info {} "after loading client libraries")
+    (binding [*script-dir* (fs/parent script)]
+      (load-file script)))
   (log/debug "load-file done: " script)
   ;; main-fn is a symbol as gotten from client. After load-file, eval should work.
-  ((eval main-fn) ctx script-params)
+  (when-not (:nomain opt)
+    ((eval main-fn) ctx script-params))
   (log/debug "exec main-fn done: " main-fn))
 
 (defn load-relative-file
