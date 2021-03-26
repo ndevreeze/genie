@@ -203,7 +203,13 @@
         script-params2 (-> script-params (normalize-params nonormalize) quote-params)
         expr (exec-expression ctx script2 main-fn script-params2)]
     (debug "nrepl-eval: " expr)
-    (nrepl-eval "localhost" port expr)))
+    (println "exec-script (client) to stdout before calling main")
+    (binding [*out* *err*]
+      (println "exec-script (client) to stderr before calling main"))
+    (nrepl-eval "localhost" port expr)
+    (println "exec-script (client) to stdout before calling main")
+    (binding [*out* *err*]
+      (println "exec-script (client) to stderr before calling main"))))
 
 (defn print-help
   "Print help when --help given, or errors, or no script"

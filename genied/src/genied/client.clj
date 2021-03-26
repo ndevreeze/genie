@@ -50,6 +50,18 @@
    Used by load-relative-file below"
   nil)
 
+(defn println-server-out
+  "Print a line to the server *out*"
+  [msg]
+  (binding [*out* (:out (sing/get-out-streams))]
+    (println msg)))
+
+(defn println-server-err
+  "Print a line to the server *err*"
+  [msg]
+  (binding [*out* (:err (sing/get-out-streams))]
+    (println msg)))
+
 ;; standard definition of main-function:
 ;; (defn main [ctx & args]
 ;;   (cl/check-and-exec "" cli-options script args ctx))
@@ -69,8 +81,12 @@
       (load-file script)))
   (log/debug "load-file done: " script)
   ;; main-fn is a symbol as gotten from client. After load-file, eval should work.
+  (println-server-out "exec-script to stdout before calling main")
+  (println-server-err "exec-script to stderr before calling main")
   (when-not (:nomain opt)
     ((eval main-fn) ctx script-params))
+  (println-server-out "exec-script to stdout after calling main")
+  (println-server-err "exec-script to stderr after calling main")
   (log/debug "exec main-fn done: " main-fn))
 
 (defn load-relative-file

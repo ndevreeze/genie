@@ -38,7 +38,9 @@
 
   (loader/mark-project-libraries opt)
   (loader/load-startup-libraries opt)
-  
+
+  (sing/set-out-streams! *out* *err*)
+
   (log/debug "Starting server on port " (:port opt))
   (defonce server (nrepl/start-server :port (:port opt)))
   (log/info "nrepl server started on port: " (:port opt))

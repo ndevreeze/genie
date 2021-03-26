@@ -25,3 +25,17 @@
   "Add dependency coordinates to loaded set"
   [coord]
   (swap! classloader update-in [:dependencies] conj coord))
+
+;; not directly related to classloaders, but singletons as well, so keep here for now.
+;; keep system *out* and *err*, so they can be distinguished from the dynamic nRepl ones.
+(def out-streams (atom {:out nil :err nil}))
+
+(defn set-out-streams!
+  "set output streams to current values in atom out-streams"
+  [out err]
+  (reset! out-streams {:out out :err err}))
+
+(defn get-out-streams
+  "Get map with system out and err streams"
+  []
+  @out-streams)
