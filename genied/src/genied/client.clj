@@ -6,7 +6,8 @@
             [genied.diagnostics :as diag]
             [genied.sing-loader :as sing]
             [me.raynes.fs :as fs]
-            [ndevreeze.logger :as log]))
+            [ndevreeze.logger :as log]
+            [clojure.string :as str]))
 
 (defn init
   "Init client part, dummy for now"
@@ -62,14 +63,25 @@
   (binding [*out* (:err (sing/get-out-streams))]
     (println msg)))
 
+;; TODO - maybe in a separate logger namespace, specifically for server logging.
+(defn log-server-debug
+  "Log a message to the original logger and *err* stream"
+  [& forms]
+  (log/log (log/get-logger (:err (sing/get-out-streams))) :debug forms))
+
+(defn log-server-info
+  "Log a message to the original logger and *err* stream"
+  [& forms]
+  (log/log (log/get-logger (:err (sing/get-out-streams))) :info forms))
+
 ;; standard definition of main-function:
 ;; (defn main [ctx & args]
 ;;   (cl/check-and-exec "" cli-options script args ctx))
 (defn exec-script
   "Wrapper around load-script-libraries, load-file, and call-main."
   [script main-fn {:keys [cwd script opt] :as ctx} script-params]
-  (log/debug "exec-script - start")
-  (log/debug "script=" script ", main-fn=" main-fn ", ctx=" ctx ", script-params=" script-params)
+  (log-server-debug "exec-script - start")
+  (log-server-debug "script=" script ", main-fn=" main-fn ", ctx=" ctx ", script-params=" script-params)
   (print-diagnostic-info {} "start client")
   (when-not (:nosetloader opt)
     (set-dynamic-classloader!)
@@ -79,15 +91,17 @@
     (print-diagnostic-info {} "after loading client libraries")
     (binding [*script-dir* (fs/parent script)]
       (load-file script)))
-  (log/debug "load-file done: " script)
+  (log-server-debug "load-file done: " script)
   ;; main-fn is a symbol as gotten from client. After load-file, eval should work.
   (println-server-out "exec-script to stdout before calling main")
   (println-server-err "exec-script to stderr before calling main")
+  (log-server-info "exec-script (server) - log/info before calling main")
   (when-not (:nomain opt)
     ((eval main-fn) ctx script-params))
+  (log-server-info "exec-script (server) - log/info after calling main")
   (println-server-out "exec-script to stdout after calling main")
   (println-server-err "exec-script to stderr after calling main")
-  (log/debug "exec main-fn done: " main-fn))
+  (log-server-debug "exec main-fn done: " main-fn))
 
 (defn load-relative-file
   "Load a file relative to the currently loading script"

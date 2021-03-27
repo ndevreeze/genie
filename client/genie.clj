@@ -206,7 +206,9 @@
     (println "exec-script (client) to stdout before calling main")
     (binding [*out* *err*]
       (println "exec-script (client) to stderr before calling main"))
+    (info "log with genie client logger before calling main")
     (nrepl-eval "localhost" port expr)
+    (info "log with genie client logger after calling main")
     (println "exec-script (client) to stdout before calling main")
     (binding [*out* *err*]
       (println "exec-script (client) to stderr before calling main"))))

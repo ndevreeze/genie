@@ -10,7 +10,7 @@
                  [clj-commons/fs "1.6.307"]
                  [nrepl "0.8.3"]
                  [clj-commons/pomegranate "1.2.0"] ;; 2021-02-21: for dynamic loading of libraries.
-                 [ndevreeze/logger "0.2.0"]
+                 [ndevreeze/logger "0.3.0-SNAPSHOT"]
                  [ndevreeze/cmdline "0.1.2"]]
   :main ^:skip-aot genied.core
   :target-path "target/%s"
