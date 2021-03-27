@@ -38,7 +38,7 @@
   nil)
 
 ;; Using ndevreeze/logger and also java-time in Babashka gives some errors. So use this poor man's version for now.
-(def log-time-pattern (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH-mm-ss.SSS Z"))
+(def log-time-pattern (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss.SSSZ"))
 
 (defn current-timestamp
   "Return current timestamp in a format suitable for a filename.
@@ -62,18 +62,18 @@
 (defn warn
   "Log warning, always"
   [& msg]
-  (log "warn" msg))
+  (log "WARN" msg))
 
 (defn info
   "Log always"
   [& msg]
-  (log "info" msg))
+  (log "INFO" msg))
 
 (defn debug
   "Log if -verbose is given"
   [& msg]
   (when *verbose*
-    (log "debug" msg)))
+    (log "DEBUG" msg)))
 
 (defn log-stderr
   "Redirect script *err* output to both *err* and log-file"
