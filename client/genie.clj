@@ -99,32 +99,106 @@
   (when-let [logdir (:logdir opt)]
     (fs/file logdir (format "genie-%s.log" (current-timestamp-file)))))
 
+(defn bencode-value
+  [val]
+  (try (String. val)
+       (catch Exception e
+         (str "seq: " (str/join ", " (map #(String. %) val))))))
+
+(defn println-result
+  [result]
+  (info "result: "result)
+  (info "status:")
+  (let [status (get result "status")]
+    (doseq [status-item status]
+      (info (String. status-item))))
+  (doseq [key (keys result)]
+    (info "have key in result:" key "=" (bencode-value (get result key)))))
+
+(defn map-values
+  "Map a function f over the values of a map m, and return a new map."
+  [f m]
+  (into {} (map (fn [[k v]] [k (f v)]) m)))
+
+(defn readable-result
+  "Assume result is a map, translate objects to readable strings"
+  [result]
+  (map-values bencode-value result))
+
 (defn read-print-result
   "Read and print result channel until status is 'done'"
   [in]
   (let [result (b/read-bencode in)
         out-bytes (get result "out")
         err-bytes (get result "err")
+        value (get result "value")
+        ex (get result "ex")
+        root-ex (get result "root-ex")
         status (get result "status")
-        done (and status
-                  (= "done" (String. (first status))))]
+        need-input (and status (= "need-input" (String. (first status))))
+        done (and status (= "done" (String. (first status))))]
+    (when true ;; need some verbose or debug argument here.
+      (println-result result)
+      (flush))
     (when out-bytes
       (print (String. out-bytes))
       (flush))
     (when err-bytes
       (log-stderr (String. err-bytes)))
-    (when (not done)
-      (recur in))))
+    (when value
+      (println "value: " (String. value)))
+    (when ex
+      (println "ex: " (String. ex)))
+    (when root-ex
+      (println "root-ex: " (String. root-ex)))
+    (if (not (or done need-input))
+      (recur in)
+      {:done done :need-input need-input
+       :result (readable-result result)})))
 
 ;; from https://book.babashka.org/#_interacting_with_an_nrepl_server
+;; some tests with stdin
 (defn nrepl-eval [host port expr]
   (let [s (java.net.Socket. host port)
         out (.getOutputStream s)
         in (java.io.PushbackInputStream. (.getInputStream s))
         _ (b/write-bencode out {"op" "clone"})
-        _ (read-print-result in) ;; should save session-id for later cancellation.
-        _ (b/write-bencode out {"op" "eval" "code" expr})]
-    (read-print-result in)))
+        clone-result (read-print-result in) ;; should save session-id for later cancellation.
+        session-id (get (:result clone-result) "new-session")
+        _ (info "Result of op=clone: " clone-result ", session-id=" session-id)
+        _ (b/write-bencode out {"op" "eval" "session" session-id "code" expr})
+        _ 0 #_(b/write-bencode out {"op" "stdin" "stdin" "Genie 1\nGenie 2\n"})
+        _ (Thread/sleep 1000)
+        _ 0 #_(b/write-bencode out {"op" "stdin" "stdin" "Genie 3\nGenie 4\n"})] ;; met deze doet 'ie niets, goede volgorde van op's nodig.
+    (loop [it 0]
+      (let [res (read-print-result in)]
+        (info "res: " res ", iter=" it)
+        (when (:need-input res)
+          (info "Need more input!")
+          (Thread/sleep 1000)
+          (b/write-bencode out {"session" session-id "op" "stdin" "stdin" "Genie 3\nGenie 4\n"})
+          (Thread/sleep 1000)
+          _ (read-print-result in) ;; read ack
+          (b/write-bencode out {"session" session-id "op" "stdin" "stdin" ""}) ; ook leeg string, dan einde?
+          #_(b/write-bencode out {"op" "eval" "code" "(+ 3 4)"})
+          (Thread/sleep 1000)
+          _ (read-print-result in) ;; read ack
+          (Thread/sleep 1000)
+          (recur (inc it)))))
+    (info "nrepl-eval loop has finished. Are we really done?")
+    (when false
+      (println "try read-print-result one more time:")
+      (read-print-result in)
+      (println "Really done now"))))
+
+#_(defn nrepl-eval [host port expr]
+    (let [s (java.net.Socket. host port)
+          out (.getOutputStream s)
+          in (java.io.PushbackInputStream. (.getInputStream s))
+          _ (b/write-bencode out {"op" "clone"})
+          _ (read-print-result in) ;; should save session-id for later cancellation.
+          _ (b/write-bencode out {"op" "eval" "code" expr})]
+      (read-print-result in)))
 
 (defn create-context
   "Create script context, with current working directory (cwd)"
@@ -209,9 +283,9 @@
     (info "log with genie client logger before calling main")
     (nrepl-eval "localhost" port expr)
     (info "log with genie client logger after calling main")
-    (println "exec-script (client) to stdout before calling main")
+    (println "exec-script (client) to stdout after calling main")
     (binding [*out* *err*]
-      (println "exec-script (client) to stderr before calling main"))))
+      (println "exec-script (client) to stderr after calling main"))))
 
 (defn print-help
   "Print help when --help given, or errors, or no script"
@@ -235,6 +309,8 @@
     (binding [*verbose* (-> opts :options :verbose)
               *logfile* (log-file (:options opts))]
       ;;      (println "logfile: " (str *logfile*))
+      #_(debug "Sleep 3 seconds at the start...")
+      #_(Thread/sleep 3000)
       (debug "*command-line-args* = " *command-line-args*)
       (debug "opts = " opts)
       (debug "opt=" opt ", args=" args)
