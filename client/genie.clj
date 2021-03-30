@@ -7,6 +7,7 @@
   (:require [bencode.core :as b]
             [clojure.tools.cli :as cli]
             [clojure.string :as str]
+            [clojure.java.io :as io]
             [me.raynes.fs :as fs]
             ;; [java-time :as time]
             ;; [ndevreeze.logger :as log] ;; does not work: Message:  Could not resolve symbol: clojure.lang.LockingTransaction/isRunning
@@ -165,26 +166,38 @@
         _ (b/write-bencode out {"op" "clone"})
         clone-result (read-print-result in) ;; should save session-id for later cancellation.
         session-id (get (:result clone-result) "new-session")
+        in-reader (io/reader *in*)
         _ (info "Result of op=clone: " clone-result ", session-id=" session-id)
         _ (b/write-bencode out {"op" "eval" "session" session-id "code" expr})
         _ 0 #_(b/write-bencode out {"op" "stdin" "stdin" "Genie 1\nGenie 2\n"})
         _ (Thread/sleep 1000)
         _ 0 #_(b/write-bencode out {"op" "stdin" "stdin" "Genie 3\nGenie 4\n"})] ;; met deze doet 'ie niets, goede volgorde van op's nodig.
-    (loop [it 0]
+    (loop [it 0
+           in-seq nil #_(line-seq (io/reader *in*))] ;; does this already start using stdin? -> yes, with line-seq, just the io/reader is ok.
       (let [res (read-print-result in)]
         (info "res: " res ", iter=" it)
         (when (:need-input res)
           (info "Need more input!")
-          (Thread/sleep 1000)
-          (b/write-bencode out {"session" session-id "op" "stdin" "stdin" "Genie 3\nGenie 4\n"})
-          (Thread/sleep 1000)
-          _ (read-print-result in) ;; read ack
-          (b/write-bencode out {"session" session-id "op" "stdin" "stdin" ""}) ; ook leeg string, dan einde?
-          #_(b/write-bencode out {"op" "eval" "code" "(+ 3 4)"})
-          (Thread/sleep 1000)
-          _ (read-print-result in) ;; read ack
-          (Thread/sleep 1000)
-          (recur (inc it)))))
+          #_(Thread/sleep 1000)
+          (debug "After sleep, getting first from line-seq now:")
+          ;; only create line-seq after input is requested by the script.
+          (let [in-seq (or in-seq (line-seq in-reader))
+                line (first in-seq)]
+            (debug "Read another line from my stdin:")
+            (debug line)
+            #_(b/write-bencode out {"session" session-id "op" "stdin" "stdin" "Genie 3\nGenie 4\n"})
+            (b/write-bencode out {"session" session-id "op" "stdin" "stdin" (when line (str line "\n"))})
+            (debug "Wrote this line with bencode to nRepl session")
+            #_(Thread/sleep 1000)
+            (read-print-result in) ;; read ack
+            #_(b/write-bencode out {"session" session-id "op" "stdin" "stdin" ""}) ; ook leeg string, dan einde?
+            ;; mogelijk stopt 'ie nu na de eerste regel:
+            #_(b/write-bencode out {"session" session-id "op" "stdin" "stdin" nil}) ; nil werkt ook.
+            #_(b/write-bencode out {"op" "eval" "code" "(+ 3 4)"})
+            #_(Thread/sleep 1000)
+            #_(read-print-result in) ;; read ack
+            #_(Thread/sleep 1000)
+            (recur (inc it) (rest in-seq))))))
     (info "nrepl-eval loop has finished. Are we really done?")
     (when false
       (println "try read-print-result one more time:")
@@ -192,6 +205,9 @@
       (println "Really done now"))
     (b/write-bencode out {"op" "close" "session" session-id})
     (read-print-result in)))
+
+
+
 
 #_(defn nrepl-eval [host port expr]
     (let [s (java.net.Socket. host port)
