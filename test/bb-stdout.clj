@@ -3,8 +3,7 @@
 ;; helper test for testing stdin/stdout functionality of both babashka en genie/nrepl.
 
 (ns bb-stdout
-  (:require [bencode.core :as b]
-            [clojure.tools.cli :as cli]
+  (:require [clojure.tools.cli :as cli]
             [clojure.string :as str]))
 
 (def cli-options
