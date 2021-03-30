@@ -137,7 +137,7 @@
         status (get result "status")
         need-input (and status (= "need-input" (String. (first status))))
         done (and status (= "done" (String. (first status))))]
-    (when true ;; need some verbose or debug argument here.
+    (when *verbose*
       (println-result result)
       (flush))
     (when out-bytes
@@ -189,7 +189,9 @@
     (when false
       (println "try read-print-result one more time:")
       (read-print-result in)
-      (println "Really done now"))))
+      (println "Really done now"))
+    (b/write-bencode out {"op" "close" "session" session-id})
+    (read-print-result in)))
 
 #_(defn nrepl-eval [host port expr]
     (let [s (java.net.Socket. host port)
