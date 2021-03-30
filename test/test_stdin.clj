@@ -62,7 +62,9 @@
 
 (defn script [opt arguments ctx]
   #_(read-standard-input2 opt ctx arguments)
-  (read-standard-input3 opt ctx arguments)
+  (if (:file opt)
+    (read-standard-input3 opt ctx arguments)
+    (read-standard-input opt ctx arguments))
   #_(read-standard-input opt ctx arguments))
 
 ;; expect context/ctx now as first parameter, a map.
