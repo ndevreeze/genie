@@ -3,6 +3,13 @@
 ;; helper test for testing stdin/stdout functionality of both babashka en genie/nrepl.
 ;; this ones pipes stdin to stdout with a given delay.
 
+;; $ ./bb-stdout.clj -n 5 -d 1000 | ./bb-pipe.clj -d 2000
+;; [2021-03-30 20:58:19.618+0200] line: [2021-03-30 20:58:19.618+0200] counter:     0
+;; [2021-03-30 20:58:21.619+0200] line: [2021-03-30 20:58:20.618+0200] counter:     1
+;; [2021-03-30 20:58:23.619+0200] line: [2021-03-30 20:58:21.618+0200] counter:     2
+;; [2021-03-30 20:58:25.620+0200] line: [2021-03-30 20:58:22.619+0200] counter:     3
+;; [2021-03-30 20:58:27.621+0200] line: [2021-03-30 20:58:23.620+0200] counter:     4
+
 (ns bb-pipe
   (:require [clojure.tools.cli :as cli]
             [clojure.java.io :as io]
