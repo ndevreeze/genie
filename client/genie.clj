@@ -120,86 +120,60 @@
               res)]
     res))
 
-#_(defn bencode-value
-    [val]
-    (try (String. val)
-         (catch Exception e
-           (str "seq: " (str/join ", " (map #(String. %) val))))))
-
 (defn println-result
   [result]
-  (info "result: " result)
-  (info "status:")
+  (debug "result: " result)
+  (debug "status:")
   (let [status (get result "status")]
     (doseq [status-item status]
-      (info (String. status-item))))
+      (debug status-item)))
   (doseq [key (keys result)]
-    (info "have key in result:" key "=" (get result key))))
+    (debug "have key in result:" key "=" (get result key))))
 
-#_(defn println-result
-    [result]
-    (info "result: " result)
-    (info "status:")
-    (let [status (get result "status")]
-      (doseq [status-item status]
-        (info (String. status-item))))
-    (doseq [key (keys result)]
-      (info "have key in result:" key "=" (bencode-value (get result key)))))
 
-#_(defn map-values
-    "Map a function f over the values of a map m, and return a new map."
-    [f m]
-    (into {} (map (fn [[k v]] [k (f v)]) m)))
-
-#_(defn readable-result
-    "Assume result is a map, translate objects to readable strings"
-    [result]
-    (map-values bencode-value result))
-
-;; TODO - use destructuring to get parts of msg.
-(defn read-print-result
-  "Read and print result channel until status is 'done'"
+;; TODO - merge with read-print-result.  but take of recur in
+;; combination with both output and input. If this one recurs without
+;; printing output, we loose some output.
+(defn read-result
+  "Read result channel until status is 'done'.
+   Return result map with keys :done, :need-input and :result"
   [in]
-  (let [result (-> (b/read-bencode in) read-msg)
-        out-bytes (get result "out")
-        out-str (:out result)
-        err-bytes (get result "err")
-        err-str (:err result)
-        value2 (get result "value")
-        value (:value result)
-        ex2 (get result "ex")
-        ex (:ex result)
-        root-ex2 (get result "root-ex")
-        root-ex (:root-ex result)
-        status2 (get result "status")
-        status (:status result)
-        need-input2 (and status (= "need-input" (String. (first status))))
-        need-input (= "need-input" (first status))
-        done (= "done" (first status))
-        done2 (and status (= "done" (String. (first status))))]
+  (let [{:keys [out err value ex root-ex status] :as result} (-> (b/read-bencode in) read-msg)
+        need-input (some #{"need-input"} status)
+        done (some #{"done"} status)]
     (when *verbose*
       (println-result result)
       (flush))
-    (when out-bytes
-      (print (String. out-bytes))
-      (flush))
-    (when out-str
-      (print out-str)
-      (flush))
-    (when err-bytes
-      (log-stderr (String. err-bytes)))
-    (when err-str
-      (log-stderr err-str))
-    (when value
-      (println "value: " (String. value)))
-    (when ex
-      (println "ex: " (String. ex)))
-    (when root-ex
-      (println "root-ex: " (String. root-ex)))
     (if (not (or done need-input))
       (recur in)
-      {:done done :need-input need-input
-       :result result #_(readable-result result)})))
+      (merge {:done done :need-input need-input} result))))
+
+(defn read-print-result
+  "Read and print result channel until status is 'done'.
+   Return result map with keys :done, :need-input and :result"
+  [in]
+  (let [{:keys [out err value ex root-ex status] :as result}
+        (-> (b/read-bencode in) read-msg)
+        need-input (some #{"need-input"} status)
+        done (some #{"done"} status)]
+    (when *verbose*
+      (println-result result)
+      (flush))
+    (when out
+      (print out)
+      (flush))
+    (when err
+      (log-stderr err))
+    (when value
+      (if *verbose*
+        (println "value: " value)))
+    (when ex
+      (println "ex: " ex))
+    (when root-ex
+      (println "root-ex: " root-ex))
+    (if (not (or done need-input))
+      (recur in)
+      (merge {:done done :need-input need-input} result))))
 
 ;; from https://book.babashka.org/#_interacting_with_an_nrepl_server
 ;; some tests with stdin
@@ -208,60 +182,27 @@
         out (.getOutputStream s)
         in (java.io.PushbackInputStream. (.getInputStream s))
         _ (b/write-bencode out {"op" "clone"})
-        clone-result (read-print-result in) ;; should save session-id for later cancellation.
-        session-id2 (get (:result clone-result) "new-session")
-        session-id (-> clone-result :result :new-session)
+        session (-> (read-result in) :new-session)
         in-reader (io/reader *in*)
-        _ (info "Result of op=clone: " clone-result ", session-id=" session-id)
-        _ (b/write-bencode out {"op" "eval" "session" session-id "code" expr})
-        _ 0 #_(b/write-bencode out {"op" "stdin" "stdin" "Genie 1\nGenie 2\n"})
-        _ 0 #_(Thread/sleep 1000)
-        _ 0 #_(b/write-bencode out {"op" "stdin" "stdin" "Genie 3\nGenie 4\n"})] ;; met deze doet 'ie niets, goede volgorde van op's nodig.
+        _ (b/write-bencode out {"op" "eval" "session" session "code" expr})]
     (loop [it 0
-           in-seq nil #_(line-seq (io/reader *in*))] ;; does this already start using stdin? -> yes, with line-seq, just the io/reader is ok.
+           in-seq nil]
       (let [res (read-print-result in)]
-        (info "res: " res ", iter=" it)
+        (debug "res: " res ", iter=" it)
         (when (:need-input res)
-          (info "Need more input!")
-          #_(Thread/sleep 1000)
+          (debug "Need more input!")
           (debug "After sleep, getting first from line-seq now:")
           ;; only create line-seq after input is requested by the script.
           (let [in-seq (or in-seq (line-seq in-reader))
                 line (first in-seq)]
             (debug "Read another line from my stdin:")
             (debug line)
-            #_(b/write-bencode out {"session" session-id "op" "stdin" "stdin" "Genie 3\nGenie 4\n"})
-            (b/write-bencode out {"session" session-id "op" "stdin" "stdin" (when line (str line "\n"))})
+            (b/write-bencode out {"session" session "op" "stdin" "stdin" (when line (str line "\n"))})
             (debug "Wrote this line with bencode to nRepl session")
-            #_(Thread/sleep 1000)
-            (read-print-result in) ;; read ack
-            #_(b/write-bencode out {"session" session-id "op" "stdin" "stdin" ""}) ; ook leeg string, dan einde?
-            ;; mogelijk stopt 'ie nu na de eerste regel:
-            #_(b/write-bencode out {"session" session-id "op" "stdin" "stdin" nil}) ; nil werkt ook.
-            #_(b/write-bencode out {"op" "eval" "code" "(+ 3 4)"})
-            #_(Thread/sleep 1000)
-            #_(read-print-result in) ;; read ack
-            #_(Thread/sleep 1000)
+            (read-result in) ;; read ack
             (recur (inc it) (rest in-seq))))))
-    (info "nrepl-eval loop has finished. Are we really done?")
-    (when false
-      (println "try read-print-result one more time:")
-      (read-print-result in)
-      (println "Really done now"))
-    (b/write-bencode out {"op" "close" "session" session-id})
-    (read-print-result in)))
-
-
-
-
-#_(defn nrepl-eval [host port expr]
-    (let [s (java.net.Socket. host port)
-          out (.getOutputStream s)
-          in (java.io.PushbackInputStream. (.getInputStream s))
-          _ (b/write-bencode out {"op" "clone"})
-          _ (read-print-result in) ;; should save session-id for later cancellation.
-          _ (b/write-bencode out {"op" "eval" "code" expr})]
-      (read-print-result in)))
+    (b/write-bencode out {"op" "close" "session" session})
+    (read-result in)))
 
 (defn create-context
   "Create script context, with current working directory (cwd)"
@@ -340,15 +281,7 @@
         script-params2 (-> script-params (normalize-params nonormalize) quote-params)
         expr (exec-expression ctx script2 main-fn script-params2)]
     (debug "nrepl-eval: " expr)
-    (println "exec-script (client) to stdout before calling main")
-    (binding [*out* *err*]
-      (println "exec-script (client) to stderr before calling main"))
-    (info "log with genie client logger before calling main")
-    (nrepl-eval "localhost" port expr)
-    (info "log with genie client logger after calling main")
-    (println "exec-script (client) to stdout after calling main")
-    (binding [*out* *err*]
-      (println "exec-script (client) to stderr after calling main"))))
+    (nrepl-eval "localhost" port expr)))
 
 (defn print-help
   "Print help when --help given, or errors, or no script"
@@ -382,6 +315,10 @@
         (try
           (exec-script opt (first args) (rest args))
           (catch Exception e
-            (warn "caught exception: " e)))))))
+            (warn "caught exception: " e))))
+      ;; do not print/return the result of the last expression:
+      nil)))
 
 (main)
+
+
