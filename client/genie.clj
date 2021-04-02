@@ -100,52 +100,96 @@
   (when-let [logdir (:logdir opt)]
     (fs/file logdir (format "genie-%s.log" (current-timestamp-file)))))
 
-(defn bencode-value
-  [val]
-  (try (String. val)
-       (catch Exception e
-         (str "seq: " (str/join ", " (map #(String. %) val))))))
+;; 2021-04-02: copied from babashka: test/babashka/impl/nrepl_server_test.clj
+(defn bytes->str [x]
+  (if (bytes? x) (String. (bytes x))
+      (str x)))
+
+;; 2021-04-02: copied from babashka: test/babashka/impl/nrepl_server_test.clj
+(defn read-msg [msg]
+  (let [res (zipmap (map keyword (keys msg))
+                    (map #(if (bytes? %)
+                            (String. (bytes %))
+                            %)
+                         (vals msg)))
+        res (if-let [status (:status res)]
+              (assoc res :status (mapv bytes->str status))
+              res)
+        res (if-let [status (:sessions res)]
+              (assoc res :sessions (mapv bytes->str status))
+              res)]
+    res))
+
+#_(defn bencode-value
+    [val]
+    (try (String. val)
+         (catch Exception e
+           (str "seq: " (str/join ", " (map #(String. %) val))))))
 
 (defn println-result
   [result]
-  (info "result: "result)
+  (info "result: " result)
   (info "status:")
   (let [status (get result "status")]
     (doseq [status-item status]
       (info (String. status-item))))
   (doseq [key (keys result)]
-    (info "have key in result:" key "=" (bencode-value (get result key)))))
+    (info "have key in result:" key "=" (get result key))))
 
-(defn map-values
-  "Map a function f over the values of a map m, and return a new map."
-  [f m]
-  (into {} (map (fn [[k v]] [k (f v)]) m)))
+#_(defn println-result
+    [result]
+    (info "result: " result)
+    (info "status:")
+    (let [status (get result "status")]
+      (doseq [status-item status]
+        (info (String. status-item))))
+    (doseq [key (keys result)]
+      (info "have key in result:" key "=" (bencode-value (get result key)))))
 
-(defn readable-result
-  "Assume result is a map, translate objects to readable strings"
-  [result]
-  (map-values bencode-value result))
+#_(defn map-values
+    "Map a function f over the values of a map m, and return a new map."
+    [f m]
+    (into {} (map (fn [[k v]] [k (f v)]) m)))
 
+#_(defn readable-result
+    "Assume result is a map, translate objects to readable strings"
+    [result]
+    (map-values bencode-value result))
+
+;; TODO - use destructuring to get parts of msg.
 (defn read-print-result
   "Read and print result channel until status is 'done'"
   [in]
-  (let [result (b/read-bencode in)
+  (let [result (-> (b/read-bencode in) read-msg)
         out-bytes (get result "out")
+        out-str (:out result)
         err-bytes (get result "err")
-        value (get result "value")
-        ex (get result "ex")
-        root-ex (get result "root-ex")
-        status (get result "status")
-        need-input (and status (= "need-input" (String. (first status))))
-        done (and status (= "done" (String. (first status))))]
+        err-str (:err result)
+        value2 (get result "value")
+        value (:value result)
+        ex2 (get result "ex")
+        ex (:ex result)
+        root-ex2 (get result "root-ex")
+        root-ex (:root-ex result)
+        status2 (get result "status")
+        status (:status result)
+        need-input2 (and status (= "need-input" (String. (first status))))
+        need-input (= "need-input" (first status))
+        done (= "done" (first status))
+        done2 (and status (= "done" (String. (first status))))]
     (when *verbose*
       (println-result result)
       (flush))
     (when out-bytes
       (print (String. out-bytes))
       (flush))
+    (when out-str
+      (print out-str)
+      (flush))
     (when err-bytes
       (log-stderr (String. err-bytes)))
+    (when err-str
+      (log-stderr err-str))
     (when value
       (println "value: " (String. value)))
     (when ex
@@ -155,7 +199,7 @@
     (if (not (or done need-input))
       (recur in)
       {:done done :need-input need-input
-       :result (readable-result result)})))
+       :result result #_(readable-result result)})))
 
 ;; from https://book.babashka.org/#_interacting_with_an_nrepl_server
 ;; some tests with stdin
@@ -165,12 +209,13 @@
         in (java.io.PushbackInputStream. (.getInputStream s))
         _ (b/write-bencode out {"op" "clone"})
         clone-result (read-print-result in) ;; should save session-id for later cancellation.
-        session-id (get (:result clone-result) "new-session")
+        session-id2 (get (:result clone-result) "new-session")
+        session-id (-> clone-result :result :new-session)
         in-reader (io/reader *in*)
         _ (info "Result of op=clone: " clone-result ", session-id=" session-id)
         _ (b/write-bencode out {"op" "eval" "session" session-id "code" expr})
         _ 0 #_(b/write-bencode out {"op" "stdin" "stdin" "Genie 1\nGenie 2\n"})
-        _ (Thread/sleep 1000)
+        _ 0 #_(Thread/sleep 1000)
         _ 0 #_(b/write-bencode out {"op" "stdin" "stdin" "Genie 3\nGenie 4\n"})] ;; met deze doet 'ie niets, goede volgorde van op's nodig.
     (loop [it 0
            in-seq nil #_(line-seq (io/reader *in*))] ;; does this already start using stdin? -> yes, with line-seq, just the io/reader is ok.
