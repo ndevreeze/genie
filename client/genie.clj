@@ -155,6 +155,37 @@
       (recur in)
       (merge {:done done :need-input need-input} result))))
 
+#_(defn read-result2
+    "Read result channel until status is 'done'.
+   Return result map with keys :done, :need-input and keys of nrepl-result.
+   Specific version for use in shutdown hook."
+    [in]
+    (println "start of read-result2")
+    (try
+      (let [msg (b/read-bencode in)
+            _ (println "read-bencode done, msg=" msg)
+            msg (read-msg msg)
+            _ (println "read-msg done, msg=" msg)
+            {:keys [out err value ex root-ex status] :as result} msg
+            _ (println "destructuring done")
+            need-input (some #{"need-input"} status)
+            done (some #{"done"} status)]
+        (println "start of body of let")
+        (println "need-input: " need-input)
+        (println "done: " done)
+        (when *verbose*
+          (println-result result)
+          (flush))
+        (if (not (or done need-input))
+          (do
+            (println "do recur")
+            (recur in))
+          (merge {:done done :need-input need-input} result)))
+      (catch Exception e
+        (println "Caught exception: " e))
+      (finally
+        (println "End of shutdown hook, in finally clause"))))
+
 (defn read-print-result
   "Read and print result channel until status is 'done'.
    Return result map with keys :done, :need-input and keys of nrepl-result"
@@ -203,6 +234,8 @@
         nil
         (apply str lines)))))
 
+(def session-atom (atom nil))
+
 (defn nrepl-eval [opt host port expr]
   (let [s (java.net.Socket. host port)
         out (.getOutputStream s)
@@ -211,6 +244,7 @@
         session (-> (read-result in) :new-session)
         _ (b/write-bencode out {"op" "eval" "session" session "id" (msg-id) "code" expr})]
     (try
+      (reset! session-atom {:session session :out out :in in})
       (loop [it 0]
         (let [res (read-print-result in)]
           (debug "res: " res ", iter=" it)
@@ -226,6 +260,7 @@
         ;; this close-op should always be executed, even when an uncaught exception occurs.
         (b/write-bencode out {"op" "close" "session" session "id" (msg-id)})
         (read-result in)
+        (reset! session-atom nil)
         (debug "Wrote op=close")))))
 
 (defn create-context
@@ -320,6 +355,20 @@
   (when errors
     (println "Errors:" errors)))
 
+(defn kill-script
+  "Kill the running script when a shutdown signal is received.
+   Writing op=close seems to work, and the script stops. Reading the
+  response however does not, causes java.lang.ArithmeticException:
+  integer overflow in read-bencode. So do not read result for now"
+  []
+  (debug "Running session: " @session-atom)
+  (if-let [{:keys [session in out]} @session-atom]
+    (do
+      (warn "Shutdown hook triggered, stopping script")
+      (b/write-bencode out {"op" "close" "session" session "id" (msg-id)})
+      (debug "Wrote op=close"))
+    (debug "session already closed, do nothing")))
+
 (defn main
   "Main function"
   []
@@ -334,6 +383,7 @@
       (if (or (:help opt) (:errors opt) (empty? args))
         (print-help opts)
         (try
+          (-> (Runtime/getRuntime) (.addShutdownHook (Thread. kill-script)))
           (exec-script opt (first args) (rest args))
           (catch Exception e
             (warn "caught exception: " e))))
