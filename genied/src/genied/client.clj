@@ -74,34 +74,66 @@
   [& forms]
   (log/log (log/get-logger (:err (sing/get-out-streams))) :info forms))
 
+(defn log-server-warn
+  "Log a message to the original logger and *err* stream"
+  [& forms]
+  (log/log (log/get-logger (:err (sing/get-out-streams))) :warn forms))
+
 ;; standard definition of main-function:
 ;; (defn main [ctx & args]
 ;;   (cl/check-and-exec "" cli-options script args ctx))
 (defn exec-script
   "Wrapper around load-script-libraries, load-file, and call-main."
   [script main-fn {:keys [cwd script opt] :as ctx} script-params]
-  (log-server-debug "exec-script - start")
-  (log-server-debug "script=" script ", main-fn=" main-fn ", ctx=" ctx ", script-params=" script-params)
-  (print-diagnostic-info {} "start client")
-  (when-not (:nosetloader opt)
-    (set-dynamic-classloader!)
-    (print-diagnostic-info {} "after set-dyn3!"))
-  (when-not (:noload opt)
-    (loader/load-script-libraries ctx script)
-    (print-diagnostic-info {} "after loading client libraries")
-    (binding [*script-dir* (fs/parent script)]
-      (load-file script)))
-  (log-server-debug "load-file done: " script)
-  ;; main-fn is a symbol as gotten from client. After load-file, eval should work.
-  (println-server-out "exec-script to stdout before calling main")
-  (println-server-err "exec-script to stderr before calling main")
-  (log-server-info "exec-script (server) - log/info before calling main")
-  (when-not (:nomain opt)
-    ((eval main-fn) ctx script-params))
-  (log-server-info "exec-script (server) - log/info after calling main")
-  (println-server-out "exec-script to stdout after calling main")
-  (println-server-err "exec-script to stderr after calling main")
-  (log-server-debug "exec main-fn done: " main-fn))
+  (try
+    (log-server-debug "exec-script - start")
+    (log-server-debug "script=" script ", main-fn=" main-fn ", ctx=" ctx
+                      ", script-params=" script-params)
+    (print-diagnostic-info {} "start client")
+    (when-not (:nosetloader opt)
+      (set-dynamic-classloader!)
+      (print-diagnostic-info {} "after set-dyn3!"))
+    (when-not (:noload opt)
+      (loader/load-script-libraries ctx script)
+      (print-diagnostic-info {} "after loading client libraries")
+      (binding [*script-dir* (fs/parent script)]
+        (load-file script)))
+    (log-server-debug "load-file done: " script)
+    ;; main-fn is a symbol given by client. After load-file, eval
+    ;; should work.
+    (when-not (:nomain opt)
+      ((eval main-fn) ctx script-params))
+    (catch Exception e
+      (log-server-warn "Exception during script exec: " e))
+    (finally
+      (log-server-debug "exec main-fn done: " main-fn))))
+
+;; old, without try-catch-finaly.
+#_(defn exec-script
+    "Wrapper around load-script-libraries, load-file, and call-main."
+    [script main-fn {:keys [cwd script opt] :as ctx} script-params]
+    (log-server-debug "exec-script - start")
+    (log-server-debug "script=" script ", main-fn=" main-fn ", ctx=" ctx ", script-params=" script-params)
+    (print-diagnostic-info {} "start client")
+    (when-not (:nosetloader opt)
+      (set-dynamic-classloader!)
+      (print-diagnostic-info {} "after set-dyn3!"))
+    (when-not (:noload opt)
+      (loader/load-script-libraries ctx script)
+      (print-diagnostic-info {} "after loading client libraries")
+      (binding [*script-dir* (fs/parent script)]
+        (load-file script)))
+    (log-server-debug "load-file done: " script)
+    ;; main-fn is a symbol as gotten from client. After load-file, eval should work.
+    #_(println-server-out "exec-script to stdout before calling main")
+    #_(println-server-err "exec-script to stderr before calling main")
+    #_(log-server-info "exec-script (server) - log/info before calling main")
+    (when-not (:nomain opt)
+      ((eval main-fn) ctx script-params))
+    #_(log-server-info "exec-script (server) - log/info after calling main")
+    #_(println-server-out "exec-script to stdout after calling main")
+    #_(println-server-err "exec-script to stderr after calling main")
+    (log-server-debug "exec main-fn done: " main-fn))
 
 (defn load-relative-file
   "Load a file relative to the currently loading script"
