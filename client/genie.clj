@@ -210,12 +210,8 @@
         (debug "res: " res ", iter=" it)
         (when (:need-input res)
           (debug "Need more input!")
-          ;; only create line-seq after input is requested by the script.
           (let [lines (read-lines opt *in*)]
-            (debug "Read another line from my stdin:")
-            ;; (b/write-bencode out {"session" session "op" "stdin" "stdin" (when line (str line "\n"))})
             (b/write-bencode out {"session" session "op" "stdin" "stdin" lines})
-            (debug "Wrote this line with bencode to nRepl session")
             (read-result in) ;; read ack
             (recur (inc it))))))
     (b/write-bencode out {"op" "close" "session" session})
@@ -251,8 +247,6 @@
   [ctx script main-fn script-params]
   (str "(genied.client/exec-script \"" script "\" '" main-fn " " ctx " [" script-params "])"))
 
-;; TODO - prb want a config flag to not do this. It may be a bit too
-;; magical in some circumstances.
 (defn normalize-param
   "file normalise a parameter, so the server-process can find it, even though it has
    a different current-working-directory (cwd).
@@ -260,7 +254,8 @@
    - if it starts with /, also not relative
    - if it start with ./, or is a single dot, then it is relative.
      Also useful when a path does start with a '-'
-   - if it starts with a letter/digit/underscore, it could be relative. Check with file exists then."
+   - if it starts with a letter/digit/underscore, it could be relative. Check with file exists then.
+   If --nonormalize given, this conversion is not done."
   [param]
   (let [first-char (first param)]
     (cond (= \- first-char) param
@@ -289,7 +284,6 @@
   (str/join " " (map quote-param params)))
 
 ;; TODO - maybe start server when it's not started yet.
-;; 2021-04-02: nrepl-eval-fast uses buffered reading, but some issues with streaming currently.
 (defn exec-script
   "Execute given script with opt and script-params"
   [{:keys [port verbose nonormalize] :as opt} script script-params]
@@ -336,5 +330,3 @@
       nil)))
 
 (main)
-
-
