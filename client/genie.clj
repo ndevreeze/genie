@@ -8,10 +8,7 @@
             [clojure.tools.cli :as cli]
             [clojure.string :as str]
             [clojure.java.io :as io]
-            [me.raynes.fs :as fs]
-            ;; [java-time :as time]
-            ;; [ndevreeze.logger :as log] ;; does not work: Message:  Could not resolve symbol: clojure.lang.LockingTransaction/isRunning
-            ))
+            [me.raynes.fs :as fs]))
 
 (def cli-options
   [["-p" "--port PORT" "Genie daemon port number"
@@ -22,6 +19,10 @@
    ["-l" "--logdir LOGDIR" "Directory for client log. Leave empty for no logging"]
    ["-v" "--verbose" "Verbose output"]
    ["-h" "--help"]
+   [nil "--max-lines MAX-LINES" "Maximum number of lines to read from stdin and give to daemon in one message"
+    :default 1024
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 %) "Must be a number greater than 0"]]
    [nil "--noload" "Do not load libraries and scripts, assume this has been done before"]
    [nil "--nocheckserver" "Do not perform server checks when an error occurs"]
    [nil "--nosetloader" "Do not set dynamic classloader before loading libraries and script"]
@@ -121,6 +122,7 @@
     res))
 
 (defn println-result
+  "For verbose/debug printing of nrepl messages"
   [result]
   (debug "result: " result)
   (debug "status:")
@@ -131,7 +133,7 @@
     (debug "have key in result:" key "=" (get result key))))
 
 
-;; TODO - merge with read-print-result.  but take of recur in
+;; TODO - merge with read-print-result.  but take care of recur in
 ;; combination with both output and input. If this one recurs without
 ;; printing output, we loose some output.
 (defn read-result
@@ -175,7 +177,6 @@
       (recur in)
       (merge {:done done :need-input need-input} result))))
 
-;; TODO - maybe limit max number of lines/bytes to return, say 64 kb, or used defined.
 (defn read-lines
   "Read at least one line from reader, possibly more.
    genied 'need-input', so we need at least one line (or char).
@@ -183,19 +184,21 @@
    Each line returned ends with a new-line.
    Return one single string, possibly containing multiple lines.
    If input is exhausted, return nil"
-  [rdr]
+  [{:keys [max-lines] :as opt} rdr]
   (loop [lines []
-         line (.readLine rdr)]
+         line (.readLine rdr)
+         read 1]
     (if line
-      (if (.ready rdr)
+      (if (and (.ready rdr) (< read max-lines))
         (recur (conj lines (str line "\n"))
-               (.readLine rdr))
+               (.readLine rdr)
+               (inc read))
         (apply str (conj lines (str line "\n"))))
       (if (empty? lines)
         nil
         (apply str lines)))))
 
-(defn nrepl-eval [host port expr]
+(defn nrepl-eval [opt host port expr]
   (let [s (java.net.Socket. host port)
         out (.getOutputStream s)
         in (java.io.PushbackInputStream. (.getInputStream s))
@@ -208,7 +211,7 @@
         (when (:need-input res)
           (debug "Need more input!")
           ;; only create line-seq after input is requested by the script.
-          (let [lines (read-lines *in*)]
+          (let [lines (read-lines opt *in*)]
             (debug "Read another line from my stdin:")
             ;; (b/write-bencode out {"session" session "op" "stdin" "stdin" (when line (str line "\n"))})
             (b/write-bencode out {"session" session "op" "stdin" "stdin" lines})
@@ -296,7 +299,7 @@
         script-params2 (-> script-params (normalize-params nonormalize) quote-params)
         expr (exec-expression ctx script2 main-fn script-params2)]
     (debug "nrepl-eval: " expr)
-    (nrepl-eval "localhost" port expr)
+    (nrepl-eval opt "localhost" port expr)
     #_(nrepl-eval-fast "localhost" port expr)))
 
 (defn print-help
