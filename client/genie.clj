@@ -210,17 +210,23 @@
         _ (b/write-bencode out {"op" "clone" "id" (msg-id)})
         session (-> (read-result in) :new-session)
         _ (b/write-bencode out {"op" "eval" "session" session "id" (msg-id) "code" expr})]
-    (loop [it 0]
-      (let [res (read-print-result in)]
-        (debug "res: " res ", iter=" it)
-        (when (:need-input res)
-          (debug "Need more input!")
-          (let [lines (read-lines opt *in*)]
-            (b/write-bencode out {"session" session "id" (msg-id) "op" "stdin" "stdin" lines})
-            (read-result in) ;; read ack
-            (recur (inc it))))))
-    (b/write-bencode out {"op" "close" "session" session "id" (msg-id)})
-    (read-result in)))
+    (try
+      (loop [it 0]
+        (let [res (read-print-result in)]
+          (debug "res: " res ", iter=" it)
+          (when (:need-input res)
+            (debug "Need more input!")
+            (let [lines (read-lines opt *in*)]
+              (b/write-bencode out {"session" session "id" (msg-id) "op" "stdin" "stdin" lines})
+              (read-result in) ;; read ack
+              (recur (inc it))))))
+      (catch Exception e
+        (warn "Caught exception: " e))
+      (finally
+        ;; this close-op should always be executed, even when an uncaught exception occurs.
+        (b/write-bencode out {"op" "close" "session" session "id" (msg-id)})
+        (read-result in)
+        (debug "Wrote op=close")))))
 
 (defn create-context
   "Create script context, with current working directory (cwd)"
@@ -299,8 +305,7 @@
         script-params2 (-> script-params (normalize-params nonormalize) quote-params)
         expr (exec-expression ctx script2 main-fn script-params2)]
     (debug "nrepl-eval: " expr)
-    (nrepl-eval opt "localhost" port expr)
-    #_(nrepl-eval-fast "localhost" port expr)))
+    (nrepl-eval opt "localhost" port expr)))
 
 (defn print-help
   "Print help when --help given, or errors, or no script"
