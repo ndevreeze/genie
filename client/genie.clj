@@ -19,7 +19,7 @@
    ["-l" "--logdir LOGDIR" "Directory for client log. Leave empty for no logging"]
    ["-v" "--verbose" "Verbose output"]
    ["-h" "--help"]
-   [nil "--max-lines MAX-LINES" "Maximum number of lines to read from stdin and give to daemon in one message"
+   [nil "--max-lines MAX-LINES" "Maximum number of lines to read from stdin and pass to daemon in one message"
     :default 1024
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 %) "Must be a number greater than 0"]]
@@ -27,7 +27,10 @@
    [nil "--nocheckserver" "Do not perform server checks when an error occurs"]
    [nil "--nosetloader" "Do not set dynamic classloader before loading libraries and script"]
    [nil "--nomain" "Do not call main function after loading"]
-   [nil "--nonormalize" "Do not normalize parameters to script (e.g. relative paths)"]])
+   [nil "--nonormalize" "Do not normalize parameters to script (e.g. relative paths)"]
+   ;; and some admin commands.
+   [nil "--list-sessions" "List currently open/running sessions/scripts"]
+   [nil "--kill-sessions SESSIONS" "csv list of sessions/scripts to kill"]])
 
 (def ^:dynamic *verbose*
   "Dynamic var, set to true when -verbose cmdline option given.
@@ -203,12 +206,20 @@
         nil
         (apply str lines)))))
 
+(defn connect-nrepl
+  "Connect to an nRepl server and open in and out TCP streams"
+  [{:keys [port verbose] :as opt}]
+  (let [s (java.net.Socket. "localhost" port)
+        out (.getOutputStream s)
+        in (java.io.PushbackInputStream. (.getInputStream s))]
+    {:socket s
+     :out out
+     :in in}))
+
 (def session-atom (atom nil))
 
 (defn nrepl-eval [opt host port expr]
-  (let [s (java.net.Socket. host port)
-        out (.getOutputStream s)
-        in (java.io.PushbackInputStream. (.getInputStream s))
+  (let [{:keys [socket out in]} (connect-nrepl opt)
         _ (b/write-bencode out {"op" "clone" "id" (msg-id)})
         session (-> (read-result in) :new-session)
         eval-id (msg-id)]
@@ -342,6 +353,60 @@
       (debug "wrote op=close"))
     (debug "session already closed, do nothing")))
 
+;; possibly want to call a server function, to get script and other
+;; info connected to session.
+(defn admin-list-sessions
+  "List currently open/running sessions/scripts"
+  [{:keys [port verbose] :as opt}]
+  (let [{:keys [socket out in]} (connect-nrepl opt)]
+    (try
+      (b/write-bencode out {"op" "ls-sessions"})
+      (let [{:keys [sessions] :as res} (read-print-result in)]
+        #_(info "res: " res)
+        (println "Total #sessions:" (count sessions))
+        (doseq [session sessions]
+          (println "Session: " session))
+        sessions)
+      (catch Exception e
+        (warn "Caught exception: " e))
+      (finally
+        (debug "finally clause in admin-list-sessions")))))
+
+(defn split-sessions
+  "Split session list on a comma"
+  [opt sessions]
+  (if (= sessions "all")
+    (admin-list-sessions opt)
+    (str/split sessions #",")))
+
+;; assume a full session-id for now.
+(defn admin-kill-sessions
+  "Kill the sessions with the given ids"
+  [opt sessions]
+  (println "Kill sessions:" sessions)
+  (let [{:keys [socket out in]} (connect-nrepl opt)
+        sessions (split-sessions opt sessions)]
+    (doseq [session sessions]
+      (try
+        (b/write-bencode out {"op" "close" "session" session})
+        (let [res (read-print-result in)]
+          (println "Status: " (str/join ", " (:status res))))
+        (catch Exception e
+          (warn "Caught exception: " e))
+        (finally
+          (debug "finally clause in admin-list-sessions"))))))
+
+(defn admin-command
+  "Perform an admin command instead of running a script"
+  [{:keys [list-sessions kill-sessions] :as opt} args]
+  #_(println "Admin command: " opt)
+  (cond list-sessions
+        (admin-list-sessions opt)
+        kill-sessions
+        (admin-kill-sessions opt kill-sessions)
+        :else
+        (warn "Unknown admin command: " opt)))
+
 (defn main
   "Main function"
   []
@@ -353,14 +418,38 @@
       (debug "*command-line-args* = " *command-line-args*)
       (debug "opts = " opts)
       (debug "opt=" opt ", args=" args)
-      (if (or (:help opt) (:errors opt) (empty? args))
-        (print-help opts)
-        (try
-          (-> (Runtime/getRuntime) (.addShutdownHook (Thread. kill-script)))
-          (exec-script opt (first args) (rest args))
-          (catch Exception e
-            (warn "caught exception: " e))))
+      (cond (or (:list-sessions opt) (:kill-sessions opt))
+            (admin-command opt args)
+            (or (:help opt) (:errors opt) (empty? args))
+            (print-help opts)
+            :else
+            (try
+              (-> (Runtime/getRuntime) (.addShutdownHook (Thread. kill-script)))
+              (exec-script opt (first args) (rest args))
+              (catch Exception e
+                (warn "caught exception: " e))))
       ;; do not print/return the result of the last expression:
       nil)))
+
+#_(defn main
+    "Main function"
+    []
+    (let [opts (cli/parse-opts *command-line-args* cli-options :in-order true)
+          opt (:options opts)
+          args (:arguments opts)]
+      (binding [*verbose* (-> opts :options :verbose)
+                *logfile* (log-file (:options opts))]
+        (debug "*command-line-args* = " *command-line-args*)
+        (debug "opts = " opts)
+        (debug "opt=" opt ", args=" args)
+        (if (or (:help opt) (:errors opt) (empty? args))
+          (print-help opts)
+          (try
+            (-> (Runtime/getRuntime) (.addShutdownHook (Thread. kill-script)))
+            (exec-script opt (first args) (rest args))
+            (catch Exception e
+              (warn "caught exception: " e))))
+        ;; do not print/return the result of the last expression:
+        nil)))
 
 (main)
