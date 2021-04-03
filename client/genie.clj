@@ -362,7 +362,6 @@
     (try
       (b/write-bencode out {"op" "ls-sessions"})
       (let [{:keys [sessions] :as res} (read-print-result in)]
-        #_(info "res: " res)
         (println "Total #sessions:" (count sessions))
         (doseq [session sessions]
           (println "Session: " session))
@@ -381,7 +380,8 @@
 
 ;; assume a full session-id for now.
 (defn admin-kill-sessions
-  "Kill the sessions with the given ids"
+  "Kill the sessions with the given ids.
+   Or 'all' to kill all sessions."
   [opt sessions]
   (println "Kill sessions:" sessions)
   (let [{:keys [socket out in]} (connect-nrepl opt)
@@ -399,7 +399,6 @@
 (defn admin-command
   "Perform an admin command instead of running a script"
   [{:keys [list-sessions kill-sessions] :as opt} args]
-  #_(println "Admin command: " opt)
   (cond list-sessions
         (admin-list-sessions opt)
         kill-sessions
@@ -430,26 +429,5 @@
                 (warn "caught exception: " e))))
       ;; do not print/return the result of the last expression:
       nil)))
-
-#_(defn main
-    "Main function"
-    []
-    (let [opts (cli/parse-opts *command-line-args* cli-options :in-order true)
-          opt (:options opts)
-          args (:arguments opts)]
-      (binding [*verbose* (-> opts :options :verbose)
-                *logfile* (log-file (:options opts))]
-        (debug "*command-line-args* = " *command-line-args*)
-        (debug "opts = " opts)
-        (debug "opt=" opt ", args=" args)
-        (if (or (:help opt) (:errors opt) (empty? args))
-          (print-help opts)
-          (try
-            (-> (Runtime/getRuntime) (.addShutdownHook (Thread. kill-script)))
-            (exec-script opt (first args) (rest args))
-            (catch Exception e
-              (warn "caught exception: " e))))
-        ;; do not print/return the result of the last expression:
-        nil)))
 
 (main)
