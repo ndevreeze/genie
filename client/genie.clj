@@ -244,36 +244,6 @@
     (b/write-bencode out {"op" "close" "session" session})
     (read-result in)))
 
-;; version that reads per line; works, but slow.
-#_(defn nrepl-eval [host port expr]
-    (let [s (java.net.Socket. host port)
-          out (.getOutputStream s)
-          in (java.io.PushbackInputStream. (.getInputStream s))
-          _ (b/write-bencode out {"op" "clone"})
-          session (-> (read-result in) :new-session)
-          in-reader (io/reader *in*)
-          _ (b/write-bencode out {"op" "eval" "session" session "code" expr})]
-      (loop [it 0
-             in-seq nil]
-        (let [res (read-print-result in)]
-          (debug "res: " res ", iter=" it)
-          (when (:need-input res)
-            (debug "Need more input!")
-            (debug "After sleep, getting first from line-seq now:")
-            ;; only create line-seq after input is requested by the script.
-            (let [in-seq (or in-seq (line-seq in-reader))
-                  line (first in-seq)]
-              (debug "Read another line from my stdin:")
-              ;;            (debug line)
-              (b/write-bencode out {"session" session "op" "stdin" "stdin" (when line (str line "\n"))})
-              ;; (println "class of *in*: " (class *in*))
-              ;; (b/write-bencode out {"session" session "op" "stdin" "stdin" (read-bytes *in*)})
-              (debug "Wrote this line with bencode to nRepl session")
-              (read-result in) ;; read ack
-              (recur (inc it) (rest in-seq))))))
-      (b/write-bencode out {"op" "close" "session" session})
-      (read-result in)))
-
 ;; alternative that used .readLine, but still slow.
 (defn nrepl-eval [host port expr]
   (let [s (java.net.Socket. host port)
