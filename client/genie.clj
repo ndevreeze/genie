@@ -155,37 +155,6 @@
       (recur in)
       (merge {:done done :need-input need-input} result))))
 
-(defn read-result2
-  "Read result channel until status is 'done'.
-   Return result map with keys :done, :need-input and keys of nrepl-result.
-   Specific version for use in shutdown hook."
-  [in]
-  (println "start of read-result2")
-  (try
-    (let [msg (b/read-bencode in)
-          _ (println "read-bencode done, msg=" msg)
-          msg (read-msg msg)
-          _ (println "read-msg done, msg=" msg)
-          {:keys [out err value ex root-ex status] :as result} msg
-          _ (println "destructuring done")
-          need-input (some #{"need-input"} status)
-          done (some #{"done"} status)]
-      (println "start of body of let")
-      (println "need-input: " need-input)
-      (println "done: " done)
-      (when *verbose*
-        (println-result result)
-        (flush))
-      (if (not (or done need-input))
-        (do
-          (println "do recur")
-          (recur in))
-        (merge {:done done :need-input need-input} result)))
-    (catch Exception e
-      (println "Caught exception: " e))
-    (finally
-      (println "End of shutdown hook, in finally clause"))))
-
 (defn read-print-result
   "Read and print result channel until status is 'done'.
    Return result map with keys :done, :need-input and keys of nrepl-result"
@@ -369,11 +338,8 @@
       (warn "Shutdown hook triggered, stopping script")
       (b/write-bencode out {"op" "interrupt" "session" session "interrupt-id" eval-id})
       (debug "Wrote op=interrupt")
-      #_(read-result2 in)
-      #_(info "read-result2")
       (b/write-bencode out {"op" "close" "session" session "id" (msg-id)})
-      (debug "wrote op=close")
-      #_(read-result2 in))
+      (debug "wrote op=close"))
     (debug "session already closed, do nothing")))
 
 (defn main
