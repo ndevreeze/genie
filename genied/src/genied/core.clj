@@ -3,7 +3,7 @@
   (:require [genied.classloader :as loader]
             [genied.client :as client]
             [genied.diagnostics :as diag]
-            [genied.sing-loader :as sing]
+            [genied.state :as state]
             [ndevreeze.logger :as log]
             [ndevreeze.cmdline :as cl]
             [nrepl.server :as nrepl]))
@@ -33,13 +33,13 @@
   
   (loader/init-dynamic-classloader!)
 
-  (log/debug "init dynamic classloader done: " (sing/get-classloader))
+  (log/debug "init dynamic classloader done: " (state/get-classloader))
   (diag/print-diagnostic-info "after init-dynamic-classloader!")
 
   (loader/mark-project-libraries opt)
   (loader/load-startup-libraries opt)
 
-  (sing/set-out-streams! *out* *err*)
+  (state/set-out-streams! *out* *err*)
 
   (log/debug "Starting server on port " (:port opt))
   (defonce server (nrepl/start-server :port (:port opt)))

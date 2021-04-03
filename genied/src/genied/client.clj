@@ -4,7 +4,7 @@
   (:gen-class)
   (:require [genied.classloader :as loader]
             [genied.diagnostics :as diag]
-            [genied.sing-loader :as sing]
+            [genied.state :as state]
             [me.raynes.fs :as fs]
             [ndevreeze.logger :as log]
             [clojure.string :as str]))
@@ -17,7 +17,7 @@
 (defn get-classloader
   "Wrapper around classloader-ns version"
   []
-  (sing/get-classloader))
+  (state/get-classloader))
 
 (defn set-dynamic-classloader!
   "Wrapper around classloader-ns version"
@@ -54,30 +54,30 @@
 (defn println-server-out
   "Print a line to the server *out*"
   [msg]
-  (binding [*out* (:out (sing/get-out-streams))]
+  (binding [*out* (:out (state/get-out-streams))]
     (println msg)))
 
 (defn println-server-err
   "Print a line to the server *err*"
   [msg]
-  (binding [*out* (:err (sing/get-out-streams))]
+  (binding [*out* (:err (state/get-out-streams))]
     (println msg)))
 
 ;; TODO - maybe in a separate logger namespace, specifically for server logging.
 (defn log-server-debug
   "Log a message to the original logger and *err* stream"
   [& forms]
-  (log/log (log/get-logger (:err (sing/get-out-streams))) :debug forms))
+  (log/log (log/get-logger (:err (state/get-out-streams))) :debug forms))
 
 (defn log-server-info
   "Log a message to the original logger and *err* stream"
   [& forms]
-  (log/log (log/get-logger (:err (sing/get-out-streams))) :info forms))
+  (log/log (log/get-logger (:err (state/get-out-streams))) :info forms))
 
 (defn log-server-warn
   "Log a message to the original logger and *err* stream"
   [& forms]
-  (log/log (log/get-logger (:err (sing/get-out-streams))) :warn forms))
+  (log/log (log/get-logger (:err (state/get-out-streams))) :warn forms))
 
 ;; standard definition of main-function:
 ;; (defn main [ctx & args]

@@ -3,7 +3,7 @@
   (:require [cemerick.pomegranate :as pom]
             [clojure.edn :as edn]
             [genied.diagnostics :as diag]
-            [genied.sing-loader :as sing]
+            [genied.state :as state]
             [ndevreeze.logger :as log]
             [me.raynes.fs :as fs]))
 
@@ -44,16 +44,16 @@
    And keep it in an atom, so clients may use it.
    This version uses the (dynamic) classloader of ndevreeze.cmdline/check-and-exec"
   []
-  (sing/set-classloader! (bind-root-loader)))
+  (state/set-classloader! (bind-root-loader)))
 
 (defn set-dynamic-classloader!
   "Set global classloader on current (client) thread.
    And also on the loader, if this is possible.
    Return the set classloader"
   []
-  (let [cl (sing/get-classloader)
+  (let [cl (state/get-classloader)
         thread (Thread/currentThread)]
-    (log/debug "set-dynamic-classloader! with logging, sing/get-cl:" cl)
+    (log/debug "set-dynamic-classloader! with logging, state/get-cl:" cl)
     (diag/print-baseloader-classloaders "dyn3 - 1:")
     (.setContextClassLoader thread cl)
     (diag/print-baseloader-classloaders "dyn3 - 2:")
@@ -72,19 +72,19 @@
   lib - symbol, eg 'ndevreeze/logger
   version - string, eg \"0.2.0\""
   ([lib version]
-   (load-library lib version (sing/get-classloader)))
+   (load-library lib version (state/get-classloader)))
   ([lib version classloader]
    (log/debug "Loading library: " lib ", version: " version)
    (log/debug "Using classloader: " classloader)
    (let [coord [lib version]]
-     (if (sing/has-dep? coord)
+     (if (state/has-dep? coord)
        (log/debug "Already loaded: " coord)
        (let [res (pom/add-dependencies :classloader classloader
                                        :coordinates [coord]
                                        :repositories (merge
                                                       cemerick.pomegranate.aether/maven-central
                                                       {"clojars" "https://clojars.org/repo"}))]
-         (sing/add-dep! coord)
+         (state/add-dep! coord)
          (log/info "Loaded library: " lib ", version: " version)
          (log/debug "Result of add-dependencies: " res)
          res)))))
@@ -102,7 +102,7 @@
                   [ndevreeze/logger "0.3.0"]
                   [ndevreeze/cmdline "0.1.2"]]]
     (log/info "Mark as loaded from project.clj: " coord)
-    (sing/add-dep! coord)))
+    (state/add-dep! coord)))
 
 ;; TODO - support other (non-maven) coordinates?
 (defn load-libraries

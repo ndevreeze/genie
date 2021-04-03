@@ -3,7 +3,7 @@
    These should only be called when *verbose* is true."
   (:gen-class)
   (:require [cemerick.pomegranate :as pom]
-            [genied.sing-loader :as sing]
+            [genied.state :as state]
             [ndevreeze.logger :as log]))
 
 (def ^:dynamic *verbose* "Iff true, call diagnostics for classloaders" false)
@@ -77,6 +77,6 @@
     (log/debug "Current thread: " (Thread/currentThread))
     (print-loaded-libs)
     (print-baseloader-classloaders)
-    (log/debug "Server dynamic classloader: " (sing/get-classloader))
+    (log/debug "Server dynamic classloader: " (state/get-classloader))
     (log/debug "======================")))
 
