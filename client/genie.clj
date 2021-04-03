@@ -212,39 +212,58 @@
 ;; some tests with stdin
 ;; version with read-bytes, but some issues with streaming
 
-(defn nrepl-eval-fast [host port expr]
-  ;; (info "nrepl-eval-fast version used here")
-  (let [s (java.net.Socket. host port)
-        out (.getOutputStream s)
-        in (java.io.PushbackInputStream. (.getInputStream s))
-        _ (b/write-bencode out {"op" "clone"})
-        session (-> (read-result in) :new-session)
-        ;;      in-reader (io/reader *in*)
-        _ (b/write-bencode out {"op" "eval" "session" session "code" expr})]
-    (loop [it 0
-           in-seq nil]
-      (let [res (read-print-result in)]
-        (debug "res: " res ", iter=" it)
-        (when (:need-input res)
-          (debug "Need more input!")
-          (debug "After sleep, getting first from line-seq now:")
-          ;; only create line-seq after input is requested by the script.
-          (let [dummy 0
-                ;; in-seq (or in-seq (line-seq in-reader))
-                ;; line (first in-seq)
-                ]
-            (debug "Read another line from my stdin:")
-            ;;            (debug line)
-            ;; (b/write-bencode out {"session" session "op" "stdin" "stdin" (when line (str line "\n"))})
-            (println "class of *in*: " (class *in*))
-            (b/write-bencode out {"session" session "op" "stdin" "stdin" (read-bytes *in*)})
-            (debug "Wrote this line with bencode to nRepl session")
-            (read-result in) ;; read ack
-            (recur (inc it) (rest in-seq))))))
-    (b/write-bencode out {"op" "close" "session" session})
-    (read-result in)))
+#_(defn nrepl-eval-fast [host port expr]
+    ;; (info "nrepl-eval-fast version used here")
+    (let [s (java.net.Socket. host port)
+          out (.getOutputStream s)
+          in (java.io.PushbackInputStream. (.getInputStream s))
+          _ (b/write-bencode out {"op" "clone"})
+          session (-> (read-result in) :new-session)
+          ;;      in-reader (io/reader *in*)
+          _ (b/write-bencode out {"op" "eval" "session" session "code" expr})]
+      (loop [it 0
+             in-seq nil]
+        (let [res (read-print-result in)]
+          (debug "res: " res ", iter=" it)
+          (when (:need-input res)
+            (debug "Need more input!")
+            (debug "After sleep, getting first from line-seq now:")
+            ;; only create line-seq after input is requested by the script.
+            (let [dummy 0
+                  ;; in-seq (or in-seq (line-seq in-reader))
+                  ;; line (first in-seq)
+                  ]
+              (debug "Read another line from my stdin:")
+              ;;            (debug line)
+              ;; (b/write-bencode out {"session" session "op" "stdin" "stdin" (when line (str line "\n"))})
+              (println "class of *in*: " (class *in*))
+              (b/write-bencode out {"session" session "op" "stdin" "stdin" (read-bytes *in*)})
+              (debug "Wrote this line with bencode to nRepl session")
+              (read-result in) ;; read ack
+              (recur (inc it) (rest in-seq))))))
+      (b/write-bencode out {"op" "close" "session" session})
+      (read-result in)))
 
-;; alternative that used .readLine, but still slow.
+;; TODO - maybe limit max number of lines/bytes to return, say 64 kb, or used defined.
+(defn read-lines
+  "Read at least one line from reader, possibly more.
+   genied 'need-input', so we need at least one line (or char).
+   Use .ready to see if we can read more. This should be faster.
+   Each line returned ends with a new-line.
+   Return one single string, possibly containing multiple lines.
+   If input is exhausted, return nil"
+  [rdr]
+  (loop [lines []
+         line (.readLine rdr)]
+    (if line
+      (if (.ready rdr)
+        (recur (conj lines (str line "\n"))
+               (.readLine rdr))
+        (apply str (conj lines (str line "\n"))))
+      (if (empty? lines)
+        nil
+        (apply str lines)))))
+
 (defn nrepl-eval [host port expr]
   (let [s (java.net.Socket. host port)
         out (.getOutputStream s)
@@ -257,11 +276,11 @@
         (debug "res: " res ", iter=" it)
         (when (:need-input res)
           (debug "Need more input!")
-          (debug "After sleep, getting first from line-seq now:")
           ;; only create line-seq after input is requested by the script.
-          (let [line (.readLine *in*)]
+          (let [lines (read-lines *in*)]
             (debug "Read another line from my stdin:")
-            (b/write-bencode out {"session" session "op" "stdin" "stdin" (when line (str line "\n"))})
+            ;; (b/write-bencode out {"session" session "op" "stdin" "stdin" (when line (str line "\n"))})
+            (b/write-bencode out {"session" session "op" "stdin" "stdin" lines})
             (debug "Wrote this line with bencode to nRepl session")
             (read-result in) ;; read ack
             (recur (inc it))))))
