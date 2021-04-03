@@ -1,4 +1,7 @@
 (ns genied.sing-loader
+  "Keep state of the daemon proces.
+   Classloader for all libraries, loaded dependencies/libs,
+   output/error streams, loaded scripts and sessions."
   (:gen-class))
 
 ;; only define the singleton classloader here, for use from other namespaces.
