@@ -135,7 +135,7 @@
 
 ;; TODO - merge with read-print-result.  but take care of recur in
 ;; combination with both output and input. If this one recurs without
-;; printing output, we loose some output.
+;; printing output, we lose some output.
 (defn read-result
   "Read result channel until status is 'done'.
    Return result map with keys :done, :need-input and keys of nrepl-result"
