@@ -53,12 +53,12 @@
    If dynamic var *logfile* is set, append to this file.
    Also add timestamp."
   [level msg]
-  (let [msg2 (format "[%s] [%-5s] %s\n" (current-timestamp) level (str/join " " msg))]
+  (let [msg (format "[%s] [%-5s] %s\n" (current-timestamp) level (str/join " " msg))]
     (binding [*out* *err*]
-      (print msg2)
+      (print msg)
       (flush))
     (when *logfile*
-      (spit *logfile* msg2  :append true))))
+      (spit *logfile* msg  :append true))))
 
 ;; some poor man's logging for now
 (defn warn
@@ -120,6 +120,11 @@
               (assoc res :sessions (mapv bytes->str status))
               res)]
     res))
+
+(defn msg-id
+  "Create a UUID for adding to nRepl message"
+  []
+  (str (java.util.UUID/randomUUID)))
 
 (defn println-result
   "For verbose/debug printing of nrepl messages"
@@ -202,19 +207,19 @@
   (let [s (java.net.Socket. host port)
         out (.getOutputStream s)
         in (java.io.PushbackInputStream. (.getInputStream s))
-        _ (b/write-bencode out {"op" "clone"})
+        _ (b/write-bencode out {"op" "clone" "id" (msg-id)})
         session (-> (read-result in) :new-session)
-        _ (b/write-bencode out {"op" "eval" "session" session "code" expr})]
+        _ (b/write-bencode out {"op" "eval" "session" session "id" (msg-id) "code" expr})]
     (loop [it 0]
       (let [res (read-print-result in)]
         (debug "res: " res ", iter=" it)
         (when (:need-input res)
           (debug "Need more input!")
           (let [lines (read-lines opt *in*)]
-            (b/write-bencode out {"session" session "op" "stdin" "stdin" lines})
+            (b/write-bencode out {"session" session "id" (msg-id) "op" "stdin" "stdin" lines})
             (read-result in) ;; read ack
             (recur (inc it))))))
-    (b/write-bencode out {"op" "close" "session" session})
+    (b/write-bencode out {"op" "close" "session" session "id" (msg-id)})
     (read-result in)))
 
 (defn create-context
@@ -284,6 +289,7 @@
   (str/join " " (map quote-param params)))
 
 ;; TODO - maybe start server when it's not started yet.
+;; (wait/wait-for-port "localhost" 8080 {:timeout 1000 :pause 1000}) could be helpful here.
 (defn exec-script
   "Execute given script with opt and script-params"
   [{:keys [port verbose nonormalize] :as opt} script script-params]
