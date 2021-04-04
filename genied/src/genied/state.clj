@@ -43,3 +43,38 @@
   "Get map with system out and err streams"
   []
   @out-streams)
+
+
+(def sessions "Map of sessions, keyed by session id" (atom {}))
+
+(defn get-sessions
+  "Get current active sessions"
+  []
+  @sessions)
+
+(defn add-session!
+  "Add one session, for a script-run"
+  [session-info]
+  (swap! sessions assoc (:session session-info) session-info))
+
+(defn remove-session!
+  "Remove one session, based on session id"
+  [session]
+  (swap! sessions dissoc session))
+
+(defn get-session-info
+  "Get session info based on session id"
+  [session]
+  (get @sessions session))
+
+(def daemon "nrepl daemon object" (atom nil))
+
+(defn set-daemon!
+  "Set nRepl daemon for future use"
+  [nrepl-daemon]
+  (reset! daemon nrepl-daemon))
+
+(defn get-daemon
+  "Get nRepl daemon"
+  []
+  @daemon)
