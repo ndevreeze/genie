@@ -5,12 +5,13 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [
                  ;; [org.apache.commons/commons-compress "1.19"] ;; explicitly, raynes/fs uses an old one.
-                 [org.clojure/clojure "1.10.1"]
+                 [org.clojure/clojure "1.10.3"]
                  [org.clojure/tools.cli "1.0.194"]
                  [clj-commons/fs "1.6.307"]
                  [nrepl "0.8.3"]
                  [clj-commons/pomegranate "1.2.0"] ;; 2021-02-21: for dynamic loading of libraries.
                  [org.slf4j/slf4j-nop "1.7.30"] ;; 2021-04-04: getting rid of SLF warning
+                 [org.jsoup/jsoup "1.13.1"]
                  [ndevreeze/logger "0.3.0"]
                  [ndevreeze/cmdline "0.1.2"]]
   :main ^:skip-aot genied.core
