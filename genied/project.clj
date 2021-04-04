@@ -10,6 +10,7 @@
                  [clj-commons/fs "1.6.307"]
                  [nrepl "0.8.3"]
                  [clj-commons/pomegranate "1.2.0"] ;; 2021-02-21: for dynamic loading of libraries.
+                 [org.slf4j/slf4j-nop "1.7.30"] ;; 2021-04-04: getting rid of SLF warning
                  [ndevreeze/logger "0.3.0"]
                  [ndevreeze/cmdline "0.1.2"]]
   :main ^:skip-aot genied.core
