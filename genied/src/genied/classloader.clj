@@ -85,7 +85,7 @@
                                                       cemerick.pomegranate.aether/maven-central
                                                       {"clojars" "https://clojars.org/repo"}))]
          (state/add-dep! coord)
-         (log/info "Loaded library: " lib ", version: " version)
+         (log/info (str "Loaded library: " lib ", version: " version))
          (log/debug "Result of add-dependencies: " res)
          res)))))
 
@@ -101,7 +101,7 @@
                   [clj-commons/pomegranate "1.2.0"]
                   [ndevreeze/logger "0.3.0"]
                   [ndevreeze/cmdline "0.1.2"]]]
-    (log/info "Mark as loaded from project.clj: " coord)
+    (log/info (str "Mark as loaded from project.clj: " coord))
     (state/add-dep! coord)))
 
 ;; TODO - support other (non-maven) coordinates?
