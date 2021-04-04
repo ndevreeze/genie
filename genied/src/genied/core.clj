@@ -41,9 +41,10 @@
 
   (state/set-out-streams! *out* *err*)
 
-  (log/debug "Starting server on port " (:port opt))
-  (defonce server (nrepl/start-server :port (:port opt)))
-  (log/info "nrepl server started on port: " (:port opt))
+  (log/debug "Starting daemon on port " (:port opt))
+  #_(defonce daemon (nrepl/start-server :port (:port opt)))
+  (state/set-daemon! (nrepl/start-server :port (:port opt)))
+  (log/info "nrepl daemon started on port: " (:port opt))
 
   (diag/print-diagnostic-info "after start-server")
 
@@ -54,3 +55,8 @@
 (defn -main [& args]
   (cl/check-and-exec "Description of genied"
                      cli-options do-script args))
+
+(comment
+  (-main "-p" "7889")
+
+  )
