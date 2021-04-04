@@ -426,8 +426,9 @@
   (let [admin-session (connect-nrepl opt)
         session-specs (split-sessions opt admin-session sessions)
         sessions (mapcat #(find-session admin-session %) session-specs)]
-    (doseq [{:keys [session script]} sessions]
+    (doseq [{:keys [session script eval-id]} sessions]
       (println (str "Closing session: [" session "] " script))
+      (do-admin-command admin-session {"op" "interrupt" "session" session "interrupt-id" eval-id})
       (do-admin-command admin-session {"op" "close" "session" session}))))
 
 (defn admin-stop-daemon!
