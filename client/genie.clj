@@ -428,7 +428,11 @@
         sessions (mapcat #(find-session admin-session %) session-specs)]
     (doseq [{:keys [session script eval-id]} sessions]
       (println (str "Closing session: [" session "] " script))
-      (do-admin-command admin-session {"op" "interrupt" "session" session "interrupt-id" eval-id})
+      ;; giving both interrupt and close results in error messages and
+      ;; the genie.clj client process hanging, as no :done message is
+      ;; received. Only interrupt does not work, but only close
+      ;; does. So do this for now.
+      #_(do-admin-command admin-session {"op" "interrupt" "session" session "interrupt-id" eval-id})
       (do-admin-command admin-session {"op" "close" "session" session}))))
 
 (defn admin-stop-daemon!
