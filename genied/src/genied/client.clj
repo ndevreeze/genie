@@ -108,33 +108,6 @@
     (finally
       (log-server-debug "exec main-fn done: " main-fn))))
 
-;; old, without try-catch-finaly.
-#_(defn exec-script
-    "Wrapper around load-script-libraries, load-file, and call-main."
-    [script main-fn {:keys [cwd script opt] :as ctx} script-params]
-    (log-server-debug "exec-script - start")
-    (log-server-debug "script=" script ", main-fn=" main-fn ", ctx=" ctx ", script-params=" script-params)
-    (print-diagnostic-info {} "start client")
-    (when-not (:nosetloader opt)
-      (set-dynamic-classloader!)
-      (print-diagnostic-info {} "after set-dyn3!"))
-    (when-not (:noload opt)
-      (loader/load-script-libraries ctx script)
-      (print-diagnostic-info {} "after loading client libraries")
-      (binding [*script-dir* (fs/parent script)]
-        (load-file script)))
-    (log-server-debug "load-file done: " script)
-    ;; main-fn is a symbol as gotten from client. After load-file, eval should work.
-    #_(println-server-out "exec-script to stdout before calling main")
-    #_(println-server-err "exec-script to stderr before calling main")
-    #_(log-server-info "exec-script (server) - log/info before calling main")
-    (when-not (:nomain opt)
-      ((eval main-fn) ctx script-params))
-    #_(log-server-info "exec-script (server) - log/info after calling main")
-    #_(println-server-out "exec-script to stdout after calling main")
-    #_(println-server-err "exec-script to stderr after calling main")
-    (log-server-debug "exec main-fn done: " main-fn))
-
 (defn load-relative-file
   "Load a file relative to the currently loading script"
   [path]
