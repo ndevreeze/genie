@@ -24,13 +24,16 @@
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 %) "Must be a number greater than 0"]]
    [nil "--noload" "Do not load libraries and scripts, assume this has been done before"]
-   [nil "--nocheckserver" "Do not perform server checks when an error occurs"]
+   [nil "--nocheckdaemon" "Do not perform daemon checks when an error occurs"]
    [nil "--nosetloader" "Do not set dynamic classloader before loading libraries and script"]
    [nil "--nomain" "Do not call main function after loading"]
    [nil "--nonormalize" "Do not normalize parameters to script (e.g. relative paths)"]
    ;; and some admin commands.
    [nil "--list-sessions" "List currently open/running sessions/scripts"]
-   [nil "--kill-sessions SESSIONS" "csv list of sessions/scripts to kill"]])
+   [nil "--kill-sessions SESSIONS" "csv list of sessions/scripts to kill, or 'all'"]
+   [nil "--start-daemon" "Start daemon running on port"]
+   [nil "--stop-daemon" "Stop daemon running on port"]
+   [nil "--restart-daemon" "Restart daemon running on port"]])
 
 (def ^:dynamic *verbose*
   "Dynamic var, set to true when -verbose cmdline option given.
@@ -218,12 +221,18 @@
 
 (def session-atom (atom nil))
 
-(defn nrepl-eval [opt host port expr]
+(defn exec-expression
+  [ctx script main-fn script-params]
+  (str "(genied.client/exec-script \"" script "\" '" main-fn " " ctx " [" script-params "])"))
+
+(defn nrepl-eval [opt host port {:keys [eval-id] :as ctx} script main-fn script-params]
   (let [{:keys [socket out in]} (connect-nrepl opt)
         _ (b/write-bencode out {"op" "clone" "id" (msg-id)})
         session (-> (read-result in) :new-session)
-        eval-id (msg-id)]
+        ctx (assoc ctx :session session)
+        expr (exec-expression ctx script main-fn script-params)]
     (try
+      (debug "nrepl-eval: " expr)
       (reset! session-atom {:session session :eval-id eval-id :out out :in in})
       (b/write-bencode out {"op" "eval" "session" session "id" eval-id "code" expr})
       (loop [it 0]
@@ -252,7 +261,8 @@
     {:cwd (str cwd)
      :client "babashka"
      :script (str script)
-     :opt opt}))
+     :opt opt
+     :eval-id (msg-id)}))
 
 (defn det-main-fn
   "Determine main function from the script.
@@ -270,12 +280,8 @@
           (str (last namespaces) "/main")
           "main"))))
 
-(defn exec-expression
-  [ctx script main-fn script-params]
-  (str "(genied.client/exec-script \"" script "\" '" main-fn " " ctx " [" script-params "])"))
-
 (defn normalize-param
-  "file normalise a parameter, so the server-process can find it, even though it has
+  "file normalise a parameter, so the daemon-process can find it, even though it has
    a different current-working-directory (cwd).
    - if a param starts with -, it's not a relative path.
    - if it starts with /, also not relative
@@ -310,18 +316,20 @@
   [params]
   (str/join " " (map quote-param params)))
 
-;; TODO - maybe start server when it's not started yet.
+;; TODO - maybe start daemon when it's not started yet.
 ;; (wait/wait-for-port "localhost" 8080 {:timeout 1000 :pause 1000}) could be helpful here.
 (defn exec-script
   "Execute given script with opt and script-params"
   [{:keys [port verbose nonormalize] :as opt} script script-params]
   (let [ctx (create-context opt script)
-        script2 (fs/normalized script)
-        main-fn (det-main-fn opt script2)
-        script-params2 (-> script-params (normalize-params nonormalize) quote-params)
-        expr (exec-expression ctx script2 main-fn script-params2)]
-    (debug "nrepl-eval: " expr)
-    (nrepl-eval opt "localhost" port expr)))
+        script (fs/normalized script)
+        main-fn (det-main-fn opt script)
+        script-params (-> script-params (normalize-params nonormalize) quote-params)
+        ;;        expr (exec-expression ctx script main-fn script-params)
+        ]
+    ;;  (debug "nrepl-eval: " expr)
+    #_(nrepl-eval opt "localhost" port ctx expr)
+    (nrepl-eval opt "localhost" port ctx script main-fn script-params)))
 
 (defn print-help
   "Print help when --help given, or errors, or no script"
@@ -336,6 +344,19 @@
   (when errors
     (println "Errors:" errors)))
 
+(defn do-admin-command
+  "Perform an admin command on daemon"
+  [{:keys [socket out in] :as admin-session} command & [{:keys [no-read] :as opt}]]
+  (try
+    (b/write-bencode out command)
+    (if no-read
+      (debug "Not reading response")
+      (let [res (read-print-result in)]
+        (debug "Status: " (str/join ", " (:status res)))
+        res))
+    (catch Exception e
+      (warn "Caught exception: " e))))
+
 (defn kill-script
   "Kill the running script when a shutdown signal is received.
    Writing op=interrupt and then op=close seems to work, and the
@@ -344,39 +365,97 @@
   read-bencode. So do not read result for now"
   []
   (debug "Running session: " @session-atom)
-  (if-let [{:keys [session eval-id in out]} @session-atom]
+  (if-let [{:keys [session eval-id in out] :as admin-session} @session-atom]
     (do
       (warn "Shutdown hook triggered, stopping script")
-      (b/write-bencode out {"op" "interrupt" "session" session "interrupt-id" eval-id})
+      (do-admin-command admin-session {"op" "interrupt" "session" session "interrupt-id" eval-id} {:no-read true})
+      ;; don't call do-admin-command, cannot read result here.
+      #_(b/write-bencode out {"op" "interrupt" "session" session "interrupt-id" eval-id})
       (debug "Wrote op=interrupt")
-      (b/write-bencode out {"op" "close" "session" session "id" (msg-id)})
+      (do-admin-command admin-session {"op" "close" "session" session "id" (msg-id)} {:no-read true})
+      #_(b/write-bencode out {"op" "close" "session" session "id" (msg-id)})
       (debug "wrote op=close"))
     (debug "session already closed, do nothing")))
 
-;; possibly want to call a server function, to get script and other
-;; info connected to session.
+(defn admin-get-sessions
+  "Get sessions given a current admin-session"
+  [admin-session]
+  (let [{:keys [sessions]}
+        (do-admin-command admin-session {"op" "ls-sessions"})]
+    sessions))
+
+#_(defn admin-get-sessions
+    "Get sessions given a current admin-session"
+    [{:keys [socket out in] :as admin-session}]    
+    (b/write-bencode out {"op" "ls-sessions"})
+    (let [{:keys [sessions] :as res} (read-print-result in)]
+      sessions))
+
+;; use daemon function, to also show other session info such as script, maybe also start-time.
 (defn admin-list-sessions
   "List currently open/running sessions/scripts"
   [{:keys [port verbose] :as opt}]
-  (let [{:keys [socket out in]} (connect-nrepl opt)]
+  (let [{:keys [socket out in] :as admin-session} (connect-nrepl opt)]
     (try
-      (b/write-bencode out {"op" "ls-sessions"})
-      (let [{:keys [sessions] :as res} (read-print-result in)]
+      (let [sessions (admin-get-sessions admin-session)]
         (println "Total #sessions:" (count sessions))
         (doseq [session sessions]
           (println "Session: " session))
         sessions)
+      (do-admin-command admin-session {"op" "eval" "code" "(genied.client/list-sessions)"})
       (catch Exception e
         (warn "Caught exception: " e))
       (finally
         (debug "finally clause in admin-list-sessions")))))
 
+#_(defn admin-list-sessions
+    "List currently open/running sessions/scripts"
+    [{:keys [port verbose] :as opt}]
+    (let [{:keys [socket out in] :as admin-session} (connect-nrepl opt)]
+      (try
+        (let [sessions (admin-get-sessions admin-session)]
+          (println "Total #sessions:" (count sessions))
+          (doseq [session sessions]
+            (println "Session: " session))
+          sessions)
+        (b/write-bencode out {"op" "eval" "code" "(genied.client/list-sessions)"})
+        (read-print-result in)
+        #_(let [{:keys [value] :as res} (read-print-result in)]
+            (println "Result of own function: " value)
+            (println "Whole result: " res))
+        (catch Exception e
+          (warn "Caught exception: " e))
+        (finally
+          (debug "finally clause in admin-list-sessions")))))
+
+;; possibly want to call a daemon function, to get script and other
+;; info connected to session.
+#_(defn admin-list-sessions
+    "List currently open/running sessions/scripts"
+    [{:keys [port verbose] :as opt}]
+    (let [{:keys [socket out in]} (connect-nrepl opt)]
+      (try
+        (b/write-bencode out {"op" "ls-sessions"})
+        (let [{:keys [sessions] :as res} (read-print-result in)]
+          (println "Total #sessions:" (count sessions))
+          (doseq [session sessions]
+            (println "Session: " session))
+          sessions)
+        (catch Exception e
+          (warn "Caught exception: " e))
+        (finally
+          (debug "finally clause in admin-list-sessions")))))
+
+;; TODO - use separate function to just give current sessions with
+;; ls-sessions. Using admin-session.
 (defn split-sessions
   "Split session list on a comma"
-  [opt sessions]
+  [opt admin-session sessions]
   (if (= sessions "all")
-    (admin-list-sessions opt)
+    (admin-get-sessions admin-session)
     (str/split sessions #",")))
+
+
 
 ;; assume a full session-id for now.
 (defn admin-kill-sessions
@@ -384,27 +463,34 @@
    Or 'all' to kill all sessions."
   [opt sessions]
   (println "Kill sessions:" sessions)
-  (let [{:keys [socket out in]} (connect-nrepl opt)
-        sessions (split-sessions opt sessions)]
+  (let [admin-session (connect-nrepl opt)
+        sessions (split-sessions opt admin-session sessions)]
     (doseq [session sessions]
-      (try
-        (b/write-bencode out {"op" "close" "session" session})
-        (let [res (read-print-result in)]
-          (println "Status: " (str/join ", " (:status res))))
-        (catch Exception e
-          (warn "Caught exception: " e))
-        (finally
-          (debug "finally clause in admin-list-sessions"))))))
+      (do-admin-command admin-session {"op" "close" "session" session}))))
 
-(defn admin-command
+(defn admin-stop-daemon!
+  "Stop the daemon running on given port"
+  [opt]
+  (let [admin-session (connect-nrepl opt)]
+    (do-admin-command admin-session {"op" "eval" "code" "(genied.client/stop-daemon!)"} {:no-read true}))
+  (println "Stopped daemon"))
+
+(defn admin-command!
   "Perform an admin command instead of running a script"
-  [{:keys [list-sessions kill-sessions] :as opt} args]
+  [{:keys [list-sessions kill-sessions start-daemon stop-daemon restart-daemon] :as opt} args]
   (cond list-sessions
         (admin-list-sessions opt)
         kill-sessions
         (admin-kill-sessions opt kill-sessions)
+        stop-daemon
+        (admin-stop-daemon! opt)
         :else
         (warn "Unknown admin command: " opt)))
+
+(defn admin-command?
+  "Return true if an admin command is given as a cmdline option"
+  [{:keys [list-sessions kill-sessions start-daemon stop-daemon restart-daemon] :as opt}]
+  (or list-sessions kill-sessions start-daemon stop-daemon restart-daemon))
 
 (defn main
   "Main function"
@@ -417,8 +503,8 @@
       (debug "*command-line-args* = " *command-line-args*)
       (debug "opts = " opts)
       (debug "opt=" opt ", args=" args)
-      (cond (or (:list-sessions opt) (:kill-sessions opt))
-            (admin-command opt args)
+      (cond (admin-command? opt)
+            (admin-command! opt args)
             (or (:help opt) (:errors opt) (empty? args))
             (print-help opts)
             :else
