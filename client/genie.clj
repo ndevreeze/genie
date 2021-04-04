@@ -115,12 +115,9 @@
 
 ;; 2021-04-02: copied from babashka: test/babashka/impl/nrepl_server_test.clj
 (defn read-msg [msg]
-  (debug "read-msg: " msg)
   (let [res (zipmap (map keyword (keys msg))
                     (map #(if (bytes? %)
-                            (do
-                              (debug "creating a string from bytes: " % " -> " (bytes %) " -> " (String. (bytes %)))
-                              (String. (bytes %)))
+                            (String. (bytes %))
                             %)
                          (vals msg)))
         res (if-let [status (:status res)]
@@ -388,36 +385,17 @@
   [{:keys [port verbose] :as opt}]
   (let [admin-session (connect-nrepl opt)]
     (try
-      (let [res (do-admin-command admin-session {"op" "eval" "code" "(genied.client/list-sessions)"})
-            sessions (:value res)
-            sessions (edn/read-string sessions)]
-        #_(println "result of do-admin-command: " res)
-        #_(println "sessions:" sessions)
-        #_(println "class of sessions: " (class sessions))
-        (println "Total #sessions:" (count (vals sessions)))
-        (doseq [{:keys [session script]} (vals sessions)]
+      (let [sessions (-> (do-admin-command admin-session {"op" "eval" "code" "(genied.client/list-sessions)"})
+                         :value
+                         edn/read-string
+                         vals)]
+        (println "Total #sessions:" (count sessions))
+        (doseq [{:keys [session script]} sessions]
           (println (str "[" session "] " script))))
       (catch Exception e
         (warn "Caught exception: " e))
       (finally
         (debug "finally clause in admin-list-sessions")))))
-
-#_(defn admin-list-sessions
-    "List currently open/running sessions/scripts"
-    [{:keys [port verbose] :as opt}]
-    (let [{:keys [socket out in] :as admin-session} (connect-nrepl opt)]
-      (try
-        (let [sessions (admin-get-sessions admin-session)]
-          (println "Total #sessions:" (count sessions))
-          (doseq [session sessions]
-            (println "Session: " session))
-          sessions)
-        (let [res (do-admin-command admin-session {"op" "eval" "code" "(genied.client/list-sessions)"})]
-          (println "result of do-admin-command: " res))
-        (catch Exception e
-          (warn "Caught exception: " e))
-        (finally
-          (debug "finally clause in admin-list-sessions")))))
 
 (defn split-sessions
   "Split session list on a comma"
