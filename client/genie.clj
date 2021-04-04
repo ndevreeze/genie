@@ -410,7 +410,9 @@
   being executed.
    Returns seq of session ids."
   [admin-session spec]
-  (let [sessions (-> (do-admin-command admin-session {"op" "eval" "code" "(genied.client/list-sessions)"})
+  (let [sessions (-> (do-admin-command admin-session
+                                       {"op" "eval"
+                                        "code" "(genied.client/list-sessions)"})
                      :value
                      edn/read-string
                      vals)
