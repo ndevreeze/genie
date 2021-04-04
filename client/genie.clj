@@ -31,7 +31,7 @@
    [nil "--nonormalize" "Do not normalize parameters to script (e.g. relative paths)"]
    ;; and some admin commands.
    [nil "--list-sessions" "List currently open/running sessions/scripts"]
-   [nil "--kill-sessions SESSIONS" "csv list of sessions/scripts to kill, or 'all'"]
+   [nil "--kill-sessions SESSIONS" "csv list of (part of) sessions/scripts to kill, or 'all'"]
    [nil "--start-daemon" "Start daemon running on port"]
    [nil "--stop-daemon" "Stop daemon running on port"]
    [nil "--restart-daemon" "Restart daemon running on port"]])
@@ -404,15 +404,30 @@
     (admin-get-sessions admin-session)
     (str/split sessions #",")))
 
-;; assume a full session-id for now.
+(defn find-session
+  "Find session id(s) based on spec.
+   Spec is either part of the UUID session id or part of the script
+  being executed.
+   Returns seq of session ids."
+  [admin-session spec]
+  (let [sessions (-> (do-admin-command admin-session {"op" "eval" "code" "(genied.client/list-sessions)"})
+                     :value
+                     edn/read-string
+                     vals)
+        re-pat (re-pattern spec)]
+    (concat (filter #(re-find re-pat (:session %)) sessions)
+            (filter #(re-find re-pat (:script %)) sessions))))
+
 (defn admin-kill-sessions
-  "Kill the sessions with the given ids.
+  "Kill the sessions with the given (part of) ids or (part of) script names.
    Or 'all' to kill all sessions."
   [opt sessions]
   (println "Kill sessions:" sessions)
   (let [admin-session (connect-nrepl opt)
-        sessions (split-sessions opt admin-session sessions)]
-    (doseq [session sessions]
+        session-specs (split-sessions opt admin-session sessions)
+        sessions (mapcat #(find-session admin-session %) session-specs)]
+    (doseq [{:keys [session script]} sessions]
+      (println (str "Closing session: [" session "] " script))
       (do-admin-command admin-session {"op" "close" "session" session}))))
 
 (defn admin-stop-daemon!
