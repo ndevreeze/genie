@@ -42,7 +42,6 @@
   (state/set-out-streams! *out* *err*)
 
   (log/debug "Starting daemon on port " (:port opt))
-  #_(defonce daemon (nrepl/start-server :port (:port opt)))
   (state/set-daemon! (nrepl/start-server :port (:port opt)))
   (log/info "nrepl daemon started on port: " (:port opt))
 

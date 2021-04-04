@@ -43,10 +43,6 @@
   [lib version]
   (loader/load-library lib version))
 
-;; TODO - Use cmdline options (both daemon and client) to determine if
-;; classloader and load-file need to be done. And also exec main,
-;; maybe want to do pre-loading.
-
 (def ^:dynamic *script-dir*
   "Dynamic var, set when loading a script-file.
    Used by load-relative-file below"
@@ -80,9 +76,6 @@
   [& forms]
   (log/log (log/get-logger (:err (state/get-out-streams))) :warn forms))
 
-;; standard definition of main-function:
-;; (defn main [ctx & args]
-;;   (cl/check-and-exec "" cli-options script args ctx))
 (defn exec-script
   "Wrapper around load-script-libraries, load-file, and call-main."
   [script main-fn {:keys [cwd script opt] :as ctx} script-params]

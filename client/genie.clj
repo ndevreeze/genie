@@ -384,13 +384,6 @@
         (do-admin-command admin-session {"op" "ls-sessions"})]
     sessions))
 
-#_(defn admin-get-sessions
-    "Get sessions given a current admin-session"
-    [{:keys [socket out in] :as admin-session}]    
-    (b/write-bencode out {"op" "ls-sessions"})
-    (let [{:keys [sessions] :as res} (read-print-result in)]
-      sessions))
-
 ;; use daemon function, to also show other session info such as script, maybe also start-time.
 (defn admin-list-sessions
   "List currently open/running sessions/scripts"
@@ -408,54 +401,12 @@
       (finally
         (debug "finally clause in admin-list-sessions")))))
 
-#_(defn admin-list-sessions
-    "List currently open/running sessions/scripts"
-    [{:keys [port verbose] :as opt}]
-    (let [{:keys [socket out in] :as admin-session} (connect-nrepl opt)]
-      (try
-        (let [sessions (admin-get-sessions admin-session)]
-          (println "Total #sessions:" (count sessions))
-          (doseq [session sessions]
-            (println "Session: " session))
-          sessions)
-        (b/write-bencode out {"op" "eval" "code" "(genied.client/list-sessions)"})
-        (read-print-result in)
-        #_(let [{:keys [value] :as res} (read-print-result in)]
-            (println "Result of own function: " value)
-            (println "Whole result: " res))
-        (catch Exception e
-          (warn "Caught exception: " e))
-        (finally
-          (debug "finally clause in admin-list-sessions")))))
-
-;; possibly want to call a daemon function, to get script and other
-;; info connected to session.
-#_(defn admin-list-sessions
-    "List currently open/running sessions/scripts"
-    [{:keys [port verbose] :as opt}]
-    (let [{:keys [socket out in]} (connect-nrepl opt)]
-      (try
-        (b/write-bencode out {"op" "ls-sessions"})
-        (let [{:keys [sessions] :as res} (read-print-result in)]
-          (println "Total #sessions:" (count sessions))
-          (doseq [session sessions]
-            (println "Session: " session))
-          sessions)
-        (catch Exception e
-          (warn "Caught exception: " e))
-        (finally
-          (debug "finally clause in admin-list-sessions")))))
-
-;; TODO - use separate function to just give current sessions with
-;; ls-sessions. Using admin-session.
 (defn split-sessions
   "Split session list on a comma"
   [opt admin-session sessions]
   (if (= sessions "all")
     (admin-get-sessions admin-session)
     (str/split sessions #",")))
-
-
 
 ;; assume a full session-id for now.
 (defn admin-kill-sessions
