@@ -116,8 +116,6 @@
   (log-daemon-debug "Called list-sessions")
   (state/get-sessions))
 
-;; TODO - kill session, also on daemon side.
-
 (defn stop-daemon!
   "Stop this daemon"
   []
