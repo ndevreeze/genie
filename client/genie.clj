@@ -6,6 +6,7 @@
 (ns genie
   (:require [bencode.core :as b]
             [clojure.tools.cli :as cli]
+            [clojure.edn :as edn]
             [clojure.string :as str]
             [clojure.java.io :as io]
             [me.raynes.fs :as fs]))
@@ -114,9 +115,12 @@
 
 ;; 2021-04-02: copied from babashka: test/babashka/impl/nrepl_server_test.clj
 (defn read-msg [msg]
+  (debug "read-msg: " msg)
   (let [res (zipmap (map keyword (keys msg))
                     (map #(if (bytes? %)
-                            (String. (bytes %))
+                            (do
+                              (debug "creating a string from bytes: " % " -> " (bytes %) " -> " (String. (bytes %)))
+                              (String. (bytes %)))
                             %)
                          (vals msg)))
         res (if-let [status (:status res)]
@@ -165,28 +169,29 @@
   "Read and print result channel until status is 'done'.
    Return result map with keys :done, :need-input and keys of nrepl-result"
   [in]
-  (let [{:keys [out err value ex root-ex status] :as result}
-        (-> (b/read-bencode in) read-msg)
-        need-input (some #{"need-input"} status)
-        done (some #{"done"} status)]
-    (when *verbose*
-      (println-result result)
-      (flush))
-    (when out
-      (print out)
-      (flush))
-    (when err
-      (log-stderr err))
-    (when value
-      (if *verbose*
-        (println "value: " value)))
-    (when ex
-      (println "ex: " ex))
-    (when root-ex
-      (println "root-ex: " root-ex))
-    (if (not (or done need-input))
-      (recur in)
-      (merge {:done done :need-input need-input} result))))
+  (loop [old-value nil]
+    (let [{:keys [out err value ex root-ex status] :as result}
+          (-> (b/read-bencode in) read-msg)
+          need-input (some #{"need-input"} status)
+          done (some #{"done"} status)]
+      (when *verbose*
+        (println-result result)
+        (flush))
+      (when out
+        (print out)
+        (flush))
+      (when err
+        (log-stderr err))
+      (when value
+        (if *verbose*
+          (println "value: " value)))
+      (when ex
+        (println "ex: " ex))
+      (when root-ex
+        (println "root-ex: " root-ex))
+      (if (not (or done need-input))
+        (recur (or old-value value))
+        (merge {:done done :need-input need-input :value old-value} result)))))
 
 (defn read-lines
   "Read at least one line from reader, possibly more.
@@ -324,11 +329,7 @@
   (let [ctx (create-context opt script)
         script (fs/normalized script)
         main-fn (det-main-fn opt script)
-        script-params (-> script-params (normalize-params nonormalize) quote-params)
-        ;;        expr (exec-expression ctx script main-fn script-params)
-        ]
-    ;;  (debug "nrepl-eval: " expr)
-    #_(nrepl-eval opt "localhost" port ctx expr)
+        script-params (-> script-params (normalize-params nonormalize) quote-params)]
     (nrepl-eval opt "localhost" port ctx script main-fn script-params)))
 
 (defn print-help
@@ -369,11 +370,8 @@
     (do
       (warn "Shutdown hook triggered, stopping script")
       (do-admin-command admin-session {"op" "interrupt" "session" session "interrupt-id" eval-id} {:no-read true})
-      ;; don't call do-admin-command, cannot read result here.
-      #_(b/write-bencode out {"op" "interrupt" "session" session "interrupt-id" eval-id})
       (debug "Wrote op=interrupt")
       (do-admin-command admin-session {"op" "close" "session" session "id" (msg-id)} {:no-read true})
-      #_(b/write-bencode out {"op" "close" "session" session "id" (msg-id)})
       (debug "wrote op=close"))
     (debug "session already closed, do nothing")))
 
@@ -388,18 +386,38 @@
 (defn admin-list-sessions
   "List currently open/running sessions/scripts"
   [{:keys [port verbose] :as opt}]
-  (let [{:keys [socket out in] :as admin-session} (connect-nrepl opt)]
+  (let [admin-session (connect-nrepl opt)]
     (try
-      (let [sessions (admin-get-sessions admin-session)]
-        (println "Total #sessions:" (count sessions))
-        (doseq [session sessions]
-          (println "Session: " session))
-        sessions)
-      (do-admin-command admin-session {"op" "eval" "code" "(genied.client/list-sessions)"})
+      (let [res (do-admin-command admin-session {"op" "eval" "code" "(genied.client/list-sessions)"})
+            sessions (:value res)
+            sessions (edn/read-string sessions)]
+        #_(println "result of do-admin-command: " res)
+        #_(println "sessions:" sessions)
+        #_(println "class of sessions: " (class sessions))
+        (println "Total #sessions:" (count (vals sessions)))
+        (doseq [{:keys [session script]} (vals sessions)]
+          (println (str "[" session "] " script))))
       (catch Exception e
         (warn "Caught exception: " e))
       (finally
         (debug "finally clause in admin-list-sessions")))))
+
+#_(defn admin-list-sessions
+    "List currently open/running sessions/scripts"
+    [{:keys [port verbose] :as opt}]
+    (let [{:keys [socket out in] :as admin-session} (connect-nrepl opt)]
+      (try
+        (let [sessions (admin-get-sessions admin-session)]
+          (println "Total #sessions:" (count sessions))
+          (doseq [session sessions]
+            (println "Session: " session))
+          sessions)
+        (let [res (do-admin-command admin-session {"op" "eval" "code" "(genied.client/list-sessions)"})]
+          (println "result of do-admin-command: " res))
+        (catch Exception e
+          (warn "Caught exception: " e))
+        (finally
+          (debug "finally clause in admin-list-sessions")))))
 
 (defn split-sessions
   "Split session list on a comma"

@@ -113,13 +113,12 @@
 (defn list-sessions
   "Show session info"
   []
-  (log-daemon-info "Called list-sessions")
-  (println "my own sessions")
-  (println (state/get-sessions))
-  (doseq [{:keys [session script]} (vals (state/get-sessions))]
-    (println (str "[" session "] " script)))
-  (println "end of my own sessions")
-  (println "Daemon:" (state/get-daemon)))
+  (log-daemon-debug "Called list-sessions")
+  (let [sessions (state/get-sessions)]
+    #_(doseq [{:keys [session script]} (vals sessions)]
+        (println (str "[" session "] " script)))
+    #_(println "Some testing with handler")
+    sessions))
 
 ;; TODO - kill session, also on daemon side.
 
