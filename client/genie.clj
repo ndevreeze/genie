@@ -151,21 +151,19 @@
    - GENIE_HOME
    - /opt/genie
    - /usr/local/lib/genie
-   - ~/tools/genie"
+   - ~/tools/genie
+   - ../genied/target/uberjar (when running genie.clj client from source-dir"
   []
   (or (System/getenv "GENIE_HOME")
-      (first-dir ["/opt/genie" "/usr/local/lib/genie" "~/tools/genie"])))
+      (first-dir ["/opt/genie" "/usr/local/lib/genie" "~/tools/genie"
+                  (fs/normalized (fs/file *file* ".." "genied" "target" "uberjar"))])))
 
 (defn genied-jar
   "Determine location of genied jar file
-   By checking in this order:
-   - GENIE_JAR (explicit)
-   - GENIE_HOME (genied.jar or any jar with 'genied' in its name in this dir)
-   - /opt/genie (same as GENIE_HOME)
-   - /usr/local/lib/genie (same as GENIE_HOME)"
+   By checking the dirs as in `genie-home`."
   []
   (or (System/getenv "GENIE_JAR")
-      (first-file (genie-home) ["genied.jar" "genied*.jar"])))
+      (first-file (genie-home) ["genied.jar" "genied-*-standalone.jar" "genied*.jar"])))
 
 ;; 2021-04-02: copied from babashka: test/babashka/impl/nrepl_server_test.clj
 (defn bytes->str [x]
