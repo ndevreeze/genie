@@ -27,6 +27,7 @@ proc install {opt argv} {
   try_eval {install_daemon $opt $argv} {log error "install_daemon failed: $errorResult"}
   install_client $opt $argv
   install_scripts $opt $argv
+  install_config $opt $argv
 }
 
 proc install_daemon {opt argv} {
@@ -87,6 +88,16 @@ proc install_scripts {opt argv} {
   file copy -force "scripts/genie_new.clj" "~/bin/genie_new.clj"
   file copy -force "template/template.clj" $target_dir
   file copy -force "template/deps.edn" $target_dir
+}
+
+proc install_config {opt argv} {
+  set target_dir [file join ~/.config/genie]
+  file mkdir $target_dir
+  set target_file [file join $target_dir genie.edn]
+  if {![file exists $target_file]} {
+    file copy "genied/genie.edn" $target_file
+    puts "Installed genie.edn in $target_dir"
+  }
 }
 
 main $argv
