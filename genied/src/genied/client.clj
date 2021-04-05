@@ -78,7 +78,7 @@
 
 (defn exec-script
   "Wrapper around load-script-libraries, load-file, and call-main."
-  [script main-fn {:keys [cwd script opt] :as ctx} script-params]
+  [script main-fn {:keys [cwd opt] :as ctx} script-params]
   (try
     (log-daemon-debug "exec-script - start")
     (log-daemon-debug "script=" script ", main-fn=" main-fn ", ctx=" ctx
