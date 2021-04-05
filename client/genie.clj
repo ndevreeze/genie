@@ -4,7 +4,9 @@
 ;; export BABASHKA_CLASSPATH=$(clojure -Spath -Sdeps '{:deps {clj-commons/fs {:mvn/version "1.6.307"}}}')
 
 (ns genie
-  (:require [bencode.core :as b]
+  (:require [babashka.process :refer [process]]
+            [babashka.wait :as wait]
+            [bencode.core :as b]
             [clojure.tools.cli :as cli]
             [clojure.edn :as edn]
             [clojure.string :as str]
@@ -107,6 +109,63 @@
   [opt]
   (when-let [logdir (:logdir opt)]
     (fs/file logdir (format "genie-%s.log" (current-timestamp-file)))))
+
+;; some functions to determine locations of java, genied.jar and config.
+(defn java-binary
+  "Determine location of java binary.
+   By checking in this order:
+   - GENIE_JAVA_CMD
+   - JAVA_CMD
+   - JAVA_HOME
+   - java"
+  []
+  (or (System/getenv "GENIE_JAVA_CMD")
+      (System/getenv "JAVA_CMD")
+      (when-let [java-home (System/getenv "JAVA_HOME")]
+        (str (fs/file java-home "bin" "java")))
+      "java"))
+
+(defn first-file
+  "Find first file according to glob-specs in dir.
+   Return nil if none found, a string otherwise. Search in dir (no
+  sub-dirs). Check glob-specs seq in order"
+  [dir glob-specs]
+  (when (seq glob-specs)
+    (if-let [files (fs/glob (fs/file dir) (first glob-specs))]
+      (str (first files))
+      (recur dir (rest glob-specs)))))
+
+(defn first-dir
+  "Find first dir in dirs seq that exists and return it.
+   Return nil if none found."
+  [dirs]
+  (when-let [dir (first dirs)]
+    (let [dir (fs/expand-home dir)]
+      (if (fs/exists? dir)
+        (str dir)
+        (recur (rest dirs))))))
+
+(defn genie-home
+  "Determine location of genie home
+   By checking in this order:
+   - GENIE_HOME
+   - /opt/genie
+   - /usr/local/lib/genie
+   - ~/tools/genie"
+  []
+  (or (System/getenv "GENIE_HOME")
+      (first-dir ["/opt/genie" "/usr/local/lib/genie" "~/tools/genie"])))
+
+(defn genied-jar
+  "Determine location of genied jar file
+   By checking in this order:
+   - GENIE_JAR (explicit)
+   - GENIE_HOME (genied.jar or any jar with 'genied' in its name in this dir)
+   - /opt/genie (same as GENIE_HOME)
+   - /usr/local/lib/genie (same as GENIE_HOME)"
+  []
+  (or (System/getenv "GENIE_JAR")
+      (first-file (genie-home) ["genied.jar" "genied*.jar"])))
 
 ;; 2021-04-02: copied from babashka: test/babashka/impl/nrepl_server_test.clj
 (defn bytes->str [x]
@@ -444,6 +503,23 @@
     (do-admin-command admin-session {"op" "eval" "code" "(genied.client/stop-daemon!)"} {:no-read true}))
   (println "Stopped daemon"))
 
+(defn admin-start-daemon!
+  "Start the daemon process on given port.
+   Use environment vars and check directories for locations of java
+  binary and genied.jar"
+  [opt]
+  (println "Starting daemon on port:" (:port opt))
+  (let [pr (process [(java-binary) '-jar (genied-jar) '-p (:port opt)])
+        _ (println "Process started, waiting (max 60 seconds) until port is available")
+        _ (println "cmd =" (str/join " " (:cmd pr)))
+        res (wait/wait-for-port "localhost" (:port opt) {:timeout 60000 :pause 1000})]
+    (if res
+      (println "Ok, started in" (:took res) "msec")
+      (do
+        (println "Failed to start server, res=nil, process =" pr)
+        ;; reading (deref pr) blocks.
+        #_(println ", @pr=" @pr)))))
+
 (defn admin-command!
   "Perform an admin command instead of running a script"
   [{:keys [list-sessions kill-sessions start-daemon stop-daemon restart-daemon] :as opt} args]
@@ -453,6 +529,8 @@
         (admin-kill-sessions opt kill-sessions)
         stop-daemon
         (admin-stop-daemon! opt)
+        start-daemon
+        (admin-start-daemon! opt)
         :else
         (warn "Unknown admin command: " opt)))
 
