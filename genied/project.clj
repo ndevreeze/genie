@@ -13,6 +13,7 @@
                  [ndevreeze/logger "0.3.0"]
                  [ndevreeze/cmdline "0.1.2"]]
   :main ^:skip-aot genied.core
+  :jvm-opts ["--illegal-access=debug"] ;; 2021-04-04: for lein uberjar, but no more info.
   :target-path "target/%s"
   :profiles {:dev {:dependencies [[midje "1.9.9"]]}
              :uberjar {:aot :all}})
