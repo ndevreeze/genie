@@ -1,6 +1,7 @@
 (ns genied.classloader
   (:gen-class)
   (:require [cemerick.pomegranate :as pom]
+            [cemerick.pomegranate.aether :as aether]
             [clojure.edn :as edn]
             [genied.diagnostics :as diag]
             [genied.state :as state]
