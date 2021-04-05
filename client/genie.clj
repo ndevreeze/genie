@@ -4,7 +4,7 @@
 ;; export BABASHKA_CLASSPATH=$(clojure -Spath -Sdeps '{:deps {clj-commons/fs {:mvn/version "1.6.307"}}}')
 
 (ns genie
-  (:require [babashka.process :refer [process]]
+  (:require [babashka.process :as p]
             [babashka.wait :as wait]
             [bencode.core :as b]
             [clojure.tools.cli :as cli]
@@ -130,12 +130,12 @@
    Return nil if none found, a string otherwise. Search in dir (no
   sub-dirs). Check glob-specs seq in order"
   [dir glob-specs]
-  (when (seq glob-specs)
+  (when (and dir (seq glob-specs))
     (if-let [files (fs/glob (fs/file dir) (first glob-specs))]
       (str (first files))
       (recur dir (rest glob-specs)))))
 
-(defn first-dir
+(defn first-existing-dir
   "Find first dir in dirs seq that exists and return it.
    Return nil if none found."
   [dirs]
@@ -155,12 +155,13 @@
    - ../genied/target/uberjar (when running genie.clj client from source-dir"
   []
   (or (System/getenv "GENIE_HOME")
-      (first-dir ["/opt/genie" "/usr/local/lib/genie" "~/tools/genie"
-                  (fs/normalized (fs/file *file* ".." "genied" "target" "uberjar"))])))
+      (first-existing-dir ["/opt/genie" "/usr/local/lib/genie" "~/tools/genie"
+                           (fs/normalized (fs/file *file* ".." ".." "genied" "target" "uberjar"))])))
 
-(defn genied-jar
+(defn genied-jar-file
   "Determine location of genied jar file
-   By checking the dirs as in `genie-home`."
+   By checking the dirs as in `genie-home`.
+   Return nil iff nothing found."
   []
   (or (System/getenv "GENIE_JAR")
       (first-file (genie-home) ["genied.jar" "genied-*-standalone.jar" "genied*.jar"])))
@@ -498,25 +499,40 @@
   "Stop the daemon running on given port"
   [opt]
   (let [admin-session (connect-nrepl opt)]
-    (do-admin-command admin-session {"op" "eval" "code" "(genied.client/stop-daemon!)"} {:no-read true}))
+    (do-admin-command admin-session {"op" "eval"
+                                     "code" "(genied.client/stop-daemon!)"}
+                      {:no-read true}))
   (println "Stopped daemon"))
 
+(defn genied-command
+  "Create command to start genied.
+   Based on java-bin and genied-jar.
+   Or failing that, Leiningen.
+   Return vector of command and process options (cwd to use)"
+  [opt java-bin genied-jar]
+  (if (and java-bin genied-jar)
+    [[java-bin '-jar genied-jar '-p (:port opt)] {:dir (str (fs/parent genied-jar))}]
+    [['lein 'run '-- '-p (:port opt)]
+     {:dir (str (fs/normalized (fs/file *file* ".." ".." "genied")))}]))
+
+;; TODO - check if process already started. Although starting twice
+;; does not seem harmful: (process) returns quickly, old process still
+;; running.
 (defn admin-start-daemon!
   "Start the daemon process on given port.
    Use environment vars and check directories for locations of java
   binary and genied.jar"
   [opt]
   (println "Starting daemon on port:" (:port opt))
-  (let [pr (process [(java-binary) '-jar (genied-jar) '-p (:port opt)])
-        _ (println "Process started, waiting (max 60 seconds) until port is available")
-        _ (println "cmd =" (str/join " " (:cmd pr)))
-        res (wait/wait-for-port "localhost" (:port opt) {:timeout 60000 :pause 1000})]
-    (if res
-      (println "Ok, started in" (:took res) "msec")
-      (do
-        (println "Failed to start server, res=nil, process =" pr)
-        ;; reading (deref pr) blocks.
-        #_(println ", @pr=" @pr)))))
+  (let [java-bin (java-binary)
+        genied-jar (genied-jar-file)
+        [command command-opt] (genied-command opt java-bin genied-jar)]
+    (println "cmd:" (str/join " " command) ", cwd:" (:dir command-opt))
+    (let [proc (p/process command command-opt)]
+      (println "Process started, waiting (max 60 seconds) until port is available")
+      (if-let [res (wait/wait-for-port "localhost" (:port opt) {:timeout 60000 :pause 200})]
+        (println "Ok, started in" (:took res) "msec")
+        (println "Failed to start server, process =" proc)))))
 
 (defn admin-command!
   "Perform an admin command instead of running a script"
