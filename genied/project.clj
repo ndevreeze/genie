@@ -15,6 +15,8 @@
   :main ^:skip-aot genied.core
   :jvm-opts ["--illegal-access=debug"] ;; 2021-04-04: for lein uberjar, but no more info.
   :target-path "target/%s"
+  ;; 2021-04-05: reflection warnings on Pomegranate and nrepl, so disable for now.
+  :global-vars {*warn-on-reflection* false}
   :profiles {:dev {:dependencies [[midje "1.9.9"]]}
              :uberjar {:aot :all}})
 
