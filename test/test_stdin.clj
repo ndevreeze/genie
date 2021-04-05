@@ -1,11 +1,10 @@
 #! /usr/bin/env genie
 
-;; test stdin, also with redirection:
-;; * read as contents from file: cat file | genie test_stdin.clj
-;; * read as output from another process: ls | genie test_stdin.clj
-;; * read as a stream from another process: long-proc | grenie test_stdin.clj
-
 (ns test-stdin
+  "test stdin, also with redirection:
+  * read as contents from file: cat file | genie test_stdin.clj
+  * read as output from another process: ls | genie test_stdin.clj
+  * read as a stream from another process: long-proc | grenie test_stdin.clj"
   (:require [ndevreeze.cmdline :as cl]
             [me.raynes.fs :as fs]
             [clojure.java.io :as io]
@@ -27,7 +26,6 @@
 (defn script [opt arguments ctx]
   (read-standard-input opt ctx arguments))
 
-;; expect context/ctx now as first parameter, a map.
 (defn main [ctx args]
   (cl/check-and-exec "" cli-options script args ctx))
 
