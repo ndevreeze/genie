@@ -1,6 +1,7 @@
 #! /usr/bin/env bb
 
-;; helper test for testing stdin/stdout functionality of both babashka en genie/nrepl.
+;; helper test for testing stdin/stdout functionality of both babashka
+;; en genie/nrepl.
 
 (ns bb-stdout
   (:require [clojure.tools.cli :as cli]
@@ -16,7 +17,9 @@
    ["-v" "--verbose" "Verbose output"]
    ["-h" "--help"]])
 
-(def log-time-pattern (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss.SSSZ"))
+(def log-time-pattern
+  "Long log timestamp pattern"
+  (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss.SSSZ"))
 
 (defn current-timestamp
   "Return current timestamp in a format suitable for a filename.

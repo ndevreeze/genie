@@ -1,7 +1,8 @@
 #! /usr/bin/env bb
 
 ;; for using raynes.fs (clj-commons/fs):
-;; export BABASHKA_CLASSPATH=$(clojure -Spath -Sdeps '{:deps {clj-commons/fs {:mvn/version "1.6.307"}}}')
+;; export BABASHKA_CLASSPATH=$(clojure -Spath -Sdeps '{:deps
+;; {clj-commons/fs {:mvn/version "1.6.307"}}}')
 
 (ns genie
   (:require [babashka.process :as p]
@@ -18,22 +19,22 @@
     :default 7888
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
-   ["-m" "--main MAIN" "Main function to call, namespaced. Default empty: get from script ns-decl"]
-   ["-l" "--logdir LOGDIR" "Directory for client log. Leave empty for no logging"]
+   ["-m" "--main MAIN" "main ns/fn to call. Empty: get from script ns-decl"]
+   ["-l" "--logdir LOGDIR" "Directory for client log. Empty: no logging"]
    ["-v" "--verbose" "Verbose output"]
    ["-h" "--help"]
-   [nil "--max-lines MAX-LINES" "Maximum number of lines to read from stdin and pass to daemon in one message"
+   [nil "--max-lines MAX-LINES" "Max #lines to read/pass in one message"
     :default 1024
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 %) "Must be a number greater than 0"]]
-   [nil "--noload" "Do not load libraries and scripts, assume this has been done before"]
-   [nil "--nocheckdaemon" "Do not perform daemon checks when an error occurs"]
-   [nil "--nosetloader" "Do not set dynamic classloader before loading libraries and script"]
+   [nil "--noload" "Do not load libraries and scripts"]
+   [nil "--nocheckdaemon" "Do not perform daemon checks on errors"]
+   [nil "--nosetloader" "Do not set dynamic classloader"]
    [nil "--nomain" "Do not call main function after loading"]
-   [nil "--nonormalize" "Do not normalize parameters to script (e.g. relative paths)"]
+   [nil "--nonormalize" "Do not normalize parameters to script (rel. paths)"]
    ;; and some admin commands.
    [nil "--list-sessions" "List currently open/running sessions/scripts"]
-   [nil "--kill-sessions SESSIONS" "csv list of (part of) sessions/scripts to kill, or 'all'"]
+   [nil "--kill-sessions SESSIONS" "csv list of (part of) sessions, or 'all'"]
    [nil "--start-daemon" "Start daemon running on port"]
    [nil "--stop-daemon" "Stop daemon running on port"]
    [nil "--restart-daemon" "Restart daemon running on port"]])
@@ -48,8 +49,11 @@
    Used by function `log` below"
   nil)
 
-;; Using ndevreeze/logger and also java-time in Babashka gives some errors. So use this poor man's version for now.
-(def log-time-pattern (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss.SSSZ"))
+(def log-time-pattern
+  "log timestamp format.
+  Using ndevreeze/logger and also java-time in Babashka gives some
+  errors. So use this poor man's version for now."
+  (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss.SSSZ"))
 
 (defn current-timestamp
   "Return current timestamp in a format suitable for a filename.
@@ -62,7 +66,8 @@
    If dynamic var *logfile* is set, append to this file.
    Also add timestamp."
   [level msg]
-  (let [msg (format "[%s] [%-5s] %s\n" (current-timestamp) level (str/join " " msg))]
+  (let [msg (format "[%s] [%-5s] %s\n" (current-timestamp) level
+                    (str/join " " msg))]
     (binding [*out* *err*]
       (print msg)
       (flush))
@@ -100,7 +105,8 @@
    In current timezone"
   []
   (let [now (java.time.ZonedDateTime/now)
-        pattern (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH-mm-ss")]
+        pattern (java.time.format.DateTimeFormatter/ofPattern
+                 "yyyy-MM-dd'T'HH-mm-ss")]
     (.format now pattern)))
 
 (defn log-file
@@ -156,7 +162,8 @@
   []
   (or (System/getenv "GENIE_HOME")
       (first-existing-dir ["/opt/genie" "/usr/local/lib/genie" "~/tools/genie"
-                           (fs/normalized (fs/file *file* ".." ".." "genied" "target" "uberjar"))])))
+                           (fs/normalized (fs/file *file* ".." ".." "genied"
+                                                   "target" "uberjar"))])))
 
 (defn genied-jar-file
   "Determine location of genied jar file
@@ -164,7 +171,8 @@
    Return nil iff nothing found."
   []
   (or (System/getenv "GENIE_JAR")
-      (first-file (genie-home) ["genied.jar" "genied-*-standalone.jar" "genied*.jar"])))
+      (first-file (genie-home) ["genied.jar" "genied-*-standalone.jar"
+                                "genied*.jar"])))
 
 ;; 2021-04-02: copied from babashka: test/babashka/impl/nrepl_server_test.clj
 (defn bytes->str [x]
@@ -210,7 +218,8 @@
   "Read result channel until status is 'done'.
    Return result map with keys :done, :need-input and keys of nrepl-result"
   [in]
-  (let [{:keys [out err value ex root-ex status] :as result} (-> (b/read-bencode in) read-msg)
+  (let [{:keys [out err value ex root-ex status] :as result}
+        (-> (b/read-bencode in) read-msg)
         need-input (some #{"need-input"} status)
         done (some #{"done"} status)]
     (when *verbose*
@@ -283,9 +292,11 @@
 
 (defn exec-expression
   [ctx script main-fn script-params]
-  (str "(genied.client/exec-script \"" script "\" '" main-fn " " ctx " [" script-params "])"))
+  (str "(genied.client/exec-script \"" script "\" '" main-fn " " ctx
+       " [" script-params "])"))
 
-(defn nrepl-eval [opt host port {:keys [eval-id] :as ctx} script main-fn script-params]
+(defn nrepl-eval [opt host port
+                  {:keys [eval-id] :as ctx} script main-fn script-params]
   (let [{:keys [socket out in]} (connect-nrepl opt)
         _ (b/write-bencode out {"op" "clone" "id" (msg-id)})
         session (-> (read-result in) :new-session)
@@ -294,20 +305,21 @@
     (try
       (debug "nrepl-eval: " expr)
       (reset! session-atom {:session session :eval-id eval-id :out out :in in})
-      (b/write-bencode out {"op" "eval" "session" session "id" eval-id "code" expr})
+      (b/write-bencode out {"op" "eval" "session" session "id" eval-id
+                            "code" expr})
       (loop [it 0]
         (let [res (read-print-result in)]
           (debug "res: " res ", iter=" it)
           (when (:need-input res)
             (debug "Need more input!")
             (let [lines (read-lines opt *in*)]
-              (b/write-bencode out {"session" session "id" (msg-id) "op" "stdin" "stdin" lines})
+              (b/write-bencode out {"session" session "id" (msg-id)
+                                    "op" "stdin" "stdin" lines})
               (read-result in) ;; read ack
               (recur (inc it))))))
       (catch Exception e
         (warn "Caught exception: " e))
       (finally
-        ;; this close-op should always be executed, even when an uncaught exception occurs.
         (b/write-bencode out {"op" "close" "session" session "id" (msg-id)})
         (read-result in)
         (reset! session-atom nil)
@@ -341,13 +353,14 @@
           "main"))))
 
 (defn normalize-param
-  "file normalise a parameter, so the daemon-process can find it, even though it has
-   a different current-working-directory (cwd).
+  "file normalise a parameter, so the daemon-process can find it.
+  Even though it has a different current-working-directory (cwd).
    - if a param starts with -, it's not a relative path.
    - if it starts with /, also not relative
    - if it start with ./, or is a single dot, then it is relative.
      Also useful when a path does start with a '-'
-   - if it starts with a letter/digit/underscore, it could be relative. Check with file exists then.
+   - if it starts with a letter/digit/underscore, it could be relative.
+     Check with `(fs/exists?)` then.
    If --nonormalize given, this conversion is not done."
   [param]
   (let [first-char (first param)]
@@ -376,15 +389,15 @@
   [params]
   (str/join " " (map quote-param params)))
 
-;; TODO - maybe start daemon when it's not started yet.
-;; (wait/wait-for-port "localhost" 8080 {:timeout 1000 :pause 1000}) could be helpful here.
 (defn exec-script
   "Execute given script with opt and script-params"
   [{:keys [port verbose nonormalize] :as opt} script script-params]
   (let [ctx (create-context opt script)
         script (fs/normalized script)
         main-fn (det-main-fn opt script)
-        script-params (-> script-params (normalize-params nonormalize) quote-params)]
+        script-params (-> script-params
+                          (normalize-params nonormalize)
+                          quote-params)]
     (nrepl-eval opt "localhost" port ctx script main-fn script-params)))
 
 (defn print-help
@@ -401,8 +414,11 @@
     (println "Errors:" errors)))
 
 (defn do-admin-command
-  "Perform an admin command on daemon"
-  [{:keys [socket out in] :as admin-session} command & [{:keys [no-read] :as opt}]]
+  "Perform an admin command on daemon.
+   Use opened session with socket, in and out streams.
+   Reading responses might fail, don't try if no-read given."
+  [{:keys [socket out in] :as admin-session} command
+   & [{:keys [no-read] :as opt}]]
   (try
     (b/write-bencode out command)
     (if no-read
@@ -424,9 +440,11 @@
   (if-let [{:keys [session eval-id in out] :as admin-session} @session-atom]
     (do
       (warn "Shutdown hook triggered, stopping script")
-      (do-admin-command admin-session {"op" "interrupt" "session" session "interrupt-id" eval-id} {:no-read true})
+      (do-admin-command admin-session {"op" "interrupt" "session" session
+                                       "interrupt-id" eval-id} {:no-read true})
       (debug "Wrote op=interrupt")
-      (do-admin-command admin-session {"op" "close" "session" session "id" (msg-id)} {:no-read true})
+      (do-admin-command admin-session {"op" "close" "session" session
+                                       "id" (msg-id)} {:no-read true})
       (debug "wrote op=close"))
     (debug "session already closed, do nothing")))
 
@@ -437,16 +455,20 @@
         (do-admin-command admin-session {"op" "ls-sessions"})]
     sessions))
 
-;; use daemon function, to also show other session info such as script, maybe also start-time.
+;; use daemon function, to also show other session info such as
+;; script, maybe also start-time.
 (defn admin-list-sessions
   "List currently open/running sessions/scripts"
   [{:keys [port verbose] :as opt}]
   (let [admin-session (connect-nrepl opt)]
     (try
-      (let [sessions (-> (do-admin-command admin-session {"op" "eval" "code" "(genied.client/list-sessions)"})
-                         :value
-                         edn/read-string
-                         vals)]
+      (let [sessions
+            (-> (do-admin-command admin-session
+                                  {"op" "eval"
+                                   "code" "(genied.client/list-sessions)"})
+                :value
+                edn/read-string
+                vals)]
         (println "Total #sessions:" (count sessions))
         (doseq [{:keys [session script]} sessions]
           (println (str "[" session "] " script))))
@@ -492,7 +514,8 @@
       ;; the genie.clj client process hanging, as no :done message is
       ;; received. Only interrupt does not work, but only close
       ;; does. So do this for now.
-      #_(do-admin-command admin-session {"op" "interrupt" "session" session "interrupt-id" eval-id})
+      #_(do-admin-command admin-session {"op" "interrupt" "session" session
+                                         "interrupt-id" eval-id})
       (do-admin-command admin-session {"op" "close" "session" session}))))
 
 (defn admin-stop-daemon!
@@ -511,7 +534,8 @@
    Return vector of command and process options (cwd to use)"
   [opt java-bin genied-jar]
   (if (and java-bin genied-jar)
-    [[java-bin '-jar genied-jar '-p (:port opt)] {:dir (str (fs/parent genied-jar))}]
+    [[java-bin '-jar genied-jar '-p (:port opt)]
+     {:dir (str (fs/parent genied-jar))}]
     [['lein 'run '-- '-p (:port opt)]
      {:dir (str (fs/normalized (fs/file *file* ".." ".." "genied")))}]))
 
@@ -529,14 +553,16 @@
         [command command-opt] (genied-command opt java-bin genied-jar)]
     (println "cmd:" (str/join " " command) ", cwd:" (:dir command-opt))
     (let [proc (p/process command command-opt)]
-      (println "Process started, waiting (max 60 seconds) until port is available")
-      (if-let [res (wait/wait-for-port "localhost" (:port opt) {:timeout 60000 :pause 200})]
+      (println "Process started, waiting (max 60 sec) until port is available")
+      (if-let [res (wait/wait-for-port "localhost" (:port opt)
+                                       {:timeout 60000 :pause 200})]
         (println "Ok, started in" (:took res) "msec")
         (println "Failed to start server, process =" proc)))))
 
 (defn admin-command!
   "Perform an admin command instead of running a script"
-  [{:keys [list-sessions kill-sessions start-daemon stop-daemon restart-daemon] :as opt} args]
+  [{:keys [list-sessions kill-sessions start-daemon
+           stop-daemon restart-daemon] :as opt} args]
   (cond list-sessions
         (admin-list-sessions opt)
         kill-sessions
@@ -550,7 +576,8 @@
 
 (defn admin-command?
   "Return true if an admin command is given as a cmdline option"
-  [{:keys [list-sessions kill-sessions start-daemon stop-daemon restart-daemon] :as opt}]
+  [{:keys [list-sessions kill-sessions start-daemon
+           stop-daemon restart-daemon] :as opt}]
   (or list-sessions kill-sessions start-daemon stop-daemon restart-daemon))
 
 (defn main
