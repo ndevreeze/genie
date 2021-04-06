@@ -8,4 +8,3 @@
  (midje/fact "Basic test"
              (* 6 7)
              => 42))
-
