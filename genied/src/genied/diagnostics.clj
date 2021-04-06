@@ -1,6 +1,7 @@
 (ns genied.diagnostics
-  "Classloaders are tricky in Java and Clojure. This namespace provides some diagnostic functions.
-   These should only be called when *verbose* is true."
+  "Classloaders are tricky in Java and Clojure.
+  This namespace provides some diagnostic functions. These should
+  only be called when *verbose* is true."
   (:gen-class)
   (:require [cemerick.pomegranate :as pom]
             [genied.state :as state]
@@ -47,9 +48,11 @@
        (log/debug "1. Compiler/LOADER is not bound"))
      (log/debug "2a. Value of clojure.core/*use-context-classloader*: "
                 clojure.core/*use-context-classloader*)
-     (log/debug "2b. Context classloader: " (.. Thread currentThread getContextClassLoader))
+     (log/debug "2b. Context classloader: "
+                (.. Thread currentThread getContextClassLoader))
      (log/debug "3. Classloader of Compiler: " (.getClassLoader Compiler))
-     (log/debug "Resulting in Baseloader (used by require/load): " (clojure.lang.RT/baseLoader))))
+     (log/debug "Resulting in Baseloader (used by require/load): "
+                (clojure.lang.RT/baseLoader))))
   ([]
    (print-baseloader-classloaders "BaseLoader:")))
 
@@ -69,7 +72,8 @@
   (when *verbose*
     (log/debug "Diagnostic info for: " label)
     (log/debug "Classloader hierarchy for current thread:")
-    (print-classloader-hierarchy (.. Thread currentThread getContextClassLoader))
+    (print-classloader-hierarchy
+     (.. Thread currentThread getContextClassLoader))
     (log/debug "Classloader hierarchy for base classloader:")
     (print-classloader-hierarchy (clojure.lang.RT/baseLoader))
     (print-classpath "thread" (.. Thread currentThread getContextClassLoader))

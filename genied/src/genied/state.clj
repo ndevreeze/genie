@@ -5,8 +5,9 @@
    Keep some singleton atoms."
   (:gen-class))
 
-;; only define the singleton classloader here, for use from other namespaces.
-;; dependencies is a set of coordinates, where coordinate is a vec of lib and version.
+;; only define the singleton classloader here, for use from other
+;; namespaces.  dependencies is a set of coordinates, where coordinate
+;; is a vec of lib and version.
 (def classloader
   "Core/root classloader"
   (atom {:loader nil :dependencies #{}}))
@@ -32,8 +33,9 @@
   [coord]
   (swap! classloader update-in [:dependencies] conj coord))
 
-;; not directly related to classloaders, but singletons as well, so keep here for now.
-;; keep system *out* and *err*, so they can be distinguished from the dynamic nRepl ones.
+;; not directly related to classloaders, but singletons as well, so
+;; keep here for now.  keep system *out* and *err*, so they can be
+;; distinguished from the dynamic nRepl ones.
 (def out-streams
   "out/err streams for main daemon process"
   (atom {:out nil :err nil}))

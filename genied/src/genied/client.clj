@@ -37,7 +37,8 @@
   "Wrapper around diagnostics version.
    Use ctx to also log script-name on daemon-side"
   [ctx label]
-  (diag/print-diagnostic-info (str (-> ctx :script (or "") fs/base-name) "/" label)))
+  (diag/print-diagnostic-info
+   (str (-> ctx :script (or "") fs/base-name) "/" label)))
 
 (defn load-library
   "Wrapper around classloader-ns version"

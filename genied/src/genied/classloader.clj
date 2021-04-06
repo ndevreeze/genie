@@ -22,9 +22,9 @@
     (.getContextClassLoader thread)))
 
 (defn bind-root-loader
-  "Bind Compiler/LOADER to a new one, which stays fixed in server and later client calls.
-   Use (baseloader) as parent.
-   Return newly created classloader"
+  "Bind Compiler/LOADER to a new one.
+   This stays fixed in server and later client calls.
+  Use (baseloader) as parent.  Return newly created classloader"
   []
   (let [bl (clojure.lang.RT/baseLoader)
         cl (clojure.lang.DynamicClassLoader. bl)]
@@ -37,15 +37,16 @@
         (if (.isBound clojure.lang.Compiler/LOADER)
           (.set clojure.lang.Compiler/LOADER cl)
           (log/debug "Compiler/LOADER is not bound, do not .set it")))
-      (log/debug "Compiler/LOADER has no threadBinding yet, do not use .set here"))
-    (log/debug "After bindRoot, Compiler/LOADER (.deref) = " (.deref Compiler/LOADER))
+      (log/debug "Compiler/LOADER has no threadBinding yet, not using .set"))
+    (log/debug "After bindRoot, Compiler/LOADER (.deref) = "
+               (.deref Compiler/LOADER))
     (log/debug "After bindRoot, baseloader = " (clojure.lang.RT/baseLoader))
     cl))
 
 (defn init-dynamic-classloader!
   "Ensure the system/server has a dynamic classloader.
-   And keep it in an atom, so clients may use it.
-   This version uses the (dynamic) classloader of ndevreeze.cmdline/check-and-exec"
+   And keep it in an atom, so clients may use it. This version uses
+  the (dynamic) classloader of ndevreeze.cmdline/check-and-exec"
   []
   (state/set-classloader! (bind-root-loader)))
 
@@ -66,7 +67,8 @@
     (diag/print-baseloader-classloaders "dyn3 - 4:")
     cl))
 
-;; TODO - make given repo's more flexible - allow all/other specs similar to deps.edn.
+;; TODO - make given repo's more flexible - allow all/other specs
+;; similar to deps.edn.
 ;; 2021-02-28: current Pomegranate seems the only working version;
 ;; Cider/nrepl and tools.deps versions don't seem to work currently.
 (defn load-library
@@ -82,11 +84,12 @@
    (let [coord [lib version]]
      (if (state/has-dep? coord)
        (log/debug "Already loaded: " coord)
-       (let [res (pom/add-dependencies :classloader classloader
-                                       :coordinates [coord]
-                                       :repositories (merge
-                                                      cemerick.pomegranate.aether/maven-central
-                                                      {"clojars" "https://clojars.org/repo"}))]
+       (let [res (pom/add-dependencies
+                  :classloader classloader
+                  :coordinates [coord]
+                  :repositories (merge
+                                 cemerick.pomegranate.aether/maven-central
+                                 {"clojars" "https://clojars.org/repo"}))]
          (state/add-dep! coord)
          (log/info (str "Loaded library: " lib ", version: " version))
          (log/debug "Result of add-dependencies: " res)
