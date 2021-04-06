@@ -7,7 +7,9 @@
 
 ;; only define the singleton classloader here, for use from other namespaces.
 ;; dependencies is a set of coordinates, where coordinate is a vec of lib and version.
-(def classloader (atom {:loader nil :dependencies #{}}))
+(def classloader
+  "Core/root classloader"
+  (atom {:loader nil :dependencies #{}}))
 
 (defn get-classloader
   "Get the globally set dynamic classloader"
@@ -32,7 +34,9 @@
 
 ;; not directly related to classloaders, but singletons as well, so keep here for now.
 ;; keep system *out* and *err*, so they can be distinguished from the dynamic nRepl ones.
-(def out-streams (atom {:out nil :err nil}))
+(def out-streams
+  "out/err streams for main daemon process"
+  (atom {:out nil :err nil}))
 
 (defn set-out-streams!
   "set output streams to current values in atom out-streams"

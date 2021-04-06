@@ -1,6 +1,7 @@
 ;; client/script facing functions
 
 (ns genied.client
+  "Client namespace - functions called by (babashka) clients"
   (:gen-class)
   (:require [genied.classloader :as loader]
             [genied.diagnostics :as diag]

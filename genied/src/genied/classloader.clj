@@ -1,4 +1,6 @@
 (ns genied.classloader
+  "Classloader functions.
+   Mostly related to dynamic class loaders and the system root loader."
   (:gen-class)
   (:require [cemerick.pomegranate :as pom]
             [cemerick.pomegranate.aether :as aether]

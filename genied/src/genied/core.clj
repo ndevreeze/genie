@@ -1,4 +1,5 @@
 (ns genied.core
+  "Genied core with main function and do-script"
   (:gen-class)
   (:require [genied.classloader :as loader]
             [genied.client :as client]
@@ -9,6 +10,7 @@
             [nrepl.server :as nrepl]))
 
 (def cli-options
+  "Command line options"
   [["-c" "--config CONFIG" "Config file"
     :default "~/.config/genie/genie.edn"]
    ["-h" "--help" "Show this help"]
@@ -49,7 +51,9 @@
   (client/init) ;; dummy for now, this also makes sure the namespace is loaded.
   (diag/print-diagnostic-info "end of do-script (genied)"))
 
-(defn -main [& args]
+(defn -main
+  "Main function, starting point"
+  [& args]
   (cl/check-and-exec "Description of genied"
                      cli-options do-script args))
 
