@@ -6,4 +6,3 @@
   "Another test function"
   [ses code]
   (doall (repl/message ses {:op "eval" :code code})))
-

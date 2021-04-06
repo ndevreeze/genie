@@ -79,4 +79,3 @@
     (print-baseloader-classloaders)
     (log/debug "Server dynamic classloader: " (state/get-classloader))
     (log/debug "======================")))
-

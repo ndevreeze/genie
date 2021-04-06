@@ -33,7 +33,7 @@
       (do
         (log/debug "result of getThreadBinding: " box)
         (if (.isBound clojure.lang.Compiler/LOADER)
-          (.set clojure.lang.Compiler/LOADER cl) 
+          (.set clojure.lang.Compiler/LOADER cl)
           (log/debug "Compiler/LOADER is not bound, do not .set it")))
       (log/debug "Compiler/LOADER has no threadBinding yet, do not use .set here"))
     (log/debug "After bindRoot, Compiler/LOADER (.deref) = " (.deref Compiler/LOADER))
@@ -126,4 +126,3 @@
     (if (fs/exists? deps-edn)
       (let [script-opt (edn/read-string (slurp deps-edn))]
         (load-libraries script-opt)))))
-

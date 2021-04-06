@@ -30,7 +30,6 @@
   (log/debug "Context (ctx): " ctx)
 
   (diag/print-diagnostic-info "start of do-script (genied)")
-  
   (loader/init-dynamic-classloader!)
 
   (log/debug "init dynamic classloader done: " (state/get-classloader))
@@ -48,7 +47,6 @@
   (diag/print-diagnostic-info "after start-server")
 
   (client/init) ;; dummy for now, this also makes sure the namespace is loaded.
-  
   (diag/print-diagnostic-info "end of do-script (genied)"))
 
 (defn -main [& args]
