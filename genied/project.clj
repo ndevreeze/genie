@@ -1,4 +1,4 @@
-(defproject genied "0.1.0-SNAPSHOT"
+(defproject ndevreeze/genied "0.1.0-SNAPSHOT"
   :description "Clojure script server/daemon - genied"
   :url "https://github.com/ndevreeze/genie"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
