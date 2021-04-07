@@ -5,6 +5,7 @@
 ;; {clj-commons/fs {:mvn/version "1.6.307"}}}')
 
 (ns genie
+  "Genie client in Babashka"
   (:require [babashka.process :as p]
             [babashka.wait :as wait]
             [bencode.core :as b]
@@ -15,6 +16,7 @@
             [me.raynes.fs :as fs]))
 
 (def cli-options
+  "Genie client command line options"
   [["-p" "--port PORT" "Genie daemon port number"
     :default 7888
     :parse-fn #(Integer/parseInt %)
@@ -174,13 +176,18 @@
       (first-file (genie-home) ["genied.jar" "genied-*-standalone.jar"
                                 "genied*.jar"])))
 
-;; 2021-04-02: copied from babashka: test/babashka/impl/nrepl_server_test.clj
-(defn bytes->str [x]
+(defn bytes->str
+  "If `x` is a byte-array, convert it to a string.
+   return as-is otherwise.
+  copied from babashka: test/babashka/impl/nrepl_server_test.clj"
+  [x]
   (if (bytes? x) (String. (bytes x))
       (str x)))
 
-;; 2021-04-02: copied from babashka: test/babashka/impl/nrepl_server_test.clj
-(defn read-msg [msg]
+(defn read-msg
+  "Convert all byte-arrays in msg to strings.
+  copied from babashka: test/babashka/impl/nrepl_server_test.clj"
+  [msg]
   (let [res (zipmap (map keyword (keys msg))
                     (map #(if (bytes? %)
                             (String. (bytes %))
@@ -288,15 +295,22 @@
      :out out
      :in in}))
 
-(def session-atom (atom nil))
+(def session-atom
+  "Atom to hold the session-id
+  For use when the babashka script is killed, and server session
+  should be killed as well"
+  (atom nil))
 
 (defn exec-expression
+  "Return string with expression to execute on Genie daemon.
+   Make sure it's a valid string passable through nRepl/bencode"
   [ctx script main-fn script-params]
   (str "(genied.client/exec-script \"" script "\" '" main-fn " " ctx
        " [" script-params "])"))
 
-(defn nrepl-eval [opt host port
-                  {:keys [eval-id] :as ctx} script main-fn script-params]
+(defn nrepl-eval
+  "Eval a Genie script in a genied/nRepl session"
+  [opt host port {:keys [eval-id] :as ctx} script main-fn script-params]
   (let [{:keys [socket out in]} (connect-nrepl opt)
         _ (b/write-bencode out {"op" "clone" "id" (msg-id)})
         session (-> (read-result in) :new-session)
@@ -386,6 +400,7 @@
   (str "\"" param "\""))
 
 (defn quote-params
+  "Quote parameters in 'cmd-line' with double quotes"
   [params]
   (str/join " " (map quote-param params)))
 
@@ -559,6 +574,14 @@
         (println "Ok, started in" (:took res) "msec")
         (println "Failed to start server, process =" proc)))))
 
+(defn admin-restart-daemon!
+  "Restart the daemon process on given port."
+  [opt]
+  (admin-stop-daemon! opt)
+  (println "Wait 3 seconds...")
+  (Thread/sleep 3000)
+  (admin-start-daemon! opt))
+
 (defn admin-command!
   "Perform an admin command instead of running a script"
   [{:keys [list-sessions kill-sessions start-daemon
@@ -571,6 +594,8 @@
         (admin-stop-daemon! opt)
         start-daemon
         (admin-start-daemon! opt)
+        restart-daemon
+        (admin-restart-daemon! opt)
         :else
         (warn "Unknown admin command: " opt)))
 
@@ -604,4 +629,8 @@
       ;; do not print/return the result of the last expression:
       nil)))
 
-(main)
+;; wrt linting with leiningen/bikeshed etc.
+;; see https://book.babashka.org/#main_file
+(if (= *file* (System/getProperty "babashka.file"))
+  (main)
+  (println "Not called/sourced as main, do nothing"))

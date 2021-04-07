@@ -1,8 +1,7 @@
 #! /usr/bin/env genie
 
-;; create a new genie script.
-
 (ns genie-new
+  "Create a new Genie script"
   (:require
    [clojure.java.io :as io]
    [clojure.set :as set]
@@ -15,6 +14,7 @@
 ;; TODO - add deps.edn to use as a param.
 
 (def cli-options
+  "Command line options for creating new Genie script"
   [["-c" "--config CONFIG" "Config file"
     :default "~/.config/genie/genie.edn"]
    ["-h" "--help" "Show this help"]
@@ -106,5 +106,7 @@
   (doseq [script arguments]
     (create-script opt (make-absolute-clj-script ctx script))))
 
-(defn main [ctx args]
+(defn main
+  "Main function as called from Genie"
+  [ctx args]
   (cl/check-and-exec "" cli-options script args ctx))
