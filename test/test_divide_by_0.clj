@@ -1,8 +1,7 @@
 #! /usr/bin/env genie
 
-;; test exception handling.
-
 (ns test-divide-by-0
+  "test exception handling."
   (:require
    [ndevreeze.cmdline :as cl]))
 

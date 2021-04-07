@@ -1,9 +1,8 @@
 #! /usr/bin/env genie
 
-;; test printing the first few lines of a given file
-;; including test for relative files.
-
 (ns test-head
+  "test printing the first few lines of a given file including test for
+  relative files."
   (:require
    [ndevreeze.cmdline :as cl]
    [clojure.string :as str]))

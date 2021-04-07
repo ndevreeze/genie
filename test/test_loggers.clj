@@ -1,10 +1,9 @@
 #! /usr/bin/env genie
 
-;; test if loggers at daemon, client and script don't get mingled, log
-;; to the right log file.  just log on info level here, logging on
-;; debug level is tested elsewhere.
-
 (ns test-loggers
+  "test if loggers at daemon, client and script don't get mingled, log
+  to the right log file.  just log on info level here, logging on
+  debug level is tested elsewhere."
   (:require [ndevreeze.cmdline :as cl]
             [me.raynes.fs :as fs]
             [ndevreeze.logger :as log]))

@@ -1,6 +1,8 @@
 #! /usr/bin/env genie
 
-;; 2021-03-03: specific script for testing the classloader on the client side.
+;; 2021-03-03: specific script for testing the classloader on the
+;; client side.  this version without a namespace declaration. This
+;; works in genie, but not in clj.
 
 (require '[ndevreeze.cmdline :as cl])
 (require '[clojure.data.csv :as csv])

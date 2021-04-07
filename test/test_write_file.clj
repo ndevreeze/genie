@@ -1,8 +1,8 @@
 #! /usr/bin/env genie
 
-;; test writing a file as a long process than can be interrupted. If
-;; the genie client is stopped, the script should stop as well.
 (ns test-write-file
+  "Test writing a file as a long process than can be interrupted. If the
+  genie client is stopped, the script should stop as well."
   (:require [ndevreeze.cmdline :as cl]
             [me.raynes.fs :as fs]
             [ndevreeze.logger :as log]))

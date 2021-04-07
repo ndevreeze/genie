@@ -1,11 +1,10 @@
 #! /usr/bin/env genie
 
-;; test if loggers at daemon, client and script don't get mingled, log
-;; to the right log file.  log several lines, each with one second
-;; interval. So we can test if we run this script multiple times at
-;; the same time, the logs do not get mixed up.
-
 (ns test-log-concurrent
+  "Test if loggers at daemon, client and script don't get mingled, log
+  to the right log file.  log several lines, each with one second
+  interval. So we can test if we run this script multiple times at the
+  same time, the logs do not get mixed up."
   (:require [ndevreeze.cmdline :as cl]
             [me.raynes.fs :as fs]
             [ndevreeze.logger :as log]))

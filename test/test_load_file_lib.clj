@@ -1,4 +1,5 @@
 (ns test-load-file-lib
+  "test loading a library from a genie script"
   (:require
    [clojure.data.csv :as csv]))
 

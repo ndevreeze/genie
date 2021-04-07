@@ -1,9 +1,8 @@
 #! /usr/bin/env bb
 
-;; helper test for testing stdin/stdout functionality of both babashka
-;; en genie/nrepl.
-
 (ns bb-stdout
+  "helper test for testing stdin/stdout functionality of both babashka
+   and genie/nrepl."
   (:require [clojure.tools.cli :as cli]
             [clojure.string :as str]))
 

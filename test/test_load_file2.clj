@@ -1,9 +1,8 @@
 #! /usr/bin/env genie
 
-;; require genied.client namespace, use load-relative-file afterwards,
-;; and then require the namespace of the loaded lib.
-
 (ns test-load-file2
+  "require genied.client namespace, use load-relative-file afterwards,
+   and then require the namespace of the loaded lib."
   (:require
    [ndevreeze.cmdline :as cl]
    [genied.client :as client]

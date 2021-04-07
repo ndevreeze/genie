@@ -1,15 +1,14 @@
 #! /usr/bin/env genie
 
-;; We can use load-file here, but it needs an absolute path. Even ~
-;; (home-dir) is not understood. Also clojure.main/load-script does
-;; not seem to work here, as the classpath does not contain the
-;; currently loaded script.  Using load-relative-file in genied.client
-;; is an alternative. Currently this namespace is not aliased by
-;; default (would need to do it in the context of load-file)
-
 (genied.client/load-relative-file "test_load_file_lib.clj")
 
 (ns test-load-file
+  "We can use load-file here, but it needs an absolute path. Even ~
+  (home-dir) is not understood. Also clojure.main/load-script does not
+  seem to work here, as the classpath does not contain the currently
+  loaded script.  Using load-relative-file in genied.client is an
+  alternative. Currently this namespace is not aliased by
+  default (would need to do it in the context of load-file)"
   (:require
    [ndevreeze.cmdline :as cl]
    [test-load-file-lib :as lib]

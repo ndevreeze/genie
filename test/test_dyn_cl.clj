@@ -1,8 +1,7 @@
 #! /usr/bin/env genie
 
-;; 2021-03-03: specific script for testing the classloader on the client side.
-
 (ns test-dyn-cl
+  "specific script for testing the classloader on the client side."
   (:require
    [ndevreeze.cmdline :as cl]
    [clojure.data.csv :as csv]))

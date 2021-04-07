@@ -1,8 +1,7 @@
 #! /usr/bin/env genie
 
-;; test adding numbers, including parsing from cmdline.
-
 (ns test-add-numbers
+  "test adding numbers, including parsing from cmdline."
   (:require
    [ndevreeze.cmdline :as cl]))
 

@@ -5,6 +5,7 @@
 ;; first line.  what works for now is doing 'genie test.clj'
 
 (ns test
+  "Test several specific things related stdout/err, logfiles."
   (:require [ndevreeze.cmdline :as cl]
             [me.raynes.fs :as fs]
             [ndevreeze.logger :as log]))

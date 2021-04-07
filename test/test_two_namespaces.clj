@@ -1,8 +1,7 @@
 #! /usr/bin/env genie
 
-;; 2021-03-03: specific script for testing the classloader on the client side.
-
 (ns test-lib-ns
+  "Test with 2 namespaces - lib"
   (:require
    [clojure.data.csv :as csv]))
 
@@ -11,6 +10,7 @@
   (println "Parsing csv using data.csv: " (csv/read-csv "two,namespaces")))
 
 (ns test-main-ns
+  "Test with 2 namespaces - main"
   (:require
    [ndevreeze.cmdline :as cl]
    [test-lib-ns :as lib]))

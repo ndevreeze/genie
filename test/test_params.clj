@@ -8,9 +8,11 @@
 
 ;; results in:
 ;; Given cmdline options:  {:verbose true, :port 1234}
-;; Given cmdline arugments:  [abc]
+;; Given cmdline arguments:  [abc]
 
 (ns test-params
+  "test is command line options of script can conflict with cmdline
+  options of the (babashka) client.  test with -p and -v"
   (:require
    [ndevreeze.cmdline :as cl]))
 
