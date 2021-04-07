@@ -51,4 +51,6 @@
         args (:arguments opts)]
     (output-lines opt)))
 
-(main)
+(if (= *file* (System/getProperty "babashka.file"))
+  (main)
+  (println "Not called/sourced as main, do nothing"))
