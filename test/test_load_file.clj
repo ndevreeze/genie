@@ -10,7 +10,7 @@
 (genied.client/load-relative-file "test_load_file_lib.clj")
 
 (ns test-load-file
-  (:require 
+  (:require
    [ndevreeze.cmdline :as cl]
    [test-load-file-lib :as lib]
    [clojure.java.classpath :as cp]))
@@ -31,7 +31,8 @@
 ;; for use with 'clj -m test-dyn-cl
 
 (defn -main
-  "Entry point from clj cmdline script. Need to call System/exit, hangs otherwise."
+  "Entry point from clj cmdline script.
+  Need to call System/exit, hangs otherwise."
   [& args]
   (cl/check-and-exec "" cli-options script args {:cwd "."})
   (System/exit 0))

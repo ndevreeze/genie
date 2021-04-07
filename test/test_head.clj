@@ -4,7 +4,7 @@
 ;; including test for relative files.
 
 (ns test-head
-  (:require 
+  (:require
    [ndevreeze.cmdline :as cl]
    [clojure.string :as str]))
 
@@ -32,7 +32,8 @@
 ;;        used for bootstrapping.  or do use the -M option for giving
 ;;        the script path?
 (defn -main
-  "Entry point from clj cmdline script. Need to call System/exit, hangs otherwise."
+  "Entry point from clj cmdline script.
+  Need to call System/exit, hangs otherwise."
   [& args]
   (cl/check-and-exec "" cli-options script args {:cwd "."})
   (System/exit 0))

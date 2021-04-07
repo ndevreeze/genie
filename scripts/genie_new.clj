@@ -2,9 +2,9 @@
 
 ;; create a new genie script.
 
-(ns ndevreeze.genie-new
-  (:require 
-   [clojure.java.io :as io]            
+(ns genie-new
+  (:require
+   [clojure.java.io :as io]
    [clojure.set :as set]
    [clojure.string :as str]
    [clojure.tools.cli :as cli]
@@ -19,7 +19,7 @@
     :default "~/.config/genie/genie.edn"]
    ["-h" "--help" "Show this help"]
    ["-f" "--force" "Overwrite existing script, if it exists"]
-   ["-n" "--namespace NAMESPACE" "Namespace to create script in. By default determined from script"]
+   ["-n" "--namespace NAMESPACE" "Namespace, by default determined from script"]
    ["-p" "--project PROJECT" "genie project directory"
     :default "~/tools/genie"]
    ["-t" "--template TEMPLATE" "template file to use, within project dir"
@@ -38,7 +38,8 @@
 (defn det-full-ns
   "Determine full namespace string based on base-namespace and script or
   explicit namespace if given.
-  Do not use :base-namespace now, this conflicts with calling from clj instead of genie"
+  Do not use :base-namespace now, this conflicts with calling from clj
+  instead of genie"
   [opt script]
   (or (:namespace opt)
       (underscore->dash (fs/base-name script true))))
@@ -67,7 +68,8 @@
   (when-not (fs/exists? script)
     (let [full-ns (det-full-ns opt script)]
       (println "Full-ns: " full-ns)
-      (create-from-template (fs/file (fs/expand-home (:project opt)) (:template opt))
+      (create-from-template (fs/file (fs/expand-home (:project opt))
+                                     (:template opt))
                             script
                             {:namespace full-ns
                              :script (str script)})
@@ -95,7 +97,8 @@
       (fs/file (:cwd ctx) path2))))
 
 (defn script
-  "Create a new genie script. Arguments contains the script(s) to be created as a relative path."
+  "Create a new genie script.
+  Arguments contains the script(s) to be created as a relative path."
   [opt arguments ctx]
   #_(println opt ctx)
   #_(println "ctx: " ctx)

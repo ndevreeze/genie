@@ -4,7 +4,7 @@
 ;; and then require the namespace of the loaded lib.
 
 (ns test-load-file2
-  (:require 
+  (:require
    [ndevreeze.cmdline :as cl]
    [genied.client :as client]
    [clojure.java.classpath :as cp]))
@@ -30,7 +30,8 @@
 ;; for use with 'clj -m test-dyn-cl
 
 (defn -main
-  "Entry point from clj cmdline script. Need to call System/exit, hangs otherwise."
+  "Entry point from clj cmdline script.
+  Need to call System/exit, hangs otherwise."
   [& args]
   (cl/check-and-exec "" cli-options script args {:cwd "."})
   (System/exit 0))

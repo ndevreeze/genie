@@ -1,7 +1,8 @@
 #! /usr/bin/env genie
 
-;; 2020-12-31: does not work directly on MacOS: ./test.clj gives bad interpreter errors. Several different errors, depending on the first line.
-;; what works for now is doing 'genie test.clj'
+;; 2020-12-31: does not work directly on MacOS: ./test.clj gives bad
+;; interpreter errors. Several different errors, depending on the
+;; first line.  what works for now is doing 'genie test.clj'
 
 (ns test
   (:require [ndevreeze.cmdline :as cl]
@@ -77,7 +78,7 @@
   "Read from stdin and print to stdout"
   [opt ctx arguments]
   (println "Stdin:")
-  (doseq [line (line-seq (java.io.BufferedReader. *in*))] 
+  (doseq [line (line-seq (java.io.BufferedReader. *in*))]
     (println line))
   (println "End of stdin"))
 

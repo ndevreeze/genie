@@ -3,7 +3,7 @@
 ;; 2021-03-03: specific script for testing the classloader on the client side.
 
 (ns test-lib-ns
-  (:require 
+  (:require
    [clojure.data.csv :as csv]))
 
 (defn data-csv
@@ -11,7 +11,7 @@
   (println "Parsing csv using data.csv: " (csv/read-csv "two,namespaces")))
 
 (ns test-main-ns
-  (:require 
+  (:require
    [ndevreeze.cmdline :as cl]
    [test-lib-ns :as lib]))
 
@@ -34,7 +34,8 @@
 ;;        used for bootstrapping.  or do use the -M option for giving
 ;;        the script path?
 (defn -main
-  "Entry point from clj cmdline script. Need to call System/exit, hangs otherwise."
+  "Entry point from clj cmdline script.
+  Need to call System/exit, hangs otherwise."
   [& args]
   (cl/check-and-exec "" cli-options script args {:cwd "."})
   (System/exit 0))
