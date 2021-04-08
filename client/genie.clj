@@ -28,7 +28,7 @@
    [nil "--max-lines MAX-LINES" "Max #lines to read/pass in one message"
     :default 1024
     :parse-fn #(Integer/parseInt %)
-    :validate [#(pos? %) "Must be a number greater than 0"]]
+    :validate [pos? "Must be a number greater than 0"]]
    [nil "--noload" "Do not load libraries and scripts"]
    [nil "--nocheckdaemon" "Do not perform daemon checks on errors"]
    [nil "--nosetloader" "Do not set dynamic classloader"]
@@ -301,7 +301,7 @@
                (.readLine rdr)
                (inc read))
         (str/join (conj lines (str line "\n"))))
-      (when (seq lines) (apply str lines)))))
+      (when (seq lines) (str/join lines)))))
 
 (defn connect-nrepl
   "Connect to an nRepl server and open in and out TCP streams"
