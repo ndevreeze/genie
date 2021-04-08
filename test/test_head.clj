@@ -3,9 +3,9 @@
 (ns test-head
   "test printing the first few lines of a given file including test for
   relative files."
-  (:require
-   [ndevreeze.cmdline :as cl]
-   [clojure.string :as str]))
+  (:require [clojure.java.io :as io]
+            [ndevreeze.cmdline :as cl]
+            [clojure.string :as str]))
 
 (def cli-options
   "Cmdline options"
@@ -15,7 +15,7 @@
 (defn head-file
   "Return the first 5 lines of `path`"
   [path]
-  (with-open [rdr (clojure.java.io/reader path)]
+  (with-open [rdr (io/reader path)]
     (str/join "\n" (take 5 (line-seq rdr)))))
 
 (defn script
