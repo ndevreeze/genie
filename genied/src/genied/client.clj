@@ -101,7 +101,9 @@
     (when-not (:nomain opt)
       ((eval main-fn) ctx script-params))
     (catch Exception e
-      (log-daemon-warn "Exception during script exec: " e))
+      (log-daemon-warn "Exception during script exec: " e)
+      ;; client needs to know too
+      (throw e))
     (finally
       (log-daemon-debug "exec main-fn done: " main-fn)
       (state/remove-session! (:session ctx)))))
