@@ -241,21 +241,6 @@
       (recur in)
       (merge {:done done :need-input need-input} result))))
 
-#_(defn read-result
-    "Read result channel until status is 'done'.
-   Return result map with keys :done, :need-input and keys of nrepl-result"
-    [in]
-    (let [{:keys [out err value ex root-ex status] :as result}
-          (read-msg (b/read-bencode in))
-          need-input (some #{"need-input"} status)
-          done (some #{"done"} status)]
-      (when *verbose*
-        (println-result result)
-        (flush))
-      (if-not (or done need-input)
-        (recur in)
-        (merge {:done done :need-input need-input} result))))
-
 (defn read-print-result
   "Read and print result channel until status is 'done'.
    Return result map with keys :done, :need-input and keys of nrepl-result"
