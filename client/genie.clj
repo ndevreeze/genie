@@ -215,14 +215,7 @@
 (defn println-result
   "For verbose/debug printing of nrepl messages"
   [result]
-  (debug "<- " result)
-  #_(debug "status:")
-  #_(let [status (get result "status")]
-      (doseq [status-item status]
-        (debug status-item)))
-  #_(doseq [key (keys result)]
-      (debug "have key in result:" key "=" (get result key))))
-
+  (debug "<- " result))
 
 ;; TODO - merge with read-print-result.  but take care of recur in
 ;; combination with both output and input. If this one recurs without
