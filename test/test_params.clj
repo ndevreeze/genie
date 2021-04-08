@@ -17,17 +17,22 @@
    [ndevreeze.cmdline :as cl]))
 
 (def cli-options
+  "Cmdline options"
   [["-c" "--config CONFIG" "Config file"]
    ["-p" "--port PORT" "Port to use in script"]
    ["-v" "--verbose" "Verbose logging in script"]
    ["-h" "--help" "Show this help"]])
 
-(defn script [opt arguments ctx]
+(defn script
+  "Main script called from `main` and `-main`"
+  [opt arguments ctx]
   ;;  (println "ctx: " ctx)
   (println "Given cmdline options: " opt)
   (println "Given cmdline arugments: " arguments))
 
-(defn main [ctx args]
+(defn main
+  "Main from genie"
+  [ctx args]
   (cl/check-and-exec "" cli-options script args ctx))
 
 ;; for use with 'clj -m test-divide-by-0

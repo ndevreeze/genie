@@ -12,6 +12,7 @@
             [clojure.string :as str]))
 
 (def cli-options
+  "Default cmdline options"
   [["-c" "--config CONFIG" "Config file"]
    ["-h" "--help" "Show this help"]])
 
@@ -23,10 +24,14 @@
     (println (str/upper-case line)))
   (println "Finished reading stdin"))
 
-(defn script [opt arguments ctx]
+(defn script
+  "Script called by both `main` and `-main`"
+  [opt arguments ctx]
   (read-standard-input opt ctx arguments))
 
-(defn main [ctx args]
+(defn main
+  "Main from genie"
+  [ctx args]
   (cl/check-and-exec "" cli-options script args ctx))
 
 ;; for use with 'clj -m test'

@@ -7,20 +7,26 @@
    [clojure.data.csv :as csv]))
 
 (def cli-options
+  "Cmdline options"
   [["-c" "--config CONFIG" "Config file"]
    ["-h" "--help" "Show this help"]])
 
 (defn data-csv
+  "Parse some csv in a string"
   [opt ctx]
   (println "Parsing csv using data.csv: "
            (csv/read-csv "abc,123,\"with,comma\"")))
 
-(defn script [opt arguments ctx]
+(defn script
+  "Main script called by both `main` and `-main`"
+  [opt arguments ctx]
   (println "ctx: " ctx)
   (data-csv opt ctx))
 
 ;; expect context/ctx now as first parameter, a map.
-(defn main [ctx args]
+(defn main
+  "Main from genie"
+  [ctx args]
   (cl/check-and-exec "" cli-options script args ctx))
 
 ;; for use with 'clj -m test-dyn-cl

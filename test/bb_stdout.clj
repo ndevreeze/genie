@@ -7,6 +7,7 @@
             [clojure.string :as str]))
 
 (def cli-options
+  "Cmdline options"
   [["-n" "--lines LINES" "Number of lines to output"
     :default 5
     :parse-fn #(Integer/parseInt %)]
@@ -34,6 +35,8 @@
     (flush)))
 
 (defn output-lines
+  "Write `(:lines opt)` lines to stdout with a `(:delay opt)` delay
+   in msec after each one"
   [opt]
   (doseq [counter (range (:lines opt))]
     (output-line counter)

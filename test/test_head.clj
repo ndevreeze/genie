@@ -8,6 +8,7 @@
    [clojure.string :as str]))
 
 (def cli-options
+  "Cmdline options"
   [["-c" "--config CONFIG" "Config file"]
    ["-h" "--help" "Show this help"]])
 
@@ -17,11 +18,14 @@
   (with-open [rdr (clojure.java.io/reader path)]
     (str/join "\n" (take 5 (line-seq rdr)))))
 
-(defn script [opt arguments ctx]
-  ;;  (println "ctx: " ctx)
+(defn script
+  "Main script called by both `main` and `-main`"
+  [opt arguments ctx]
   (println (head-file (first arguments))))
 
-(defn main [ctx args]
+(defn main
+  "Main from genie"
+  [ctx args]
   (cl/check-and-exec "" cli-options script args ctx))
 
 ;; for use with 'clj -m test-divide-by-0

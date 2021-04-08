@@ -10,6 +10,7 @@
             [ndevreeze.logger :as log]))
 
 (def cli-options
+  "Cmdline options"
   [["-c" "--config CONFIG" "Config file"]
    ["-m" "--message MESSAGE" "Message to log"]
    ["-n" "--number NUMBER" "Number of lines to log"
@@ -17,6 +18,7 @@
    ["-h" "--help" "Show this help"]])
 
 (defn logging-cwd
+  "Test some logging to current working directory (cwd)"
   [opt ctx arguments]
   (println "Test logging to current-dir")
   (log/init {:location :cwd :name "test-loggers" :cwd (:cwd ctx)})
@@ -24,11 +26,15 @@
     (log/info (format "%03d: %s" i (:message opt)))
     (Thread/sleep 1000)))
 
-(defn script [opt arguments ctx]
+(defn script
+  "Main script called by both `main` and `-main`"
+  [opt arguments ctx]
   (logging-cwd opt ctx arguments))
 
 ;; expect context/ctx now as first parameter, a map.
-(defn main [ctx args]
+(defn main
+  "Main from genie"
+  [ctx args]
   (cl/check-and-exec "" cli-options script args ctx))
 
 ;; for use with 'clj -m test'

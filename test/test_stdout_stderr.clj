@@ -15,8 +15,9 @@
             [ndevreeze.logger :as log]))
 
 (def cli-options
-[["-c" "--config CONFIG" "Config file"]
- ["-h" "--help" "Show this help"]])
+  "Default cmdline options"
+  [["-c" "--config CONFIG" "Config file"]
+   ["-h" "--help" "Show this help"]])
 
 (defn standard-error
   "Print something to stdout and stderr"
@@ -26,17 +27,20 @@
     (println "Hello, STDERR!"))
   (println "Stdout again"))
 
-(defn script [opt arguments ctx]
+(defn script
+  "Script called from `main` and `-main`"
+  [opt arguments ctx]
   (standard-error opt ctx arguments))
 
-;; expect context/ctx now as first parameter, a map.
-(defn main [ctx args]
+(defn main
+  "Main from genie"
+  [ctx args]
   (cl/check-and-exec "" cli-options script args ctx))
 
 ;; for use with 'clj -m test'
 (defn -main
-"Entry point from clj cmdline script.
+  "Entry point from clj cmdline script.
    Need to call System/exit, hangs otherwise."
-[& args]
-(cl/check-and-exec "" cli-options script args {:cwd "."})
-(System/exit 0))
+  [& args]
+  (cl/check-and-exec "" cli-options script args {:cwd "."})
+  (System/exit 0))

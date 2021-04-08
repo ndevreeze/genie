@@ -11,6 +11,7 @@
             [ndevreeze.logger :as log]))
 
 (def cli-options
+  "Cmdline options for different tests to execute"
   [["-c" "--config CONFIG" "Config file"]
    ["-h" "--help" "Show this help"]
    ["-a" "--all" "Run all tests (default is minimal, only println to stdout"]
@@ -23,6 +24,7 @@
    [nil "--cmdlineparams" "test command line parameters"]])
 
 (defn println-stdout
+  "Print a line to stdout"
   [opt ctx arguments]
   (println "Just a simple line to stdout"))
 
@@ -37,6 +39,7 @@
   (println "End of test logging"))
 
 (defn logging-cwd
+  "Log to current working directory (cwd)"
   [opt ctx arguments]
   (println "Test logging to current-dir")
   (log/init {:location :cwd :name "test" :cwd (:cwd ctx)})
@@ -46,11 +49,13 @@
   (println "End of test logging"))
 
 (defn logging
+  "Log to both home-dir and cwd"
   [opt ctx arguments]
   (logging-home opt ctx arguments)
   (logging-cwd opt ctx arguments))
 
 (defn read-file
+  "Read a file using slurp"
   [{:keys [file] :as opt} ctx arguments]
   (if file
     (let [file2 (str (fs/absolute file))]
@@ -64,6 +69,7 @@
     (println "No file parameter given, not reading file")))
 
 (defn working-dir
+  "Print cwd from (java) system properties"
   [opt ctx arguments]
   (println "Working dir (user.dir): " (System/getProperty "user.dir")))
 
@@ -84,30 +90,36 @@
   (println "End of stdin"))
 
 (defn streaming-stdout
+  "Test streaming to stdout"
   [opt ctx arguments]
   (println "Wait 3 seconds...")
+  (flush)
   (Thread/sleep 3000)
   (println "Done waiting"))
 
 (defn command-line-params
+  "Print cmdline parameters"
   [opt ctx arguments]
   (println "Command line parameters:")
   (println "opt: " opt)
   (println "ctx: " ctx)
   (println "arguments: " arguments)
-  (println "#arguments: " (count arguments))
-  )
+  (println "#arguments: " (count arguments)))
 
 (defn test?
+  "Return true iff `arg` test should be performed"
   [opt arg]
   (or (:all opt) (opt arg)))
 
 (defn maybe-test
+  "Perform a test iff it is requested in the args"
   [opt ctx arguments arg f]
   (when (test? opt arg)
     (f opt ctx arguments)))
 
-(defn script [opt arguments ctx]
+(defn script
+  "Main script called from `main` and `-main`"
+  [opt arguments ctx]
   (println-stdout opt ctx arguments)
   (println "ctx: " ctx)
   (maybe-test opt ctx arguments :file read-file)
@@ -117,8 +129,9 @@
   (maybe-test opt ctx arguments :error standard-error)
   (maybe-test opt ctx arguments :cmdlineparams command-line-params))
 
-;; expect context/ctx now as first parameter, a map.
-(defn main [ctx args]
+(defn main
+  "Main from genie"
+  [ctx args]
   (cl/check-and-exec "" cli-options script args ctx))
 
 ;; for use with 'clj -m test'

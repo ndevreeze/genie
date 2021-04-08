@@ -8,6 +8,7 @@
             [ndevreeze.logger :as log]))
 
 (def cli-options
+  "Cmdline options"
   [["-c" "--config CONFIG" "Config file"]
    ["-h" "--help" "Show this help"]
    ["-f" "--file FILE" "Path of file to write to"]
@@ -26,13 +27,16 @@
     (spit file (str "Line: " i "\n") :append true)
     (Thread/sleep delay)))
 
-(defn script [opt arguments ctx]
+(defn script
+  "Main script called from `main` and `-main`"
+  [opt arguments ctx]
   (if (:file opt)
     (write-file opt)
     (println "Need --file parameter")))
 
-;; expect context/ctx now as first parameter, a map.
-(defn main [ctx args]
+(defn main
+  "Main from genie"
+  [ctx args]
   (cl/check-and-exec "" cli-options script args ctx))
 
 ;; for use with 'clj -m test'

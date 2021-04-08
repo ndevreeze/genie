@@ -13,17 +13,22 @@
 (require '[test-load-file-lib :as lib])
 
 (def cli-options
+  "Default cmdline options"
   [["-c" "--config CONFIG" "Config file"]
    ["-h" "--help" "Show this help"]])
 
-(defn script [opt arguments ctx]
+(defn script
+  "Default script"
+  [opt arguments ctx]
   (println "ctx: " ctx)
   (println "test-load-file2, using (client/load-relative-file")
   (lib/data-csv opt ctx)
   ;; classpath only contains Maven/.m2 jars.
   #_(println "classpath here: " (cp/classpath)))
 
-(defn main [ctx args]
+(defn main
+  "Main for use with genie"
+  [ctx args]
   (cl/check-and-exec "" cli-options script args ctx))
 
 ;; for use with 'clj -m test-dyn-cl
