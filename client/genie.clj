@@ -176,6 +176,12 @@
       (first-file (genie-home) ["genied.jar" "genied-*-standalone.jar"
                                 "genied*.jar"])))
 
+(defn write-bencode
+  "Wrapper around b/write-bencode, for verbose logging"
+  [out command]
+  (debug "-> " command)
+  (b/write-bencode out command))
+
 (defn bytes->str
   "If `x` is a byte-array, convert it to a string.
    return as-is otherwise.
@@ -209,13 +215,13 @@
 (defn println-result
   "For verbose/debug printing of nrepl messages"
   [result]
-  (debug "result: " result)
-  (debug "status:")
-  (let [status (get result "status")]
-    (doseq [status-item status]
-      (debug status-item)))
-  (doseq [key (keys result)]
-    (debug "have key in result:" key "=" (get result key))))
+  (debug "<- " result)
+  #_(debug "status:")
+  #_(let [status (get result "status")]
+      (doseq [status-item status]
+        (debug status-item)))
+  #_(doseq [key (keys result)]
+      (debug "have key in result:" key "=" (get result key))))
 
 
 ;; TODO - merge with read-print-result.  but take care of recur in
@@ -312,29 +318,29 @@
   "Eval a Genie script in a genied/nRepl session"
   [opt host port {:keys [eval-id] :as ctx} script main-fn script-params]
   (let [{:keys [socket out in]} (connect-nrepl opt)
-        _ (b/write-bencode out {"op" "clone" "id" (msg-id)})
+        _ (write-bencode out {"op" "clone" "id" (msg-id)})
         session (-> (read-result in) :new-session)
         ctx (assoc ctx :session session)
         expr (exec-expression ctx script main-fn script-params)]
     (try
       (debug "nrepl-eval: " expr)
       (reset! session-atom {:session session :eval-id eval-id :out out :in in})
-      (b/write-bencode out {"op" "eval" "session" session "id" eval-id
-                            "code" expr})
+      (write-bencode out {"op" "eval" "session" session "id" eval-id
+                          "code" expr})
       (loop [it 0]
         (let [res (read-print-result in)]
           (debug "res: " res ", iter=" it)
           (when (:need-input res)
             (debug "Need more input!")
             (let [lines (read-lines opt *in*)]
-              (b/write-bencode out {"session" session "id" (msg-id)
-                                    "op" "stdin" "stdin" lines})
+              (write-bencode out {"session" session "id" (msg-id)
+                                  "op" "stdin" "stdin" lines})
               (read-result in) ;; read ack
               (recur (inc it))))))
       (catch Exception e
         (warn "Caught exception: " e))
       (finally
-        (b/write-bencode out {"op" "close" "session" session "id" (msg-id)})
+        (write-bencode out {"op" "close" "session" session "id" (msg-id)})
         (read-result in)
         (reset! session-atom nil)
         (debug "Wrote op=close")))))
@@ -428,6 +434,8 @@
   (when errors
     (println "Errors:" errors)))
 
+
+
 (defn do-admin-command
   "Perform an admin command on daemon.
    Use opened session with socket, in and out streams.
@@ -435,7 +443,7 @@
   [{:keys [socket out in] :as admin-session} command
    & [{:keys [no-read] :as opt}]]
   (try
-    (b/write-bencode out command)
+    (write-bencode out command)
     (if no-read
       (debug "Not reading response")
       (let [res (read-print-result in)]
