@@ -10,7 +10,7 @@
   [opt ctx]
   (println "Parsing csv using data.csv: " (csv/read-csv "two,namespaces")))
 
-(ns test-main-ns
+(ns test-two-namespaces
   "Test with 2 namespaces - main"
   (:require
    [ndevreeze.cmdline :as cl]
