@@ -28,7 +28,7 @@
    [nil "--max-lines MAX-LINES" "Max #lines to read/pass in one message"
     :default 1024
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %) "Must be a number greater than 0"]]
+    :validate [#(pos? %) "Must be a number greater than 0"]]
    [nil "--noload" "Do not load libraries and scripts"]
    [nil "--nocheckdaemon" "Do not perform daemon checks on errors"]
    [nil "--nosetloader" "Do not set dynamic classloader"]
@@ -176,12 +176,6 @@
       (first-file (genie-home) ["genied.jar" "genied-*-standalone.jar"
                                 "genied*.jar"])))
 
-(defn write-bencode
-  "Wrapper around b/write-bencode, for verbose logging"
-  [out command]
-  (debug "-> " command)
-  (b/write-bencode out command))
-
 (defn bytes->str
   "If `x` is a byte-array, convert it to a string.
    return as-is otherwise.
@@ -207,6 +201,19 @@
               res)]
     res))
 
+(defn read-bencode
+  "Wrapper around b/read-encode and read-msg"
+  [in]
+  (let [result (read-msg (b/read-bencode in))]
+    (debug "<- " result)
+    result))
+
+(defn write-bencode
+  "Wrapper around b/write-bencode, for verbose logging"
+  [out command]
+  (debug "-> " command)
+  (b/write-bencode out command))
+
 (defn msg-id
   "Create a UUID for adding to nRepl message"
   []
@@ -217,6 +224,8 @@
   [result]
   (debug "<- " result))
 
+
+
 ;; TODO - merge with read-print-result.  but take care of recur in
 ;; combination with both output and input. If this one recurs without
 ;; printing output, we lose some output.
@@ -225,15 +234,27 @@
    Return result map with keys :done, :need-input and keys of nrepl-result"
   [in]
   (let [{:keys [out err value ex root-ex status] :as result}
-        (-> (b/read-bencode in) read-msg)
+        (read-bencode in)
         need-input (some #{"need-input"} status)
         done (some #{"done"} status)]
-    (when *verbose*
-      (println-result result)
-      (flush))
-    (if (not (or done need-input))
+    (if-not (or done need-input)
       (recur in)
       (merge {:done done :need-input need-input} result))))
+
+#_(defn read-result
+    "Read result channel until status is 'done'.
+   Return result map with keys :done, :need-input and keys of nrepl-result"
+    [in]
+    (let [{:keys [out err value ex root-ex status] :as result}
+          (read-msg (b/read-bencode in))
+          need-input (some #{"need-input"} status)
+          done (some #{"done"} status)]
+      (when *verbose*
+        (println-result result)
+        (flush))
+      (if-not (or done need-input)
+        (recur in)
+        (merge {:done done :need-input need-input} result))))
 
 (defn read-print-result
   "Read and print result channel until status is 'done'.
@@ -241,7 +262,7 @@
   [in]
   (loop [old-value nil]
     (let [{:keys [out err value ex root-ex status] :as result}
-          (-> (b/read-bencode in) read-msg)
+          (read-msg (b/read-bencode in))
           need-input (some #{"need-input"} status)
           done (some #{"done"} status)]
       (when *verbose*
@@ -259,7 +280,7 @@
         (println "ex: " ex))
       (when root-ex
         (println "root-ex: " root-ex))
-      (if (not (or done need-input))
+      (if-not (or done need-input)
         (recur (or old-value value))
         (merge {:done done :need-input need-input :value old-value} result)))))
 
@@ -279,10 +300,8 @@
         (recur (conj lines (str line "\n"))
                (.readLine rdr)
                (inc read))
-        (apply str (conj lines (str line "\n"))))
-      (if (empty? lines)
-        nil
-        (apply str lines)))))
+        (str/join (conj lines (str line "\n"))))
+      (when (seq lines) (apply str lines)))))
 
 (defn connect-nrepl
   "Connect to an nRepl server and open in and out TCP streams"
@@ -312,7 +331,7 @@
   [opt host port {:keys [eval-id] :as ctx} script main-fn script-params]
   (let [{:keys [socket out in]} (connect-nrepl opt)
         _ (write-bencode out {"op" "clone" "id" (msg-id)})
-        session (-> (read-result in) :new-session)
+        session (:new-session (read-result in))
         ctx (assoc ctx :session session)
         expr (exec-expression ctx script main-fn script-params)]
     (try
@@ -322,7 +341,7 @@
                           "code" expr})
       (loop [it 0]
         (let [res (read-print-result in)]
-          (debug "res: " res ", iter=" it)
+          #_(debug "res: " res ", iter=" it)
           (when (:need-input res)
             (debug "Need more input!")
             (let [lines (read-lines opt *in*)]
@@ -335,8 +354,7 @@
       (finally
         (write-bencode out {"op" "close" "session" session "id" (msg-id)})
         (read-result in)
-        (reset! session-atom nil)
-        (debug "Wrote op=close")))))
+        (reset! session-atom nil)))))
 
 (defn create-context
   "Create script context, with current working directory (cwd)"
@@ -619,11 +637,11 @@
       (debug "opt=" opt ", args=" args)
       (cond (admin-command? opt)
             (admin-command! opt args)
-            (or (:help opt) (:errors opt) (empty? args))
+            (or (:help opt) (:errors opts) (empty? args))
             (print-help opts)
             :else
             (try
-              (-> (Runtime/getRuntime) (.addShutdownHook (Thread. kill-script)))
+              (.addShutdownHook (Runtime/getRuntime) (Thread. kill-script))
               (exec-script opt (first args) (rest args))
               (catch Exception e
                 (warn "caught exception: " e))))
