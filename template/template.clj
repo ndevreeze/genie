@@ -5,16 +5,13 @@
    [clojure.data.csv :as csv]
    [clojure.edn :as edn]
    [clojure.java.io :as io]            
-   [clojure.java.jdbc :as jdbc]
    [clojure.set :as set]
    [clojure.string :as str]
    [clojure.tools.cli :as cli]
    [java-time :as time]
    [me.raynes.fs :as fs]
    [nrepl.server :as nrepl]
-   [ontodev.excel :as xls]
 
-   [ndevreeze.flexdb :as db]
    [ndevreeze.logger :as log]
    [ndevreeze.cmdline :as cl]))
 
