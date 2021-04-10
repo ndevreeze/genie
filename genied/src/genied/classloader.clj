@@ -98,7 +98,7 @@
 (defn mark-project-libraries
   "Mark libraries in project.clj as loaded.
    So they won't be loaded again, either from server or client/script."
-  [opt]
+  []
   ;; copied from project.clj - how to keep in sync?
   (doseq [coord '[[org.clojure/clojure "1.10.1"]
                   [org.clojure/tools.cli "1.0.194"]
@@ -126,8 +126,8 @@
 ;; TODO - check ctx if different deps.edn is mentioned.
 (defn load-script-libraries
   "Load libraries as found in deps.edn in script-dir or ctx"
-  [ctx script]
+  [script]
   (let [deps-edn (fs/file (fs/parent script) "deps.edn")]
-    (if (fs/exists? deps-edn)
+    (when (fs/exists? deps-edn)
       (let [script-opt (edn/read-string (slurp deps-edn))]
         (load-libraries script-opt)))))

@@ -10,9 +10,7 @@
    in Tcl)
   * Babashka takes care that *out* and *err* are bound to the
   * stdout/err of the client process."
-  (:require [ndevreeze.cmdline :as cl]
-            [me.raynes.fs :as fs]
-            [ndevreeze.logger :as log]))
+  (:require [ndevreeze.cmdline :as cl]))
 
 (def cli-options
   "Default cmdline options"
@@ -21,7 +19,7 @@
 
 (defn standard-error
   "Print something to stdout and stderr"
-  [opt ctx arguments]
+  []
   (println "Next line to stderr (this line on stdout):")
   (binding [*out* *err*]
     (println "Hello, STDERR!"))
@@ -29,8 +27,8 @@
 
 (defn script
   "Script called from `main` and `-main`"
-  [opt arguments ctx]
-  (standard-error opt ctx arguments))
+  [_opt _arguments _ctx]
+  (standard-error))
 
 (defn main
   "Main from genie"

@@ -13,15 +13,15 @@
 
 (defn data-csv
   "Parse some csv in a string"
-  [opt ctx]
+  []
   (println "Parsing csv using data.csv: "
            (csv/read-csv "abc,123,\"with,comma\"")))
 
 (defn script
   "Main script called by both `main` and `-main`"
-  [opt arguments ctx]
+  [_opt _arguments ctx]
   (println "ctx: " ctx)
-  (data-csv opt ctx))
+  (data-csv))
 
 ;; expect context/ctx now as first parameter, a map.
 (defn main

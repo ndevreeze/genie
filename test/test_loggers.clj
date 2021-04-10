@@ -5,7 +5,6 @@
   to the right log file.  just log on info level here, logging on
   debug level is tested elsewhere."
   (:require [ndevreeze.cmdline :as cl]
-            [me.raynes.fs :as fs]
             [ndevreeze.logger :as log]))
 
 (def cli-options
@@ -16,7 +15,7 @@
 
 (defn logging-cwd
   "Some logging to cwd"
-  [opt ctx arguments]
+  [opt ctx _arguments]
   (println "Test logging to current-dir")
   (log/init {:location :cwd :name "test-loggers" :cwd (:cwd ctx)})
   (log/info "msg: " (:message opt)))

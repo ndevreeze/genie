@@ -37,7 +37,7 @@
   (log/debug "init dynamic classloader done: " (state/get-classloader))
   (diag/print-diagnostic-info "after init-dynamic-classloader!")
 
-  (loader/mark-project-libraries opt)
+  (loader/mark-project-libraries)
   (loader/load-startup-libraries opt)
 
   (state/set-out-streams! *out* *err*)

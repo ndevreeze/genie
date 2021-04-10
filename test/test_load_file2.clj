@@ -5,8 +5,7 @@
    and then require the namespace of the loaded lib."
   (:require
    [ndevreeze.cmdline :as cl]
-   [genied.client :as client]
-   [clojure.java.classpath :as cp]))
+   [genied.client :as client]))
 
 (client/load-relative-file "test_load_file_lib.clj")
 
@@ -19,7 +18,7 @@
 
 (defn script
   "Default script"
-  [opt arguments ctx]
+  [opt _arguments ctx]
   (println "ctx: " ctx)
   (println "test-load-file2, using (client/load-relative-file")
   (lib/data-csv opt ctx)

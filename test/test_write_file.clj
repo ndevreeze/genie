@@ -4,8 +4,7 @@
   "Test writing a file as a long process than can be interrupted. If the
   genie client is stopped, the script should stop as well."
   (:require [ndevreeze.cmdline :as cl]
-            [me.raynes.fs :as fs]
-            [ndevreeze.logger :as log]))
+            [me.raynes.fs :as fs]))
 
 (def cli-options
   "Cmdline options"
@@ -21,7 +20,7 @@
 
 (defn write-file
   "Write a file according to options given"
-  [{:keys [file lines delay] :as opt}]
+  [{:keys [file lines delay]}]
   (fs/delete file)
   (doseq [i (range lines)]
     (spit file (str "Line: " i "\n") :append true)
@@ -29,7 +28,7 @@
 
 (defn script
   "Main script called from `main` and `-main`"
-  [opt arguments ctx]
+  [opt _arguments _ctx]
   (if (:file opt)
     (write-file opt)
     (println "Need --file parameter")))

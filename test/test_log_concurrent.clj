@@ -6,7 +6,6 @@
   interval. So we can test if we run this script multiple times at the
   same time, the logs do not get mixed up."
   (:require [ndevreeze.cmdline :as cl]
-            [me.raynes.fs :as fs]
             [ndevreeze.logger :as log]))
 
 (def cli-options
@@ -19,7 +18,7 @@
 
 (defn logging-cwd
   "Test some logging to current working directory (cwd)"
-  [opt ctx arguments]
+  [opt ctx _arguments]
   (println "Test logging to current-dir")
   (log/init {:location :cwd :name "test-loggers" :cwd (:cwd ctx)})
   (doseq [i (range (:number opt))]

@@ -20,7 +20,7 @@
 
 (defn script
   "Main script called by both `main` and `-main`"
-  [opt arguments ctx]
+  [_opt arguments _ctx]
   (println (head-file (first arguments))))
 
 (defn main

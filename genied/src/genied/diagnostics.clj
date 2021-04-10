@@ -24,7 +24,7 @@
     (doseq [cl hier]
       (log/debug "in classpath of: " cl ":")
       (doseq [part (pom/get-classpath [cl])]
-        (if (re-find #"clj-http|tools\.cli" (str part))
+        (when (re-find #"clj-http|tools\.cli" (str part))
           (log/debug "in classpath of: " cl ":" part)))))
   (log/debug "-----"))
 

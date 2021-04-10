@@ -8,8 +8,7 @@
             [genied.state :as state]
             [me.raynes.fs :as fs]
             [nrepl.server :as nrepl]
-            [ndevreeze.logger :as log]
-            [clojure.string :as str]))
+            [ndevreeze.logger :as log]))
 
 (defn init
   "Init client part, dummy for now"
@@ -80,7 +79,7 @@
 
 (defn exec-script
   "Wrapper around load-script-libraries, load-file, and call-main."
-  [script main-fn {:keys [cwd opt] :as ctx} script-params]
+  [script main-fn {:keys [opt] :as ctx} script-params]
   (try
     (log-daemon-debug "exec-script - start")
     (log-daemon-debug "script=" script ", main-fn=" main-fn ", ctx=" ctx
@@ -91,7 +90,7 @@
       (set-dynamic-classloader!)
       (print-diagnostic-info {} "after set-dyn3!"))
     (when-not (:noload opt)
-      (loader/load-script-libraries ctx script)
+      (loader/load-script-libraries script)
       (print-diagnostic-info {} "after loading client libraries")
       (binding [*script-dir* (fs/parent script)]
         (load-file script)))

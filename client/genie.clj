@@ -233,7 +233,7 @@
   "Read result channel until status is 'done'.
    Return result map with keys :done, :need-input and keys of nrepl-result"
   [in]
-  (let [{:keys [out err value ex root-ex status] :as result}
+  (let [{:keys [status] :as result}
         (read-bencode in)
         need-input (some #{"need-input"} status)
         done (some #{"done"} status)]
@@ -258,9 +258,8 @@
         (flush))
       (when err
         (log-stderr err))
-      (when value
-        (if *verbose*
-          (println "value: " value)))
+      (when (and value *verbose*)
+        (println "value: " value))
       (when ex
         (println "ex: " ex))
       (when root-ex
@@ -276,7 +275,7 @@
    Each line returned ends with a new-line.
    Return one single string, possibly containing multiple lines.
    If input is exhausted, return nil"
-  [{:keys [max-lines] :as opt} rdr]
+  [{:keys [max-lines]} rdr]
   (loop [lines []
          line (.readLine rdr)
          read 1]
@@ -290,7 +289,7 @@
 
 (defn connect-nrepl
   "Connect to an nRepl server and open in and out TCP streams"
-  [{:keys [port verbose] :as opt}]
+  [{:keys [port]}]
   (let [s (java.net.Socket. "localhost" port)
         out (.getOutputStream s)
         in (java.io.PushbackInputStream. (.getInputStream s))]
@@ -313,8 +312,8 @@
 
 (defn nrepl-eval
   "Eval a Genie script in a genied/nRepl session"
-  [opt host port {:keys [eval-id] :as ctx} script main-fn script-params]
-  (let [{:keys [socket out in]} (connect-nrepl opt)
+  [opt {:keys [eval-id] :as ctx} script main-fn script-params]
+  (let [{:keys [out in]} (connect-nrepl opt)
         _ (write-bencode out {"op" "clone" "id" (msg-id)})
         session (:new-session (read-result in))
         ctx (assoc ctx :session session)
@@ -408,18 +407,18 @@
 
 (defn exec-script
   "Execute given script with opt and script-params"
-  [{:keys [port verbose nonormalize] :as opt} script script-params]
+  [{:keys [nonormalize] :as opt} script script-params]
   (let [ctx (create-context opt script)
         script (fs/normalized script)
         main-fn (det-main-fn opt script)
         script-params (-> script-params
                           (normalize-params nonormalize)
                           quote-params)]
-    (nrepl-eval opt "localhost" port ctx script main-fn script-params)))
+    (nrepl-eval opt ctx script main-fn script-params)))
 
 (defn print-help
   "Print help when --help given, or errors, or no script"
-  [{:keys [summary options arguments errors] :as opts}]
+  [{:keys [summary options arguments errors]}]
   (println "genie.clj - babashka script to run scripts in Genie daemon")
   (println summary)
   (println)
@@ -436,8 +435,8 @@
   "Perform an admin command on daemon.
    Use opened session with socket, in and out streams.
    Reading responses might fail, don't try if no-read given."
-  [{:keys [socket out in] :as admin-session} command
-   & [{:keys [no-read] :as opt}]]
+  [{:keys [out in]} command
+   & [{:keys [no-read]}]]
   (try
     (write-bencode out command)
     (if no-read
@@ -456,7 +455,7 @@
   read-bencode. So do not read result for now"
   []
   (debug "Running session: " @session-atom)
-  (if-let [{:keys [session eval-id in out] :as admin-session} @session-atom]
+  (if-let [{:keys [session eval-id] :as admin-session} @session-atom]
     (do
       (warn "Shutdown hook triggered, stopping script")
       (do-admin-command admin-session {"op" "interrupt" "session" session
@@ -478,7 +477,7 @@
 ;; script, maybe also start-time.
 (defn admin-list-sessions
   "List currently open/running sessions/scripts"
-  [{:keys [port verbose] :as opt}]
+  [opt]
   (let [admin-session (connect-nrepl opt)]
     (try
       (let [sessions
@@ -498,7 +497,7 @@
 
 (defn split-sessions
   "Split session list on a comma"
-  [opt admin-session sessions]
+  [admin-session sessions]
   (if (= sessions "all")
     (admin-get-sessions admin-session)
     (str/split sessions #",")))
@@ -525,9 +524,9 @@
   [opt sessions]
   (println "Kill sessions:" sessions)
   (let [admin-session (connect-nrepl opt)
-        session-specs (split-sessions opt admin-session sessions)
+        session-specs (split-sessions admin-session sessions)
         sessions (mapcat #(find-session admin-session %) session-specs)]
-    (doseq [{:keys [session script eval-id]} sessions]
+    (doseq [{:keys [session script]} sessions]
       (println (str "Closing session: [" session "] " script))
       ;; giving both interrupt and close results in error messages and
       ;; the genie.clj client process hanging, as no :done message is
@@ -589,7 +588,7 @@
 (defn admin-command!
   "Perform an admin command instead of running a script"
   [{:keys [list-sessions kill-sessions start-daemon
-           stop-daemon restart-daemon] :as opt} args]
+           stop-daemon restart-daemon] :as opt} _args]
   (cond list-sessions
         (admin-list-sessions opt)
         kill-sessions
@@ -606,7 +605,7 @@
 (defn admin-command?
   "Return true if an admin command is given as a cmdline option"
   [{:keys [list-sessions kill-sessions start-daemon
-           stop-daemon restart-daemon] :as opt}]
+           stop-daemon restart-daemon]}]
   (or list-sessions kill-sessions start-daemon stop-daemon restart-daemon))
 
 (defn main

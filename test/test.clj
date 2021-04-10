@@ -25,12 +25,12 @@
 
 (defn println-stdout
   "Print a line to stdout"
-  [opt ctx arguments]
+  [_opt _ctx _arguments]
   (println "Just a simple line to stdout"))
 
 (defn logging-home
   "Using home-dir as log location"
-  [opt ctx arguments]
+  [opt _ctx _arguments]
   (println "Test logging to home-dir")
   (log/init {:location :home :name "test"})
   (log/info "8 + 8 = " (+ 8 8))
@@ -40,7 +40,7 @@
 
 (defn logging-cwd
   "Log to current working directory (cwd)"
-  [opt ctx arguments]
+  [opt ctx _arguments]
   (println "Test logging to current-dir")
   (log/init {:location :cwd :name "test" :cwd (:cwd ctx)})
   (log/info "8 + 8 = " (+ 8 8))
@@ -56,7 +56,7 @@
 
 (defn read-file
   "Read a file using slurp"
-  [{:keys [file] :as opt} ctx arguments]
+  [{:keys [file]} _ctx _arguments]
   (if file
     (let [file2 (str (fs/absolute file))]
       (if (fs/exists? file2)
@@ -70,12 +70,12 @@
 
 (defn working-dir
   "Print cwd from (java) system properties"
-  [opt ctx arguments]
+  [_opt _ctx _arguments]
   (println "Working dir (user.dir): " (System/getProperty "user.dir")))
 
 (defn standard-error
   "Print something to stderr"
-  [opt ctx arguments]
+  [_opt _ctx _arguments]
   (println "Next line to stderr:")
   (binding [*out* *err*]
     (println "Hello, STDERR!"))
@@ -83,7 +83,7 @@
 
 (defn standard-input
   "Read from stdin and print to stdout"
-  [opt ctx arguments]
+  [_opt _ctx _arguments]
   (println "Stdin:")
   (doseq [line (line-seq (java.io.BufferedReader. *in*))]
     (println line))
@@ -91,7 +91,7 @@
 
 (defn streaming-stdout
   "Test streaming to stdout"
-  [opt ctx arguments]
+  [_opt _ctx _arguments]
   (println "Wait 3 seconds...")
   (flush)
   (Thread/sleep 3000)

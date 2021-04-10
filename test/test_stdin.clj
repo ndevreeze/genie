@@ -6,9 +6,7 @@
   * read as output from another process: ls | genie test_stdin.clj
   * read as a stream from another process: long-proc | grenie test_stdin.clj"
   (:require [ndevreeze.cmdline :as cl]
-            [me.raynes.fs :as fs]
             [clojure.java.io :as io]
-            [ndevreeze.logger :as log]
             [clojure.string :as str]))
 
 (def cli-options
@@ -18,7 +16,7 @@
 
 (defn read-standard-input
   "Read standard input and output each line in capitals."
-  [opt ctx arguments]
+  [_opt _ctx _arguments]
   (println "Start reading stdin")
   (doseq [line (line-seq (io/reader *in*))]
     (println (str/upper-case line)))

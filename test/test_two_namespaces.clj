@@ -7,7 +7,7 @@
 
 (defn data-csv
   "Slight variation, also parsing csv"
-  [opt ctx]
+  [_opt _ctx]
   (println "Parsing csv using data.csv: " (csv/read-csv "two,namespaces")))
 
 (ns test-two-namespaces
@@ -23,7 +23,7 @@
 
 (defn script
   "Default script"
-  [opt arguments ctx]
+  [opt _arguments ctx]
   (println "ctx: " ctx)
   (lib/data-csv opt ctx))
 

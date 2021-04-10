@@ -25,7 +25,7 @@
 
 (defn script
   "Main script called from `main` and `-main`"
-  [opt arguments ctx]
+  [opt arguments _ctx]
   ;;  (println "ctx: " ctx)
   (println "Given cmdline options: " opt)
   (println "Given cmdline arugments: " arguments))

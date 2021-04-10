@@ -17,7 +17,7 @@
 
 (defn script
   "Main script, called by both main and -main"
-  [opt arguments ctx]
+  [_opt arguments _ctx]
   (println "The sum of" arguments "is" (add-numbers arguments)))
 
 (defn main

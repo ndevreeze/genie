@@ -3,11 +3,7 @@
 (ns genie-new
   "Create a new Genie script"
   (:require
-   [clojure.java.io :as io]
-   [clojure.set :as set]
    [clojure.string :as str]
-   [clojure.tools.cli :as cli]
-   [java-time :as time]
    [me.raynes.fs :as fs]
    [ndevreeze.cmdline :as cl]))
 
@@ -59,7 +55,7 @@
   "Create a script based on template in genie-project directory.
    param script - fully qualified, expanded"
   [opt script]
-  (if (fs/exists? script)
+  (when (fs/exists? script)
     (if (:force opt)
       (fs/delete script)
       (println "Already exists and no --force given: " script)))

@@ -12,14 +12,14 @@
 
 (defn divide-by-0
   "Divide a number by 0, to generate exception"
-  [opt ctx]
+  []
   (println "5 / 0 = " (/ 5 0)))
 
 (defn script
   "Main script called by both main and -main"
-  [opt arguments ctx]
+  [_opt _arguments ctx]
   (println "ctx: " ctx)
-  (divide-by-0 opt ctx))
+  (divide-by-0))
 
 (defn main
   "Main for genie"

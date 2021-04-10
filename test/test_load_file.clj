@@ -11,8 +11,7 @@
   default (would need to do it in the context of load-file)"
   (:require
    [ndevreeze.cmdline :as cl]
-   [test-load-file-lib :as lib]
-   [clojure.java.classpath :as cp]))
+   [test-load-file-lib :as lib]))
 
 (def cli-options
   "Default cmdline options"
@@ -21,7 +20,7 @@
 
 (defn script
   "Default script"
-  [opt arguments ctx]
+  [opt _arguments ctx]
   (println "ctx: " ctx)
   (lib/data-csv opt ctx)
   ;; classpath only contains Maven/.m2 jars.

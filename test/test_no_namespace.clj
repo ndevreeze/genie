@@ -14,14 +14,14 @@
 
 (defn data-csv
   "Calling csv/read-csv"
-  [opt ctx]
+  []
   (println "Parsing csv using data.csv: " (csv/read-csv "test,no,namespace")))
 
 (defn script
   "Default script"
-  [opt arguments ctx]
+  [_opt _arguments ctx]
   (println "ctx: " ctx)
-  (data-csv opt ctx))
+  (data-csv))
 
 ;; expect context/ctx now as first parameter, a map.
 (defn main

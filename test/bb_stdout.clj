@@ -3,8 +3,7 @@
 (ns bb-stdout
   "helper test for testing stdin/stdout functionality of both babashka
    and genie/nrepl."
-  (:require [clojure.tools.cli :as cli]
-            [clojure.string :as str]))
+  (:require [clojure.tools.cli :as cli]))
 
 (def cli-options
   "Cmdline options"
@@ -46,8 +45,7 @@
   "Main function"
   []
   (let [opts (cli/parse-opts *command-line-args* cli-options :in-order true)
-        opt (:options opts)
-        args (:arguments opts)]
+        opt (:options opts)]
     (output-lines opt)))
 
 (if (= *file* (System/getProperty "babashka.file"))
