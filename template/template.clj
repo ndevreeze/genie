@@ -44,10 +44,3 @@
   [& args]
   (cl/check-and-exec "" cli-options script args {:cwd "."})
   (System/exit 0))
-
-
-
-
-
-
-
