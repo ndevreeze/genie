@@ -28,6 +28,7 @@ proc install {opt argv} {
   try_eval {install_daemon $opt $argv} {log error "install_daemon failed: $errorResult"}
   install_client $opt $argv
   install_scripts $opt $argv
+  install_templates $opt $argv
   install_config $opt $argv
   log info "Finished installing genie"
 }
@@ -107,8 +108,19 @@ proc install_scripts {opt argv} {
   set target_dir [file join ~/tools genie]
   log info "Installing genie scripts => $target_dir"
   file copy -force "scripts/genie_new.clj" "~/bin/genie_new.clj"
-  file copy -force "template/template.clj" $target_dir
-  file copy -force "template/deps.edn" $target_dir
+}
+
+proc install_templates {opt argv} {
+  set target_dir [file join ~/.config/genie/template]
+  file mkdir $target_dir
+  log info "Installing genie templates => $target_dir"
+  foreach file {template.clj deps.edn} {
+    set target_file [file join $target_dir $file]
+    if {![file exists $target_file]} {
+      file copy "template/$file" $target_file
+      log info "Installed $file in $target_dir"
+    }
+  }
 }
 
 proc install_config {opt argv} {
