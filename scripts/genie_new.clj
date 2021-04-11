@@ -9,17 +9,15 @@
 
 ;; TODO - add deps.edn to use as a param.
 
+;; TODO - no default in cmdline params, but use env-vars or defaults.
 (def cli-options
   "Command line options for creating new Genie script"
-  [["-c" "--config CONFIG" "Config file"
-    :default "~/.config/genie/genie.edn"]
-   ["-h" "--help" "Show this help"]
-   ["-f" "--force" "Overwrite existing script, if it exists"]
-   ["-n" "--namespace NAMESPACE" "Namespace, by default determined from script"]
-   ["-p" "--project PROJECT" "genie project directory"
-    :default "~/tools/genie"]
+  [["-n" "--namespace NAMESPACE" "Namespace, by default determined from script"]
+   ["-d" "--directory DIRECTORY" "genie template directory"]
    ["-t" "--template TEMPLATE" "template file to use, within project dir"
-    :default "template.clj"]])
+    :default "template.clj"]
+   ["-f" "--force" "Overwrite existing script, if it exists"]
+   ["-h" "--help" "Show this help"]])
 
 (defn dash->underscore
   "Replace dashes in path to underscores"
@@ -30,6 +28,17 @@
   "Replace underscores in path to dashes, for namespace"
   [path]
   (str/replace path "_" "-"))
+
+(defn template-dir
+  "Determine template directory to use"
+  [opt]
+  (fs/expand-home
+   (cond (:directory opt) (:directory opt)
+         (System/getenv "GENIE_TEMPLATE") (System/getenv "GENIE_TEMPLATE")
+         (System/getenv "GENIE_CONFIG")
+         (fs/file (System/getenv "GENIE_CONFIG") "template")
+         :else
+         "~/.config/genie/template")))
 
 (defn det-full-ns
   "Determine full namespace string based on base-namespace and script or
@@ -62,15 +71,15 @@
 
   ;; if target still exists here, do nothing.
   (when-not (fs/exists? script)
-    (let [full-ns (det-full-ns opt script)]
+    (let [full-ns (det-full-ns opt script)
+          dir (template-dir opt)]
       (println "Full-ns: " full-ns)
-      (create-from-template (fs/file (fs/expand-home (:project opt))
-                                     (:template opt))
+      (create-from-template (fs/file dir (:template opt))
                             script
                             {:namespace full-ns
                              :script (str script)})
       (fs/chmod "+x" script)
-      (fs/copy (fs/file (fs/expand-home (:project opt)) "deps.edn")
+      (fs/copy (fs/file dir "deps.edn")
                (fs/file (fs/parent script) "deps.edn"))
       (println "Created:" (str (fs/normalized script))))))
 
