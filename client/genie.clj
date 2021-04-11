@@ -156,13 +156,13 @@
 (defn genie-home
   "Determine location of genie home
    By checking in this order:
-   - GENIE_HOME
+   - GENIE_DAEMON
    - /opt/genie
    - /usr/local/lib/genie
    - ~/tools/genie
    - ../genied/target/uberjar (when running genie.clj client from source-dir"
   []
-  (or (System/getenv "GENIE_HOME")
+  (or (System/getenv "GENIE_DAEMON")
       (first-existing-dir ["/opt/genie" "/usr/local/lib/genie" "~/tools/genie"
                            (fs/normalized (fs/file *file* ".." ".." "genied"
                                                    "target" "uberjar"))])))
