@@ -1,4 +1,4 @@
-#! /usr/bin/env genie
+#! /usr/bin/env genie.clj
 
 (ns {{namespace}}
   (:require 
