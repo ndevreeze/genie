@@ -429,8 +429,6 @@
   (when errors
     (println "Errors:" errors)))
 
-
-
 (defn do-admin-command
   "Perform an admin command on daemon.
    Use opened session with socket, in and out streams.
