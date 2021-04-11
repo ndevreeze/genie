@@ -18,10 +18,12 @@
 (def cli-options
   [["-c" "--config CONFIG" "Config file"
     :default "FILL IN"]
+   ["-v" "--verbose" "Enable verbose/debug logging"]
    ["-h" "--help" "Show this help"]])
 
 (defn script [opt arguments ctx]
-  (log/init {:location :cwd :name "{{namespace}}" :cwd (:cwd ctx)})
+  (log/init {:location :home :name "{{namespace}}" :cwd (:cwd ctx)
+             :level (if (:verbose opt) :debug :info)})
   (println "script: {{script}}")
   (println opt ctx)
   (println "arguments: " arguments)
