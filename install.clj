@@ -30,6 +30,7 @@
     ([] homedir)
     ([user] (if (empty? user) homedir (io/file usersdir user)))))
 
+;; from raynes.fs, no home functions in babashka.fs
 (defn expand-home
   "If `path` begins with a tilde (`~`), expand the tilde to the value
   of the `user.home` system property. If the `path` begins with a
