@@ -14,8 +14,38 @@
      - config in ~/.config/genie
      - template in ~/.config/genie/template"
   (:require [clojure.tools.cli :as cli]
-            [me.raynes.fs :as fs]
-            [babashka.process :as p]))
+            [clojure.java.io :as io]
+            [babashka.fs :as fs]
+            [babashka.process :as p])
+  (:import [java.io File]))
+
+;; from raynes.fs, no home functions in babashka.fs
+(let [homedir (io/file (System/getProperty "user.home"))
+      usersdir (.getParent homedir)]
+  (defn home
+    "With no arguments, returns the current value of the `user.home` system
+     property. If a `user` is passed, returns that user's home directory. It
+     is naively assumed to be a directory with the same name as the `user`
+     located relative to the parent of the current value of `user.home`."
+    ([] homedir)
+    ([user] (if (empty? user) homedir (io/file usersdir user)))))
+
+(defn expand-home
+  "If `path` begins with a tilde (`~`), expand the tilde to the value
+  of the `user.home` system property. If the `path` begins with a
+  tilde immediately followed by some characters, they are assumed to
+  be a username. This is expanded to the path to that user's home
+  directory. This is (naively) assumed to be a directory with the same
+  name as the user relative to the parent of the current value of
+  `user.home`."
+  [path]
+  (let [path (str path)]
+    (if (.startsWith path "~")
+      (let [sep (.indexOf path File/separator)]
+        (if (neg? sep)
+          (home (subs path 1))
+          (io/file (home (subs path 1 sep)) (subs path (inc sep)))))
+      (io/file path))))
 
 (def cli-options
   "Cmdline options"
@@ -48,28 +78,28 @@
   []
   (= (user) "root"))
 
-(defn dir-writeable?
+(defn dir-writable?
   "Return true iff dir already exists and can be written into,
-   or if its parent is writeable
+   or if its parent is writable
    Assume if we can create a dir, we can also write into it."
   [dir]
-  (or (and (fs/exists? dir) (fs/writeable? dir))
-      (and (not (fs/exists? dir)) (fs/writeable? (fs/parent dir)))))
+  (or (and (fs/exists? dir) (fs/writable? dir))
+      (and (not (fs/exists? dir)) (fs/writable? (fs/parent dir)))))
 
 (defn first-creatable-dir
   "Find first dir in dirs seq that exists and return it.
    Return nil if none found."
   [dirs]
   (when-let [dir (first dirs)]
-    (let [dir (fs/expand-home dir)]
-      (if (dir-writeable? dir)
+    (let [dir (expand-home dir)]
+      (if (dir-writable? dir)
         (str dir)
         (recur (rest dirs))))))
 
 (defn template-dir
   "Determine template directory to use"
   [opt]
-  (fs/expand-home
+  (expand-home
    (cond (:template opt) (:template opt)
          (System/getenv "GENIE_TEMPLATE") (System/getenv "GENIE_TEMPLATE")
          (System/getenv "GENIE_CONFIG")
@@ -87,7 +117,7 @@
    - /usr/local/lib/genie
    - ~/tools/genie"
   [opt]
-  (fs/expand-home
+  (expand-home
    (or (:daemon opt)
        (System/getenv "GENIE_DAEMON")
        (first-creatable-dir ["/opt/genie" "/usr/local/lib/genie" "~/tools/genie"]))))
@@ -99,7 +129,7 @@
    - GENIE_CLIENT
    - ~/bin"
   [opt]
-  (fs/expand-home
+  (expand-home
    (or (:client opt)
        (System/getenv "GENIE_CLIENT")
        "~/bin")))
@@ -111,7 +141,7 @@
    - GENIE_LOGDIR
    - ~/log"
   [opt]
-  (fs/expand-home
+  (expand-home
    (or (:client opt)
        (System/getenv "GENIE_CLIENT")
        "~/log")))
@@ -123,7 +153,7 @@
    - GENIE_CLIENT
    - ~/bin"
   [opt]
-  (fs/expand-home
+  (expand-home
    (or (:config opt)
        (System/getenv "GENIE_CONFIG")
        "~/.config/genie")))
@@ -135,7 +165,7 @@
    - GENIE_CLIENT
    - ~/bin"
   [opt]
-  (fs/expand-home
+  (expand-home
    (or (:scripts opt)
        (System/getenv "GENIE_SCRIPTS")
        "~/bin")))
@@ -186,10 +216,11 @@
     (if (:dryrun opt)
       (println "  Dry run")
       (do
-        (if (fs/copy src dest)
+        (if (fs/copy src dest {:replace-existing true})
           (println "Ok, copied uberjar")
           (println "Copy failed, is destination in use? [uberjar]"))
-        (if (fs/copy "genied/genied.sh" (fs/file (fs/parent dest) "genied.sh"))
+        (if (fs/copy "genied/genied.sh" (fs/file (fs/parent dest) "genied.sh")
+                     {:replace-existing true})
           (println "Ok, copied genied.sh")
           (println "Copy failed, is destination in use? [genied.sh]"))))))
 
@@ -201,7 +232,8 @@
     (if (:dryrun opt)
       (println "  Dryrun")
       (doseq [src (fs/glob (fs/file "client") "genie.*")]
-        (fs/copy src (fs/file target-dir (fs/base-name src))))))  )
+        (fs/copy src (fs/file target-dir (fs/file-name src))
+                 {:replace-existing true}))))  )
 
 (defn install-scripts
   "Install scripts to target location"
@@ -211,7 +243,8 @@
     (if (:dryrun opt)
       (println "  Dryrun")
       (doseq [src (fs/glob (fs/file "scripts") "*.clj")]
-        (fs/copy src (fs/file target-dir (fs/base-name src)))))))
+        (fs/copy src (fs/file target-dir (fs/file-name src))
+                 {:replace-existing true})))))
 
 (defn install-template
   "Install template to target location, iff not already there"
@@ -221,8 +254,8 @@
     (if (:dryrun opt)
       (println "  Dryrun")
       (doseq [src (fs/glob (fs/file "template") "*")]
-        (when-not (fs/exists? (fs/file target-dir (fs/base-name src)))
-          (fs/copy src (fs/file target-dir (fs/base-name src)))))))  )
+        (when-not (fs/exists? (fs/file target-dir (fs/file-name src)))
+          (fs/copy src (fs/file target-dir (fs/file-name src))))))))
 
 (defn install-config
   "Install config to target location, iff not already there"
