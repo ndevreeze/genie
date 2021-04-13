@@ -82,10 +82,23 @@
 (defn dir-writable?
   "Return true iff dir already exists and can be written into,
    or if its parent is writable
-   Assume if we can create a dir, we can also write into it."
+   Assume if we can create a dir, we can also write into it.
+   Also assume that going up to a parent, it will eventually exist"
   [dir]
-  (or (and (fs/exists? dir) (fs/writable? dir))
-      (and (not (fs/exists? dir)) (fs/writable? (fs/parent dir)))))
+  (if (fs/exists? dir)
+    (fs/writable? dir)
+    (let [parent (fs/parent dir)]
+      (if (= dir parent) ;; check if parent is not the same as dir.
+        false
+        (dir-writable? parent)))))
+
+#_(defn dir-writable?
+    "Return true iff dir already exists and can be written into,
+   or if its parent is writable
+   Assume if we can create a dir, we can also write into it."
+    [dir]
+    (or (and (fs/exists? dir) (fs/writable? dir))
+        (and (not (fs/exists? dir)) (fs/writable? (fs/parent dir)))))
 
 (defn first-creatable-dir
   "Find first dir in dirs seq that exists and return it.
