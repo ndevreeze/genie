@@ -92,14 +92,6 @@
         false
         (dir-writable? parent)))))
 
-#_(defn dir-writable?
-    "Return true iff dir already exists and can be written into,
-   or if its parent is writable
-   Assume if we can create a dir, we can also write into it."
-    [dir]
-    (or (and (fs/exists? dir) (fs/writable? dir))
-        (and (not (fs/exists? dir)) (fs/writable? (fs/parent dir)))))
-
 (defn first-creatable-dir
   "Find first dir in dirs seq that exists and return it.
    Return nil if none found."
@@ -240,7 +232,6 @@
   [opt]
   (let [src (make-uberjar opt)
         dest (genied-jar-file opt)]
-    (println "Installing uberjar from:" (str src) "=>" (str dest))
     (install-file src dest (merge opt {:force true}))
     (install-file "genied/genied.sh" (fs/file (fs/parent dest) "genied.sh")
                   (merge opt {:force true}))))
