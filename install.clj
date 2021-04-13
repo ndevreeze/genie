@@ -230,17 +230,7 @@
     (println "Installing uberjar from:" (str src) "=>" (str dest))
     (install-file src dest (merge opt {:force true}))
     (install-file "genied/genied.sh" (fs/file (fs/parent dest) "genied.sh")
-                  (merge opt {:force true}))
-    #_(if (:dryrun opt)
-        (println "  Dry run")
-        (do
-          (if (fs/copy src dest {:replace-existing true})
-            (println "Ok, copied uberjar")
-            (println "Copy failed, is destination in use? [uberjar]"))
-          (if (fs/copy "genied/genied.sh" (fs/file (fs/parent dest) "genied.sh")
-                       {:replace-existing true})
-            (println "Ok, copied genied.sh")
-            (println "Copy failed, is destination in use? [genied.sh]"))))))
+                  (merge opt {:force true}))))
 
 (defn install-clients
   "Install clients to given clients dir"
@@ -248,13 +238,7 @@
   (let [target-dir (client-dir opt)]
     (doseq [src (fs/glob (fs/file "client") "genie.*")]
       (install-file src (fs/file target-dir (fs/file-name src))
-                    (merge opt {:force true})))
-    #_(println "Installing clients from 'client' => " (str target-dir))
-    #_(if (:dryrun opt)
-        (println "  Dryrun")
-        (doseq [src (fs/glob (fs/file "client") "genie.*")]
-          (fs/copy src (fs/file target-dir (fs/file-name src))
-                   {:replace-existing true}))      ))  )
+                    (merge opt {:force true})))))
 
 (defn install-scripts
   "Install scripts to target location"
@@ -262,13 +246,7 @@
   (let [target-dir (scripts-dir opt)]
     (doseq [src (fs/glob (fs/file "scripts") "*.clj")]
       (install-file src (fs/file target-dir (fs/file-name src))
-                    (merge opt {:force true})))
-    #_(println "Installing from 'scripts' => " (str target-dir))
-    #_(if (:dryrun opt)
-        (println "  Dryrun")
-        (doseq [src (fs/glob (fs/file "scripts") "*.clj")]
-          (fs/copy src (fs/file target-dir (fs/file-name src))
-                   {:replace-existing true})        )      )))
+                    (merge opt {:force true})))))
 
 (defn install-template
   "Install template to target location, iff not already there"
@@ -276,26 +254,14 @@
   (let [target-dir (template-dir opt)]
     (doseq [src (fs/glob (fs/file "template") "*")]
       (install-file src (fs/file target-dir (fs/file-name src))
-                    (merge opt {:force false})))
-    #_(println "Installing from 'template' => " (str target-dir))
-    #_(if (:dryrun opt)
-        (println "  Dryrun")
-        (doseq [src (fs/glob (fs/file "template") "*")]
-          (install-file src (fs/file target-dir (fs/file-name src)) (merge opt {:force false}))
-          #_(when-not (fs/exists? (fs/file target-dir (fs/file-name src)))
-              (fs/copy src (fs/file target-dir (fs/file-name src)))))      )))
+                    (merge opt {:force false})))))
 
 (defn install-config
   "Install config to target location, iff not already there"
   [opt]
   (let [target-dir (config-dir opt)
         src "genied/genie.edn"]
-    (install-file src (fs/file target-dir (fs/file-name src)) (merge opt {:force false}))
-    #_(println "Installing from 'genied/genie.edn' => " (str target-dir))
-    #_(if (:dryrun opt)
-        (println "  Dryrun")
-        (when-not (fs/exists? (fs/file target-dir src))
-          (fs/copy src (fs/file target-dir src))))))
+    (install-file src (fs/file target-dir (fs/file-name src)) (merge opt {:force false}))))
 
 (defn show-bash-config
   "Show lines to put in .profile or .bashrc"
