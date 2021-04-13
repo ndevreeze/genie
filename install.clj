@@ -102,9 +102,9 @@
   [opt]
   (expand-home
    (cond (:template opt) (:template opt)
-         (System/getenv "GENIE_TEMPLATE") (System/getenv "GENIE_TEMPLATE")
-         (System/getenv "GENIE_CONFIG")
-         (fs/file (System/getenv "GENIE_CONFIG") "template")
+         (System/getenv "GENIE_TEMPLATE_DIR") (System/getenv "GENIE_TEMPLATE_DIR")
+         (System/getenv "GENIE_CONFIG_DIR")
+         (fs/file (System/getenv "GENIE_CONFIG_DIR") "template")
          :else
          "~/.config/genie/template")))
 
@@ -113,62 +113,62 @@
   "Determine location of genie home
    By checking in this order:
    - daemon in cmdline options
-   - GENIE_DAEMON
+   - GENIE_DAEMON_DIR
    - /opt/genie
    - /usr/local/lib/genie
    - ~/tools/genie"
   [opt]
   (expand-home
    (or (:daemon opt)
-       (System/getenv "GENIE_DAEMON")
+       (System/getenv "GENIE_DAEMON_DIR")
        (first-creatable-dir ["/opt/genie" "/usr/local/lib/genie" "~/tools/genie"]))))
 
 (defn client-dir
   "Determine location of client directory
    By checking in this order:
    - client in cmdline options
-   - GENIE_CLIENT
+   - GENIE_CLIENT_DIR
    - ~/bin"
   [opt]
   (expand-home
    (or (:client opt)
-       (System/getenv "GENIE_CLIENT")
+       (System/getenv "GENIE_CLIENT_DIR")
        "~/bin")))
 
 (defn log-dir
   "Determine location of log directory
    By checking in this order:
    - logdir in cmdline options
-   - GENIE_LOGDIR
+   - GENIE_LOG_DIR
    - ~/log"
   [opt]
   (expand-home
    (or (:client opt)
-       (System/getenv "GENIE_CLIENT")
+       (System/getenv "GENIE_CLIENT_DIR")
        "~/log")))
 
 (defn config-dir
   "Determine location of client directory
    By checking in this order:
    - config in cmdline options
-   - GENIE_CLIENT
+   - GENIE_CLIENT_DIR
    - ~/bin"
   [opt]
   (expand-home
    (or (:config opt)
-       (System/getenv "GENIE_CONFIG")
+       (System/getenv "GENIE_CONFIG_DIR")
        "~/.config/genie")))
 
 (defn scripts-dir
   "Determine location of client directory
    By checking in this order:
    - scripts in cmdline options
-   - GENIE_CLIENT
+   - GENIE_CLIENT_DIR
    - ~/bin"
   [opt]
   (expand-home
    (or (:scripts opt)
-       (System/getenv "GENIE_SCRIPTS")
+       (System/getenv "GENIE_SCRIPTS_DIR")
        "~/bin")))
 
 (defn genied-jar-file
@@ -176,8 +176,7 @@
    By checking the dirs as in `genie-home`.
    Return nil iff nothing found."
   [opt]
-  (or (System/getenv "GENIE_JAR")
-      (fs/file (daemon-dir opt) "genied.jar")))
+  (fs/file (daemon-dir opt) "genied.jar"))
 
 (defn genied-source-jar
   "Determine path of source uberjar, iff it exists.
@@ -208,79 +207,107 @@
               (println "... Non-zero exit-code:" exit-code)))
           (genied-source-jar))))))
 
+(defn install-file
+  "Install a file from source to target
+   Create target dirs if needed
+   With options:
+   :force - true - copy even if already exists. False - not
+   :dryrun - true - show what would be copied"
+  [src dest {:keys [force dryrun]}]
+  (when (or force (not (fs/exists? dest)))
+    (if dryrun
+      (println "Dryrun:" (str src) "=>" (str dest))
+      (do
+        (println "Install:" (str src) "=>" (str dest))
+        (fs/create-dirs (fs/parent dest))
+        (fs/copy src dest {:replace-existing true})))))
+
 (defn install-daemon
   "Install daemon uberjar and bash script to target location"
   [opt]
   (let [src (make-uberjar opt)
         dest (genied-jar-file opt)]
     (println "Installing uberjar from:" (str src) "=>" (str dest))
-    (if (:dryrun opt)
-      (println "  Dry run")
-      (do
-        (if (fs/copy src dest {:replace-existing true})
-          (println "Ok, copied uberjar")
-          (println "Copy failed, is destination in use? [uberjar]"))
-        (if (fs/copy "genied/genied.sh" (fs/file (fs/parent dest) "genied.sh")
-                     {:replace-existing true})
-          (println "Ok, copied genied.sh")
-          (println "Copy failed, is destination in use? [genied.sh]"))))))
+    (install-file src dest (merge opt {:force true}))
+    (install-file "genied/genied.sh" (fs/file (fs/parent dest) "genied.sh")
+                  (merge opt {:force true}))
+    #_(if (:dryrun opt)
+        (println "  Dry run")
+        (do
+          (if (fs/copy src dest {:replace-existing true})
+            (println "Ok, copied uberjar")
+            (println "Copy failed, is destination in use? [uberjar]"))
+          (if (fs/copy "genied/genied.sh" (fs/file (fs/parent dest) "genied.sh")
+                       {:replace-existing true})
+            (println "Ok, copied genied.sh")
+            (println "Copy failed, is destination in use? [genied.sh]"))))))
 
 (defn install-clients
   "Install clients to given clients dir"
   [opt]
   (let [target-dir (client-dir opt)]
-    (println "Installing clients from 'client' => " (str target-dir))
-    (if (:dryrun opt)
-      (println "  Dryrun")
-      (doseq [src (fs/glob (fs/file "client") "genie.*")]
-        (fs/copy src (fs/file target-dir (fs/file-name src))
-                 {:replace-existing true}))))  )
+    (doseq [src (fs/glob (fs/file "client") "genie.*")]
+      (install-file src (fs/file target-dir (fs/file-name src))
+                    (merge opt {:force true})))
+    #_(println "Installing clients from 'client' => " (str target-dir))
+    #_(if (:dryrun opt)
+        (println "  Dryrun")
+        (doseq [src (fs/glob (fs/file "client") "genie.*")]
+          (fs/copy src (fs/file target-dir (fs/file-name src))
+                   {:replace-existing true}))      ))  )
 
 (defn install-scripts
   "Install scripts to target location"
   [opt]
   (let [target-dir (scripts-dir opt)]
-    (println "Installing from 'scripts' => " (str target-dir))
-    (if (:dryrun opt)
-      (println "  Dryrun")
-      (doseq [src (fs/glob (fs/file "scripts") "*.clj")]
-        (fs/copy src (fs/file target-dir (fs/file-name src))
-                 {:replace-existing true})))))
+    (doseq [src (fs/glob (fs/file "scripts") "*.clj")]
+      (install-file src (fs/file target-dir (fs/file-name src))
+                    (merge opt {:force true})))
+    #_(println "Installing from 'scripts' => " (str target-dir))
+    #_(if (:dryrun opt)
+        (println "  Dryrun")
+        (doseq [src (fs/glob (fs/file "scripts") "*.clj")]
+          (fs/copy src (fs/file target-dir (fs/file-name src))
+                   {:replace-existing true})        )      )))
 
 (defn install-template
   "Install template to target location, iff not already there"
   [opt]
   (let [target-dir (template-dir opt)]
-    (println "Installing from 'template' => " (str target-dir))
-    (if (:dryrun opt)
-      (println "  Dryrun")
-      (doseq [src (fs/glob (fs/file "template") "*")]
-        (when-not (fs/exists? (fs/file target-dir (fs/file-name src)))
-          (fs/copy src (fs/file target-dir (fs/file-name src))))))))
+    (doseq [src (fs/glob (fs/file "template") "*")]
+      (install-file src (fs/file target-dir (fs/file-name src))
+                    (merge opt {:force false})))
+    #_(println "Installing from 'template' => " (str target-dir))
+    #_(if (:dryrun opt)
+        (println "  Dryrun")
+        (doseq [src (fs/glob (fs/file "template") "*")]
+          (install-file src (fs/file target-dir (fs/file-name src)) (merge opt {:force false}))
+          #_(when-not (fs/exists? (fs/file target-dir (fs/file-name src)))
+              (fs/copy src (fs/file target-dir (fs/file-name src)))))      )))
 
 (defn install-config
   "Install config to target location, iff not already there"
   [opt]
   (let [target-dir (config-dir opt)
-        src "genie.edn"]
-    (println "Installing from 'genied/genie.edn' => " (str target-dir))
-    (if (:dryrun opt)
-      (println "  Dryrun")
-      (when-not (fs/exists? (fs/file target-dir src))
-        (fs/copy src (fs/file target-dir src))))))
+        src "genied/genie.edn"]
+    (install-file src (fs/file target-dir (fs/file-name src)) (merge opt {:force false}))
+    #_(println "Installing from 'genied/genie.edn' => " (str target-dir))
+    #_(if (:dryrun opt)
+        (println "  Dryrun")
+        (when-not (fs/exists? (fs/file target-dir src))
+          (fs/copy src (fs/file target-dir src))))))
 
 (defn show-bash-config
   "Show lines to put in .profile or .bashrc"
   [opt]
   (println "Add the following lines to your ~/.profile:")
-  (println (str "export GENIE_CLIENT=" (client-dir opt)))
-  (println (str "export GENIE_DAEMON=" (daemon-dir opt)))
-  (println (str "export GENIE_JAR=" (genied-jar-file opt)))
+  (println (str "export GENIE_CLIENT_DIR=" (client-dir opt)))
+  (println (str "export GENIE_DAEMON_DIR=" (daemon-dir opt)))
   (println (str "export GENIE_JAVA_CMD=java"))
-  (println (str "export GENIE_CONFIG=" (config-dir opt)))
-  (println (str "export GENIE_LOGDIR=" (log-dir opt)))
-  (println (str "export GENIE_TEMPLATE=" (template-dir opt)))
-  (println (str "export GENIE_SCRIPTS=" (scripts-dir opt))))
+  (println (str "export GENIE_CONFIG_DIR=" (config-dir opt)))
+  (println (str "export GENIE_LOG_DIR=" (log-dir opt)))
+  (println (str "export GENIE_TEMPLATE_DIR=" (template-dir opt)))
+  (println (str "export GENIE_SCRIPTS_DIR=" (scripts-dir opt))))
 
 (defn show-crontab
   "Show command to add to crontab"
