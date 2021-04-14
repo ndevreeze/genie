@@ -33,12 +33,11 @@
   "Determine template directory to use"
   [opt]
   (fs/expand-home
-   (cond (:directory opt) (:directory opt)
-         (System/getenv "GENIE_TEMPLATE") (System/getenv "GENIE_TEMPLATE")
-         (System/getenv "GENIE_CONFIG")
-         (fs/file (System/getenv "GENIE_CONFIG") "template")
-         :else
-         "~/.config/genie/template")))
+   (or (:directory opt)
+       (System/getenv "GENIE_TEMPLATE")
+       (when (System/getenv "GENIE_CONFIG")
+         (fs/file (System/getenv "GENIE_CONFIG") "template"))
+       "~/.config/genie/template")))
 
 (defn det-full-ns
   "Determine full namespace string based on base-namespace and script or
