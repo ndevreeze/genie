@@ -10,7 +10,7 @@
                  [clj-commons/pomegranate "1.2.0"] ;; 2021-02-21: for dynamic loading of libraries.
                  [org.slf4j/slf4j-nop "1.7.30"] ;; 2021-04-04: getting rid of SLF warning
                  [org.jsoup/jsoup "1.13.1"] ;; 2021-04-04: try to get rid of reflective warning.
-                 [ndevreeze/logger "0.3.0"]
+                 [ndevreeze/logger "0.4.0"]
                  [ndevreeze/cmdline "0.1.2"]]
   :main ^:skip-aot genied.core
   :jvm-opts ["--illegal-access=debug"] ;; 2021-04-04: for lein uberjar, but no more info.
