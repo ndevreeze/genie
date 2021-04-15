@@ -8,8 +8,7 @@
    - explicity given on cmdline
    - already defined in env-vars
    - some default locations:
-     - daemon in /opt/genie or /usr/local/lib/genie (when root)
-       or ~/tools/genie (when not root)
+     - daemon in ~/tools/genie (root not supported)
      - client in ~/bin
      - config in ~/.config/genie
      - template in ~/.config/genie/template"
@@ -73,11 +72,11 @@
       (System/getenv "USERNAME")
       (error "Cannot determine current user")))
 
-(defn root?
-  "Return true if current used is root.
+#_(defn root?
+    "Return true if current used is root.
    Wrt install-locations"
-  []
-  (= (user) "root"))
+    []
+    (= (user) "root"))
 
 (defn dir-writable?
   "Return true iff dir already exists and can be written into,
@@ -119,14 +118,12 @@
    By checking in this order:
    - daemon in cmdline options
    - GENIE_DAEMON_DIR
-   - /opt/genie
-   - /usr/local/lib/genie
    - ~/tools/genie"
   [opt]
   (expand-home
    (or (:daemon opt)
        (System/getenv "GENIE_DAEMON_DIR")
-       (first-creatable-dir ["/opt/genie" "/usr/local/lib/genie" "~/tools/genie"]))))
+       (first-creatable-dir [ "~/tools/genie"]))))
 
 (defn client-dir
   "Determine location of client directory
@@ -148,8 +145,8 @@
    - ~/log"
   [opt]
   (expand-home
-   (or (:client opt)
-       (System/getenv "GENIE_CLIENT_DIR")
+   (or (:logdir opt)
+       (System/getenv "GENIE_LOG_DIR")
        "~/log")))
 
 (defn config-dir
@@ -176,26 +173,25 @@
        (System/getenv "GENIE_SCRIPTS_DIR")
        "~/bin")))
 
-(defn genied-jar-file
+(defn target-jar
   "Determine install location of genied jar file
    By checking the dirs as in `genie-home`.
    Return nil iff nothing found."
   [opt]
   (fs/file (daemon-dir opt) "genied.jar"))
 
-(defn genied-source-jar
+(defn source-jar
   "Determine path of source uberjar, iff it exists.
    Return nil otherwise"
   []
-  (when-let [uberjars (seq (fs/glob (fs/file "genied/target/uberjar") "*standalone*.jar"))]
-    (first uberjars)))
+  (first (fs/glob (fs/file "genied/target/uberjar") "*standalone*.jar")))
 
 ;; TODO - use --force.
 (defn make-uberjar
   "Make uberjar iff it does not exist yet, or --force given.
    Return path of existing or just created uberjar"
   [opt]
-  (if-let [uberjar (genied-source-jar)]
+  (if-let [uberjar (source-jar)]
     (do
       (println "Uberjar already created:" (str uberjar))
       uberjar)
@@ -210,7 +206,7 @@
             (if (zero? exit-code)
               (println "... Success")
               (println "... Non-zero exit-code:" exit-code)))
-          (genied-source-jar))))))
+          (source-jar))))))
 
 (defn install-file
   "Install a file from source to target
@@ -231,7 +227,7 @@
   "Install daemon uberjar and bash script to target location"
   [opt]
   (let [src (make-uberjar opt)
-        dest (genied-jar-file opt)]
+        dest (target-jar opt)]
     (install-file src dest (merge opt {:force true}))
     (install-file "genied/genied.sh" (fs/file (fs/parent dest) "genied.sh")
                   (merge opt {:force true}))))
