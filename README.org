@@ -36,6 +36,23 @@ With default locations:
 | templates  | ~/.config/genie/template | GENIE_TEMPLATE_DIR, GENIE_CONFIG_DIR      |
 | scripts    | ~/bin                    | GENIE_SCRIPTS_DIR                         |
 | client     | ~/bin                    | GENIE_CLIENT_DIR                          |
+
+You might want to add the following environment vars to your .profile:
+
+#+begin_src emacs-lisp :tangle yes
+export GENIE_CLIENT_DIR=~/bin
+export GENIE_DAEMON_DIR=~/tools/genie
+export GENIE_JAVA_CMD=java
+export GENIE_CONFIG_DIR=~/.config/genie
+export GENIE_LOG_DIR=~/log
+export GENIE_TEMPLATE_DIR=~/.config/genie/template
+export GENIE_SCRIPTS_DIR=~/bin
+#+end_src
+
+And add a crontab entry so the Genie daemon starts automatically:
+#+begin_src emacs-lisp :tangle yes
+@reboot /home/nico2/tools/genie/genied.sh
+#+end_src
 * Usage
 An example script is shown below.
 
@@ -91,6 +108,13 @@ Or with genie:
 genie test.clj
 #+end_src
 
+* Creating a script
+To create a script and deps.edn file from templates:
+#+begin_src bash :tangle yes
+./scripts/genie_new.clj /path/to/new/script.clj
+#+end_src
+
+This uses template.clj and deps.edn from the template directory (GENIE_TEMPLATE_DIR)
 * Testing
 See directory test, with these scripts:
 - test.clj - test various parts, including logging and stdout/err handling
@@ -101,9 +125,8 @@ See directory test, with these scripts:
 - Fast startup of the script
 - It might help to see the daemon as part of the OS
 * Todo
-- Much more, see [[file:docs/todo.org]] for details.
-- More real world testing
-
+- See [[file:docs/todo.org]] for details.
+- More real world using and testing
 * Related projects
 Some Clojure-like languages having fast startup, but not all Clojure/JVM functionality:
 - Babashka
