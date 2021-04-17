@@ -25,4 +25,4 @@ else
     fi
 fi
 
-$JAVA -jar $script_dir/genied.jar -p 7887 > $LOG_DIR/genied-$DATETIME.log 2>&1 &
+$JAVA -jar $script_dir/genied.jar > $LOG_DIR/genied-$DATETIME.log 2>&1 &
