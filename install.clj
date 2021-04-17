@@ -268,7 +268,7 @@
 (defn show-bash-config
   "Show lines to put in .profile or .bashrc"
   [opt]
-  (println "Add the following lines to your ~/.profile:")
+  (println "\nAdd the following lines to your ~/.profile:")
   (println (str "export GENIE_CLIENT_DIR=" (client-dir opt)))
   (println (str "export GENIE_DAEMON_DIR=" (daemon-dir opt)))
   (println (str "export GENIE_JAVA_CMD=java"))
@@ -280,7 +280,7 @@
 (defn show-crontab
   "Show command to add to crontab"
   [opt]
-  (println "Add the following to your crontab:")
+  (println "\nAdd the following to your crontab:")
   (println "@reboot" (str (fs/file (daemon-dir opt) "genied.sh"))))
 
 (defn install
