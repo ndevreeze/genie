@@ -20,13 +20,13 @@
 
 (defn do-script
   "Main user defined function for genied"
-  [opt arguments ctx]
+  [{:keys [port config verbose] :as opt} arguments ctx]
   (when (:verbose opt)
     (alter-var-root #'diag/*verbose* (constantly true)))
   (log/init {:location :home :name "genied"
-             :level (if (:verbose opt) :debug :info)})
+             :level (if verbose :debug :info)})
   (log/debug "genied started")
-
+  (log/info "Using config: " config)
   (log/debug "Opt given: " opt)
   (log/debug "Rest arguments given: " arguments)
   (log/debug "Context (ctx): " ctx)
@@ -42,9 +42,9 @@
 
   (state/set-out-streams! *out* *err*)
 
-  (log/debug "Starting daemon on port " (:port opt))
-  (state/set-daemon! (nrepl/start-server :port (:port opt)))
-  (log/info "nrepl daemon started on port: " (:port opt))
+  (log/debug "Starting daemon on port " port)
+  (state/set-daemon! (nrepl/start-server :port port))
+  (log/info "nrepl daemon started on port: " port)
 
   (diag/print-diagnostic-info "after start-server")
 
