@@ -114,7 +114,7 @@
 
 ;; these functions are the same in genie.clj, so could put in include/library.
 (defn daemon-dir
-  "Determine location of genie home
+  "Determine location of genie daemon dir.
    By checking in this order:
    - daemon in cmdline options
    - GENIE_DAEMON_DIR
@@ -173,9 +173,10 @@
        (System/getenv "GENIE_SCRIPTS_DIR")
        "~/bin")))
 
-(defn target-jar
+;; rename, so same name as in genie.clj
+(defn daemon-jar
   "Determine install location of genied jar file
-   By checking the dirs as in `genie-home`.
+   By checking the dirs as in `daemon-dir`.
    Return nil iff nothing found."
   [opt]
   (fs/file (daemon-dir opt) "genied.jar"))
@@ -227,7 +228,7 @@
   "Install daemon uberjar and bash script to target location"
   [opt]
   (let [src (make-uberjar opt)
-        dest (target-jar opt)]
+        dest (daemon-jar opt)]
     (install-file src dest (merge opt {:force true}))
     (install-file "genied/genied.sh" (fs/file (fs/parent dest) "genied.sh")
                   (merge opt {:force true}))))
