@@ -6,6 +6,8 @@ Another way of mitigating the slow startup of Clojure on the JVM, by starting a 
 * Installation
 Genie uses [[https://book.babashka.org][Babashka]] for the client and installation. So make sure you have this installed.
 
+Then:
+
 #+begin_src bash :tangle yes
   bb ./install.clj
 #+end_src
