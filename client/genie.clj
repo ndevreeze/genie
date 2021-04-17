@@ -13,7 +13,44 @@
             [clojure.edn :as edn]
             [clojure.string :as str]
             [clojure.java.io :as io]
-            [me.raynes.fs :as fs]))
+            [babashka.fs :as fs]
+            ;;            [me.raynes.fs :as fs]
+            )
+  (:import [java.io File]))
+
+;; from raynes.fs, no home functions in babashka.fs
+(let [homedir (io/file (System/getProperty "user.home"))
+      usersdir (.getParent homedir)]
+  (defn home
+    "With no arguments, returns the current value of the `user.home` system
+     property. If a `user` is passed, returns that user's home directory. It
+     is naively assumed to be a directory with the same name as the `user`
+     located relative to the parent of the current value of `user.home`."
+    ([] homedir)
+    ([user] (if (empty? user) homedir (io/file usersdir user)))))
+
+;; from raynes.fs, no home functions in babashka.fs
+(defn expand-home
+  "If `path` begins with a tilde (`~`), expand the tilde to the value
+  of the `user.home` system property. If the `path` begins with a
+  tilde immediately followed by some characters, they are assumed to
+  be a username. This is expanded to the path to that user's home
+  directory. This is (naively) assumed to be a directory with the same
+  name as the user relative to the parent of the current value of
+  `user.home`."
+  [path]
+  (let [path (str path)]
+    (if (.startsWith path "~")
+      (let [sep (.indexOf path File/separator)]
+        (if (neg? sep)
+          (home (subs path 1))
+          (io/file (home (subs path 1 sep)) (subs path (inc sep)))))
+      (io/file path))))
+
+(defn normalized
+  "From Raynes/fs, combination of absolutize and normalize"
+  [path]
+  (fs/normalize (fs/absolutize path)))
 
 (def cli-options
   "Genie client command line options"
@@ -115,7 +152,8 @@
   "Determine log-file based on --logdir option.
    Leave empty for no log file"
   [opt]
-  (when-let [logdir (:logdir opt)]
+  (when-let [logdir (or (:logdir opt)
+                        (System/getenv "GENIE_LOG_DIR"))]
     (fs/file logdir (format "genie-%s.log" (current-timestamp-file)))))
 
 ;; some functions to determine locations of java, genied.jar and config.
@@ -148,33 +186,52 @@
    Return nil if none found."
   [dirs]
   (when-let [dir (first dirs)]
-    (let [dir (fs/expand-home dir)]
+    (let [dir (expand-home dir)]
       (if (fs/exists? dir)
         (str dir)
         (recur (rest dirs))))))
 
-(defn genie-home
-  "Determine location of genie home
+(defn daemon-dir
+  "Determine location of genie daemon dir.
+   By checking in this order:
+   - daemon in cmdline options
+   - GENIE_DAEMON_DIR
+   - ~/tools/genie"
+  [opt]
+  (expand-home
+   (or (:daemon opt)
+       (System/getenv "GENIE_DAEMON_DIR")
+       (first-existing-dir [ "~/tools/genie"]))))
+
+#_(defn genie-home
+    "Determine location of genie home
    By checking in this order:
    - GENIE_DAEMON
    - /opt/genie
    - /usr/local/lib/genie
    - ~/tools/genie
    - ../genied/target/uberjar (when running genie.clj client from source-dir"
-  []
-  (or (System/getenv "GENIE_DAEMON")
-      (first-existing-dir ["/opt/genie" "/usr/local/lib/genie" "~/tools/genie"
-                           (fs/normalized (fs/file *file* ".." ".." "genied"
-                                                   "target" "uberjar"))])))
+    []
+    (or (System/getenv "GENIE_DAEMON")
+        (first-existing-dir ["/opt/genie" "/usr/local/lib/genie" "~/tools/genie"
+                             (normalized (fs/file *file* ".." ".." "genied"
+                                                  "target" "uberjar"))])))
 
-(defn genied-jar-file
-  "Determine location of genied jar file
+#_(defn genied-jar-file
+    "Determine location of genied jar file
    By checking the dirs as in `genie-home`.
    Return nil iff nothing found."
-  []
-  (or (System/getenv "GENIE_JAR")
-      (first-file (genie-home) ["genied.jar" "genied-*-standalone.jar"
-                                "genied*.jar"])))
+    []
+    (or (System/getenv "GENIE_JAR")
+        (first-file (genie-home) ["genied.jar" "genied-*-standalone.jar"
+                                  "genied*.jar"])))
+
+(defn daemon-jar
+  "Determine install location of genied jar file
+   By checking the dirs as in `daemon-dir`.
+   Return nil iff nothing found."
+  [opt]
+  (fs/file (daemon-dir opt) "genied.jar"))
 
 (defn bytes->str
   "If `x` is a byte-array, convert it to a string.
@@ -223,8 +280,6 @@
   "For verbose/debug printing of nrepl messages"
   [result]
   (debug "<- " result))
-
-
 
 ;; TODO - merge with read-print-result.  but take care of recur in
 ;; combination with both output and input. If this one recurs without
@@ -343,8 +398,8 @@
 (defn create-context
   "Create script context, with current working directory (cwd)"
   [opt script]
-  (let [script (fs/normalized script)
-        cwd (fs/normalized ".")]
+  (let [script (normalized script)
+        cwd (normalized ".")]
     {:cwd (str cwd)
      :client "babashka"
      :script (str script)
@@ -357,14 +412,17 @@
    use the last ns-decl in the script.
    If no ns-decl found, return `main` (root-ns)"
   [opt script]
+  (debug "Determine main function from script: " script)
   (or (:main opt)
-      (with-open [rdr (clojure.java.io/reader script)]
+      (with-open [rdr (clojure.java.io/reader (fs/file script))]
         (if-let [namespaces
                  (seq (for [line (line-seq rdr)
                             :let [[_ ns] (re-find #"^\(ns ([^ \(\)]+)" line)]
                             :when (re-find #"^\(ns " line)]
                         ns))]
-          (str (last namespaces) "/main")
+          (do
+            (debug "namespaces found in script: " namespaces)
+            (str (last namespaces) "/main"))
           "main"))))
 
 (defn normalize-param
@@ -381,9 +439,9 @@
   (let [first-char (first param)]
     (cond (= \- first-char) param
           (= \/ first-char) param
-          (= [\. \/] (take 2 param)) (fs/normalized param)
-          (= "." param) (fs/normalized param)
-          (fs/exists? param) (fs/normalized param)
+          (= [\. \/] (take 2 param)) (normalized param)
+          (= "." param) (normalized param)
+          (fs/exists? param) (normalized param)
           :else param)))
 
 (defn normalize-params
@@ -409,7 +467,7 @@
   "Execute given script with opt and script-params"
   [{:keys [nonormalize] :as opt} script script-params]
   (let [ctx (create-context opt script)
-        script (fs/normalized script)
+        script (normalized script)
         main-fn (det-main-fn opt script)
         script-params (-> script-params
                           (normalize-params nonormalize)
@@ -553,7 +611,7 @@
     [[java-bin '-jar genied-jar '-p (:port opt)]
      {:dir (str (fs/parent genied-jar))}]
     [['lein 'run '-- '-p (:port opt)]
-     {:dir (str (fs/normalized (fs/file *file* ".." ".." "genied")))}]))
+     {:dir (str (normalized (fs/file *file* ".." ".." "genied")))}]))
 
 ;; TODO - check if process already started. Although starting twice
 ;; does not seem harmful: (process) returns quickly, old process still
@@ -565,7 +623,7 @@
   [opt]
   (println "Starting daemon on port:" (:port opt))
   (let [java-bin (java-binary)
-        genied-jar (genied-jar-file)
+        genied-jar (daemon-jar opt)
         [command command-opt] (genied-command opt java-bin genied-jar)]
     (println "cmd:" (str/join " " command) ", cwd:" (:dir command-opt))
     (let [proc (p/process command command-opt)]
