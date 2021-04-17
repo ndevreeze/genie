@@ -575,13 +575,16 @@
   "Create command to start genied.
    Based on java-bin and genied-jar.
    Or failing that, Leiningen.
-   Return vector of command and process options (cwd to use)"
+   Return vector of command and process options (cwd to use).
+   Also set :inherit true to see the daemon starting, but this
+   does not seem to work"
   [opt java-bin genied-jar]
   (if (and java-bin genied-jar)
     [[java-bin '-jar genied-jar '-p (:port opt)]
      {:dir (str (fs/parent genied-jar))}]
     [['lein 'run '-- '-p (:port opt)]
-     {:dir (str (normalized (fs/file *file* ".." ".." "genied")))}]))
+     {:dir (str (normalized (fs/file *file* ".." ".." "genied")))
+      :inherit true}]))
 
 ;; TODO - check if process already started. Although starting twice
 ;; does not seem harmful: (process) returns quickly, old process still
