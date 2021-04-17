@@ -143,7 +143,7 @@
     (.format now pattern)))
 
 (defn log-file
-  "Determine log-file based on --logdir option.
+  "Determine log-file based on --logdir option and env-var GENIE_LOG_DIR.
    Leave empty for no log file"
   [opt]
   (when-let [logdir (or (:logdir opt)
