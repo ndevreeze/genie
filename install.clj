@@ -210,27 +210,6 @@
         uberjar))
     (do-make-uberjar! opt)))
 
-#_(defn make-uberjar
-    "Make uberjar iff it does not exist yet, or --force given.
-   Return path of existing or just created uberjar"
-    [opt]
-    (if-let [uberjar (source-jar)]
-      (do
-        (println "Uberjar already created:" (str uberjar))
-        uberjar)
-      (do
-        (println "Creating uberjar")
-        (if (:dryrun opt)
-          (println "  Dry run")
-          (do
-            (println "Starting 'lein uberjar' ...")
-            (let [proc (p/process ['lein 'uberjar] {:dir "genied"})
-                  exit-code (:exit (p/check proc))]
-              (if (zero? exit-code)
-                (println "... Success")
-                (println "... Non-zero exit-code:" exit-code)))
-            (source-jar))))))
-
 (defn install-file
   "Install a file from source to target
    Create target dirs if needed
