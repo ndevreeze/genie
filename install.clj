@@ -144,7 +144,7 @@
        "~/log")))
 
 (defn config-dir
-  "Determine location of client directory
+  "Determine location of config directory
    By checking in this order:
    - config in cmdline options
    - GENIE_CONFIG_DIR
@@ -156,7 +156,7 @@
        "~/.config/genie")))
 
 (defn scripts-dir
-  "Determine location of client directory
+  "Determine location of scripts directory
    By checking in this order:
    - scripts in cmdline options
    - GENIE_SCRIPTS_DIR
