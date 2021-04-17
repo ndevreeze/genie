@@ -72,12 +72,6 @@
       (System/getenv "USERNAME")
       (error "Cannot determine current user")))
 
-#_(defn root?
-    "Return true if current used is root.
-   Wrt install-locations"
-    []
-    (= (user) "root"))
-
 (defn dir-writable?
   "Return true iff dir already exists and can be written into,
    or if its parent is writable
