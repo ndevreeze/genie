@@ -4,15 +4,38 @@
 * Introduction
 Another way of mitigating the slow startup of Clojure on the JVM, by starting a daemon in the background.
 * Installation
-(currently an ActiveTcl script)
+Genie uses [[https://book.babashka.org][Babashka]] for the client and installation. So make sure you have this installed.
 
 #+begin_src bash :tangle yes
-  cd genied
-  lein uberjar
-  cd ..
-  tclsh install.tcl
+  bb ./install.clj
 #+end_src
 
+Install directories may be given:
+#+begin_src bash :tangle yes
+install.clj - babashka script to install genie:
+  daemon, client, config, scripts and template
+      --daemon DAEMON      Daemon directory
+      --client CLIENT      Client directory
+      --config CONFIG      Config directory
+      --logdir LOGDIR      Logging dir for daemon and client
+      --scripts SCRIPTS    Scripts directory
+      --template TEMPLATE  Template directory
+      --dryrun             Show what would have been done
+      --force              Force re-creating uberjar
+  -h, --help
+#+end_src
+
+With default locations:
+
+| item       | location                 | specs, env-vars                           |
+|------------+--------------------------+-------------------------------------------|
+| java       | <system>                 | GENIE_JAVA_CMD, JAVA_CMD, JAVA_HOME, java |
+| daemon/jar | ~/tools/genie, lein run  | GENIE_DAEMON_DIR (also genied.sh)         |
+| config     | ~/.config/genie          | GENIE_CONFIG_DIR (also templates)         |
+| log-dir    | ~/log                    | GENIE_LOG_DIR                             |
+| templates  | ~/.config/genie/template | GENIE_TEMPLATE_DIR, GENIE_CONFIG_DIR      |
+| scripts    | ~/bin                    | GENIE_SCRIPTS_DIR                         |
+| client     | ~/bin                    | GENIE_CLIENT_DIR                          |
 * Usage
 An example script is shown below.
 
