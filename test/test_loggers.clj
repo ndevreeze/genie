@@ -1,4 +1,4 @@
-#! /usr/bin/env genie
+#! /usr/bin/env genie.clj
 
 (ns test-loggers
   "test if loggers at daemon, client and script don't get mingled, log

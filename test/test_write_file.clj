@@ -1,4 +1,4 @@
-#! /usr/bin/env genie
+#! /usr/bin/env genie.clj
 
 (ns test-write-file
   "Test writing a file as a long process than can be interrupted. If the

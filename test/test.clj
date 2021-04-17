@@ -1,4 +1,4 @@
-#! /usr/bin/env genie
+#! /usr/bin/env genie.clj
 
 ;; 2020-12-31: does not work directly on MacOS: ./test.clj gives bad
 ;; interpreter errors. Several different errors, depending on the

@@ -1,4 +1,4 @@
-#! /usr/bin/env genie
+#! /usr/bin/env genie.clj
 
 (ns test-lib-ns
   "Test with 2 namespaces - lib"

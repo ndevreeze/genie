@@ -1,4 +1,4 @@
-#! /usr/bin/env genie
+#! /usr/bin/env genie.clj
 
 (ns test-load-file2
   "require genied.client namespace, use load-relative-file afterwards,

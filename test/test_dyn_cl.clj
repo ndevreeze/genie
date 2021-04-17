@@ -1,4 +1,4 @@
-#! /usr/bin/env genie
+#! /usr/bin/env genie.clj
 
 (ns test-dyn-cl
   "specific script for testing the classloader on the client side."

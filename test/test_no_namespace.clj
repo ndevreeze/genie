@@ -1,4 +1,4 @@
-#! /usr/bin/env genie
+#! /usr/bin/env genie.clj
 
 ;; 2021-03-03: specific script for testing the classloader on the
 ;; client side.  this version without a namespace declaration. This

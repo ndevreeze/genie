@@ -1,4 +1,4 @@
-#! /usr/bin/env genie
+#! /usr/bin/env genie.clj
 
 ;; test is command line options of script can conflict with cmdline
 ;; options of the (babashka) client.  test with -p and -v

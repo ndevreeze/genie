@@ -1,4 +1,4 @@
-#! /usr/bin/env genie
+#! /usr/bin/env genie.clj
 
 (genied.client/load-relative-file "test_load_file_lib.clj")
 

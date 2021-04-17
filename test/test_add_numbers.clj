@@ -1,4 +1,4 @@
-#! /usr/bin/env genie
+#! /usr/bin/env genie.clj
 
 (ns test-add-numbers
   "test adding numbers, including parsing from cmdline."
