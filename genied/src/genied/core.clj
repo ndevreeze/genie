@@ -21,38 +21,6 @@
     :default 7888 :parse-fn #(Integer/parseInt %)]
    ["-v" "--verbose" "Diagnostics wrt classloaders; log-level DEBUG"]])
 
-#_(def cli-options
-    "Command line options"
-    [["-c" "--config CONFIG" "Config file"
-      :default (or (when-let [dir (System/getenv "GENIE_CONFIG_DIR")]
-                     (fs/file (fs/normalized (fs/expand-home dir)) "genie.edn"))
-                   "~/.config/genie/genie.edn")]
-     ["-h" "--help" "Show this help"]
-     ["-p" "--port PORT" "TCP port to serve on"
-      :default 7888 :parse-fn #(Integer/parseInt %)]
-     ["-v" "--verbose" "Diagnostics wrt classloaders; log-level DEBUG"]])
-
-#_(def cli-options
-    "Command line options"
-    [["-c" "--config CONFIG" "Config file"
-      :default "~/.config/genie/genie.edn"]
-     ["-h" "--help" "Show this help"]
-     ["-p" "--port PORT" "TCP port to serve on"
-      :default 7888 :parse-fn #(Integer/parseInt %)]
-     ["-v" "--verbose" "Diagnostics wrt classloaders; log-level DEBUG"]])
-
-#_(defn config-dir
-    "Determine location of config directory
-   By checking in this order:
-   - config in cmdline options
-   - GENIE_CONFIG_DIR
-   - ~/bin"
-    [opt]
-    (fs/expand-home
-     (or (:config opt)
-         (System/getenv "GENIE_CONFIG_DIR")
-         "~/.config/genie")))
-
 (defn do-script
   "Main user defined function for genied"
   [{:keys [port config verbose] :as opt} arguments ctx]
