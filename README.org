@@ -11,7 +11,7 @@ Genie uses [[https://book.babashka.org][Babashka]] for the client and installati
 #+end_src
 
 Install directories may be given:
-#+begin_src bash :tangle yes
+#+begin_src text :tangle yes
 install.clj - babashka script to install genie:
   daemon, client, config, scripts and template
       --daemon DAEMON      Daemon directory
@@ -95,13 +95,12 @@ genie test.clj
 See directory test, with these scripts:
 - test.clj - test various parts, including logging and stdout/err handling
 - test_dyn_cl - test dynamic classloading
+- more scripts in the test-directory
 * Starting points
 - Every script that can be executed by clj (using deps.edn) should also be able to be executed using genie
 - Fast startup of the script
 - It might help to see the daemon as part of the OS
 * Todo
-- Use a Clojure-like client, e.g. babashka
-- Installer script (also babashka? or Makefile?)
 - Much more, see [[file:docs/todo.org]] for details.
 - More real world testing
 
