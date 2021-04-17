@@ -143,11 +143,10 @@
     (.format now pattern)))
 
 (defn log-file
-  "Determine log-file based on --logdir option and env-var GENIE_LOG_DIR.
+  "Determine log-file based on --logdir option.
    Leave empty for no log file"
   [opt]
-  (when-let [logdir (or (:logdir opt)
-                        (System/getenv "GENIE_LOG_DIR"))]
+  (when-let [logdir (:logdir opt)]
     (fs/file logdir (format "genie-%s.log" (current-timestamp-file)))))
 
 ;; some functions to determine locations of java, genied.jar and config.
