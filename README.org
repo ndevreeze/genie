@@ -2,7 +2,10 @@
 #+title: Genie - Run Clojure scripts with a daemon process
 
 * Introduction
-Another way of mitigating the slow startup of Clojure on the JVM, by starting a daemon in the background.
+Another way of mitigating the slow startup of Clojure on the JVM, by starting a daemon in the background. Using the following projects:
+- [[https://nrepl.org/nrepl/index.html][nRepl]] - for running the daemon and providing client connections (using bencode).
+- [[https://github.com/clj-commons/pomegranate][Pomegranate]] - for dynamically loading libraries
+- [[https://book.babashka.org][Babashka]] - for the client and installation script.
 * Installation
 Genie uses [[https://book.babashka.org][Babashka]] for the client and installation. So make sure you have this installed.
 
@@ -55,6 +58,13 @@ And add a crontab entry so the Genie daemon starts automatically:
 #+begin_src emacs-lisp :tangle yes
 @reboot /home/your-user-name/tools/genie/genied.sh
 #+end_src
+* Test without installation
+If you want to check out Genie without installing it, assuming you have Babashka and Leiningen installed (this uses 'lein run'):
+#+begin_src bash :tangle yes
+bb client/genie.clj --start-daemon
+bb client/genie.clj test/test.clj -a
+#+end_src
+
 * Usage
 An example script is shown below.
 
@@ -107,7 +117,7 @@ clj -m test
 
 Or with genie:
 #+begin_src bash :tangle yes
-genie test.clj
+genie.clj ./test.clj
 #+end_src
 
 * Creating a script
