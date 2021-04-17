@@ -4,4 +4,25 @@
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 DATETIME=`date +%Y-%m-%d-%H-%M-%S`
 
-/usr/bin/java -jar $script_dir/genied.jar > ~/log/genied-$DATETIME.log 2>&1 &
+if [[ -n "$GENIE_LOG_DIR" ]] ; then
+    LOG_DIR=$GENIE_LOG_DIR
+else
+    LOG_DIR=~/log
+fi
+
+# check GENIE_JAVA_CMD, JAVA_CMD, JAVA_HOME and default java.
+if [[ -n "$GENIE_JAVA_CMD" ]]; then
+    JAVA=$GENIE_JAVA_CMD
+else
+    if [[ -n "$JAVA_CMD" ]]; then
+        JAVA=$JAVA_CMD
+    else
+        if [[ -n "$JAVA_HOME" ]] && [[ -x "$JAVA_HOME/bin/java" ]]; then
+            JAVA_CMD="$JAVA_HOME/bin/java"
+        else
+            JAVA=java
+        fi
+    fi
+fi
+
+$JAVA -jar $script_dir/genied.jar -p 7887 > $LOG_DIR/genied-$DATETIME.log 2>&1 &
