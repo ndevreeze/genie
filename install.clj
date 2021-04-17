@@ -207,10 +207,10 @@
   "Install a file from source to target
    Create target dirs if needed
    With options:
-   :force - true - copy even if already exists. False - not
+   :replace - true - copy even if already exists. False - not
    :dryrun - true - show what would be copied"
-  [src dest {:keys [force dryrun]}]
-  (when (or force (not (fs/exists? dest)))
+  [src dest {:keys [replace dryrun]}]
+  (when (or replace (not (fs/exists? dest)))
     (if dryrun
       (println "Dryrun:" (str src) "=>" (str dest))
       (do
@@ -223,9 +223,9 @@
   [opt]
   (let [src (make-uberjar opt)
         dest (daemon-jar opt)]
-    (install-file src dest (merge opt {:force true}))
+    (install-file src dest (merge opt {:replace true}))
     (install-file "genied/genied.sh" (fs/file (fs/parent dest) "genied.sh")
-                  (merge opt {:force true}))))
+                  (merge opt {:replace true}))))
 
 (defn install-clients
   "Install clients to given clients dir"
@@ -233,7 +233,7 @@
   (let [target-dir (client-dir opt)]
     (doseq [src (fs/glob (fs/file "client") "genie.*")]
       (install-file src (fs/file target-dir (fs/file-name src))
-                    (merge opt {:force true})))))
+                    (merge opt {:replace true})))))
 
 (defn install-scripts
   "Install scripts to target location"
@@ -241,7 +241,7 @@
   (let [target-dir (scripts-dir opt)]
     (doseq [src (fs/glob (fs/file "scripts") "*.clj")]
       (install-file src (fs/file target-dir (fs/file-name src))
-                    (merge opt {:force true})))))
+                    (merge opt {:replace true})))))
 
 (defn install-template
   "Install template to target location, iff not already there"
@@ -249,14 +249,14 @@
   (let [target-dir (template-dir opt)]
     (doseq [src (fs/glob (fs/file "template") "*")]
       (install-file src (fs/file target-dir (fs/file-name src))
-                    (merge opt {:force false})))))
+                    (merge opt {:replace false})))))
 
 (defn install-config
   "Install config to target location, iff not already there"
   [opt]
   (let [target-dir (config-dir opt)
         src "genied/genie.edn"]
-    (install-file src (fs/file target-dir (fs/file-name src)) (merge opt {:force false}))))
+    (install-file src (fs/file target-dir (fs/file-name src)) (merge opt {:replace false}))))
 
 (defn show-bash-config
   "Show lines to put in .profile or .bashrc"
