@@ -579,7 +579,7 @@
    Also set :inherit true to see the daemon starting, but this
    does not seem to work"
   [opt java-bin genied-jar]
-  (if (and java-bin genied-jar)
+  (if (and (fs/exists? java-bin) (fs/exists? genied-jar))
     [[java-bin '-jar genied-jar '-p (:port opt)]
      {:dir (str (fs/parent genied-jar))}]
     [['lein 'run '-- '-p (:port opt)]
