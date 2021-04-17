@@ -1,9 +1,5 @@
 #! /usr/bin/env bb
 
-;; for using raynes.fs (clj-commons/fs):
-;; export BABASHKA_CLASSPATH=$(clojure -Spath -Sdeps '{:deps
-;; {clj-commons/fs {:mvn/version "1.6.307"}}}')
-
 (ns genie
   "Genie client in Babashka"
   (:require [babashka.process :as p]
@@ -13,9 +9,7 @@
             [clojure.edn :as edn]
             [clojure.string :as str]
             [clojure.java.io :as io]
-            [babashka.fs :as fs]
-            ;;            [me.raynes.fs :as fs]
-            )
+            [babashka.fs :as fs])
   (:import [java.io File]))
 
 ;; from raynes.fs, no home functions in babashka.fs
@@ -202,29 +196,6 @@
    (or (:daemon opt)
        (System/getenv "GENIE_DAEMON_DIR")
        (first-existing-dir [ "~/tools/genie"]))))
-
-#_(defn genie-home
-    "Determine location of genie home
-   By checking in this order:
-   - GENIE_DAEMON
-   - /opt/genie
-   - /usr/local/lib/genie
-   - ~/tools/genie
-   - ../genied/target/uberjar (when running genie.clj client from source-dir"
-    []
-    (or (System/getenv "GENIE_DAEMON")
-        (first-existing-dir ["/opt/genie" "/usr/local/lib/genie" "~/tools/genie"
-                             (normalized (fs/file *file* ".." ".." "genied"
-                                                  "target" "uberjar"))])))
-
-#_(defn genied-jar-file
-    "Determine location of genied jar file
-   By checking the dirs as in `genie-home`.
-   Return nil iff nothing found."
-    []
-    (or (System/getenv "GENIE_JAR")
-        (first-file (genie-home) ["genied.jar" "genied-*-standalone.jar"
-                                  "genied*.jar"])))
 
 (defn daemon-jar
   "Determine install location of genied jar file
