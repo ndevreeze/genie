@@ -374,6 +374,8 @@
      :client "babashka"
      :script (str script)
      :opt opt
+     :client-version "0.1.0"
+     :protocol-version "0.1.0"
      :eval-id (msg-id)}))
 
 (defn det-main-fn
