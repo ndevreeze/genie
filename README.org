@@ -51,7 +51,7 @@ export GENIE_SCRIPTS_DIR=~/bin
 
 And add a crontab entry so the Genie daemon starts automatically:
 #+begin_src emacs-lisp :tangle yes
-@reboot /home/nico2/tools/genie/genied.sh
+@reboot /home/your-user-name/tools/genie/genied.sh
 #+end_src
 * Usage
 An example script is shown below.
