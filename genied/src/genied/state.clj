@@ -33,8 +33,7 @@
   [coord]
   (swap! classloader update-in [:dependencies] conj coord))
 
-;; not directly related to classloaders, but singletons as well, so
-;; keep here for now.  keep system *out* and *err*, so they can be
+;; Keep system *out* and *err*, so they can be
 ;; distinguished from the dynamic nRepl ones.
 (def out-streams
   "out/err streams for main daemon process"
@@ -49,7 +48,6 @@
   "Get map with system out and err streams"
   []
   @out-streams)
-
 
 (def sessions "Map of sessions, keyed by session id" (atom {}))
 
