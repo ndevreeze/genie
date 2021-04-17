@@ -7,14 +7,14 @@
    [me.raynes.fs :as fs]
    [ndevreeze.cmdline :as cl]))
 
-;; TODO - add deps.edn to use as a param.
+;; TODO - add deps.edn-template to use as a param.
 
 ;; TODO - no default in cmdline params, but use env-vars or defaults.
 (def cli-options
   "Command line options for creating new Genie script"
   [["-n" "--namespace NAMESPACE" "Namespace, by default determined from script"]
    ["-d" "--directory DIRECTORY" "genie template directory"]
-   ["-t" "--template TEMPLATE" "template file to use, within project dir"
+   ["-t" "--template TEMPLATE" "template file to use, within template dir"
     :default "template.clj"]
    ["-f" "--force" "Overwrite existing script, if it exists"]
    ["-h" "--help" "Show this help"]])
@@ -34,9 +34,9 @@
   [opt]
   (fs/expand-home
    (or (:directory opt)
-       (System/getenv "GENIE_TEMPLATE")
-       (when (System/getenv "GENIE_CONFIG")
-         (fs/file (System/getenv "GENIE_CONFIG") "template"))
+       (System/getenv "GENIE_TEMPLATE_DIR")
+       (when (System/getenv "GENIE_CONFIG_DIR")
+         (fs/file (System/getenv "GENIE_CONFIG_DIR") "template"))
        "~/.config/genie/template")))
 
 (defn det-full-ns
@@ -95,18 +95,15 @@
   underscores where needed (only in final parts of path, not a common
   base part like dev-user"
   [ctx path]
-  (let [path2 (-> path add-dot-clj dash->underscore)]
-    (if (fs/absolute? path2)
-      path2
-      (fs/file (:cwd ctx) path2))))
+  (let [path (-> path add-dot-clj dash->underscore)]
+    (if (fs/absolute? path)
+      path
+      (fs/file (:cwd ctx) path))))
 
 (defn script
   "Create a new genie script.
   Arguments contains the script(s) to be created as a relative path."
   [opt arguments ctx]
-  #_(println opt ctx)
-  #_(println "ctx: " ctx)
-  #_(println "Arguments:" arguments)
   (doseq [script arguments]
     (create-script opt (make-absolute-clj-script ctx script))))
 
