@@ -147,7 +147,7 @@
   "Determine location of client directory
    By checking in this order:
    - config in cmdline options
-   - GENIE_CLIENT_DIR
+   - GENIE_CONFIG_DIR
    - ~/bin"
   [opt]
   (expand-home
@@ -159,7 +159,7 @@
   "Determine location of client directory
    By checking in this order:
    - scripts in cmdline options
-   - GENIE_CLIENT_DIR
+   - GENIE_SCRIPTS_DIR
    - ~/bin"
   [opt]
   (expand-home
