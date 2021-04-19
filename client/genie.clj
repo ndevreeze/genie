@@ -55,7 +55,7 @@
    ["-m" "--main MAIN" "main ns/fn to call. Empty: get from script ns-decl"]
    ["-l" "--logdir LOGDIR" "Directory for client log. Empty: no logging"]
    ["-v" "--verbose" "Verbose output"]
-   ["-h" "--help"]
+   ["-h" "--help" "Show help"]
    [nil "--max-lines MAX-LINES" "Max #lines to read/pass in one message"
     :default 1024
     :parse-fn #(Integer/parseInt %)
@@ -581,7 +581,7 @@
    Also set :inherit true to see the daemon starting, but this
    does not seem to work"
   [opt java-bin genied-jar]
-  (if (and (fs/exists? java-bin) (fs/exists? genied-jar))
+  (if (and java-bin (fs/exists? genied-jar))
     [[java-bin '-jar genied-jar '-p (:port opt)]
      {:dir (str (fs/parent genied-jar))}]
     [['lein 'run '-- '-p (:port opt)]
@@ -600,6 +600,8 @@
   (let [java-bin (java-binary)
         genied-jar (daemon-jar opt)
         [command command-opt] (genied-command opt java-bin genied-jar)]
+    (debug "java binary:" java-bin)
+    (debug "genied-jar:" genied-jar)
     (println "cmd:" (str/join " " command) ", cwd:" (:dir command-opt))
     (let [proc (p/process command command-opt)]
       (println "Process started, waiting (max 60 sec) until port is available")
