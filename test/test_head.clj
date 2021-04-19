@@ -15,8 +15,10 @@
 (defn head-file
   "Return the first 5 lines of `path`"
   [path]
-  (with-open [rdr (io/reader path)]
-    (str/join "\n" (take 5 (line-seq rdr)))))
+  (if path
+    (with-open [rdr (io/reader path)]
+      (str/join "\n" (take 5 (line-seq rdr))))
+    (println "Need file cmdline argument")))
 
 (defn script
   "Main script called by both `main` and `-main`"

@@ -12,7 +12,8 @@
 (def cli-options
   "Default cmdline options"
   [["-c" "--config CONFIG" "Config file"]
-   ["-h" "--help" "Show this help"]])
+   ["-h" "--help" "Show this help"]
+   [nil "--stdin" "Do read stdin"]])
 
 (defn read-standard-input
   "Read standard input and output each line in capitals."
@@ -25,7 +26,9 @@
 (defn script
   "Script called by both `main` and `-main`"
   [opt arguments ctx]
-  (read-standard-input opt ctx arguments))
+  (if (:stdin opt)
+    (read-standard-input opt ctx arguments)
+    (println "Give option --stdin to really read stdin")))
 
 (defn main
   "Main from genie"
