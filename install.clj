@@ -57,7 +57,7 @@
    [nil "--template TEMPLATE" "Template directory"]
    [nil "--dryrun" "Show what would have been done"]
    [nil "--force" "Force re-creating uberjar"]
-   ["-h" "--help"]])
+   ["-h" "--help" "Show help"]])
 
 (defn error
   "Throw an exception with msg given"
