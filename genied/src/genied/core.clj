@@ -61,6 +61,4 @@
                      cli-options do-script args))
 
 (comment
-  (-main "-p" "7889")
-
-  )
+  (-main "-p" "7889"))

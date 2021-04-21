@@ -14,7 +14,7 @@
   [tip]
   (doseq [loader (pom/classloader-hierarchy tip)]
     (log/debug loader))
-  (log/debug "-----")  )
+  (log/debug "-----"))
 
 (defn- print-classpath
   "Use doseq to really print the lazy seq"
