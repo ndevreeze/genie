@@ -138,6 +138,27 @@ Also from the 'test' directory:
 ./run-all-tests.clj
 #+end_src
 
+| Test                    | Notes                                              |
+|-------------------------+----------------------------------------------------|
+| run-all-tests.clj       | Start a daemon, run all tests and stop daemon      |
+| bb_pipe.clj             | Babashka test script for piping stdin->stdout      |
+| bb_stdout.clj           | Babashka test script for generating delayed output |
+| test_add_numbers.clj    | Add numbers from cmdline                           |
+| test.clj                | Several tests with log, stdout, stderr             |
+| test_divide_by_0.clj    | Test if exceptions are returned                    |
+| test_dyn_cl.clj         | Test dynamic class-loader                          |
+| test_head.clj           | Read a text file                                   |
+| test_load_file2.clj     | Load/source a library, take 2                      |
+| test_load_file.clj      | Load/source a library, take 1                      |
+| test_load_file_lib.clj  | Library loaded by test_load_file(2).clj            |
+| test_log_concurrent.clj | Test if concurrent logs don't get mixed up         |
+| test_loggers.clj        | Test if loggers in script, client and daemon work  |
+| test_no_namespace.clj   | Test without a script namespace                    |
+| test_params.clj         | Test command line parameters                       |
+| test_stdin.clj          | Test reading stdin                                 |
+| test_stdout_stderr.clj  | Test output to stdout and stderr                   |
+| test_two_namespaces.clj | Test with 2 namespaces in a file                   |
+| test_write_file.clj     | Test writing a text file                           |
 * Starting points
 - Every script that can be executed by clj (using deps.edn) should also be able to be executed using genie
 - Fast startup of the script
