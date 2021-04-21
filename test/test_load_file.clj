@@ -31,8 +31,6 @@
   [ctx args]
   (cl/check-and-exec "" cli-options script args ctx))
 
-;; for use with 'clj -m test-dyn-cl
-
 (defn -main
   "Entry point from clj cmdline script.
   Need to call System/exit, hangs otherwise."

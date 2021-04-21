@@ -6,4 +6,4 @@
 (defn data-csv
   "Parse some csv in text"
   [_opt _ctx]
-  (println "Parsing csv using data.csv: " (csv/read-csv "load-file,lib-ns")))
+  (println "Parsing csv using data.csv: " (csv/read-csv "load-file,lib-ns,abc,123")))
