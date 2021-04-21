@@ -78,8 +78,10 @@
                             {:namespace full-ns
                              :script (str script)})
       (fs/chmod "+x" script)
-      (fs/copy (fs/file dir "deps.edn")
-               (fs/file (fs/parent script) "deps.edn"))
+      (let [deps-target (fs/file (fs/parent script) "deps.edn")]
+        (if (fs/exists? deps-target)
+          (println "deps.edn already exists, do not overwrite")
+          (fs/copy (fs/file dir "deps.edn") deps-target)))
       (println "Created:" (str (fs/normalized script))))))
 
 (defn add-dot-clj
