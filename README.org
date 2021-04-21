@@ -131,7 +131,7 @@ This uses template.clj and deps.edn from the template directory (GENIE_TEMPLATE_
 See directory test, with these scripts:
 - test.clj - test various parts, including logging and stdout/err handling
 - test_dyn_cl - test dynamic classloading
-- more scripts in the test-directory
+- more scripts in the 'test' directory
 
 Also from the 'test' directory:
 #+begin_src bash :tangle yes
