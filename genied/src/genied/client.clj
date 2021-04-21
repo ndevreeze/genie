@@ -93,9 +93,11 @@
     (state/add-session! ctx)
     (print-diagnostic-info {} "start client")
     (when-not (supported-protocol-version? ctx)
-      (log-daemon-warn "Unsupported protocol version:" (:protocol-version ctx) "for script:" script)
+      (log-daemon-warn "Unsupported protocol version:" (:protocol-version ctx)
+                       "for script:" script)
       (binding [*out* *err*]
-        (println "WARNING - Unsupported protocol version:" (:protocol-version ctx))))
+        (println "WARNING - Unsupported protocol version:"
+                 (:protocol-version ctx))))
     (when-not (:nosetloader opt)
       (set-dynamic-classloader!)
       (print-diagnostic-info {} "after set-dyn3!"))
