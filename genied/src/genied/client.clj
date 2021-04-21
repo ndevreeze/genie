@@ -7,8 +7,8 @@
             [genied.diagnostics :as diag]
             [genied.state :as state]
             [me.raynes.fs :as fs]
-            [nrepl.server :as nrepl]
-            [ndevreeze.logger :as log]))
+            [ndevreeze.logger :as log]
+            [nrepl.server :as nrepl]))
 
 (defn init
   "Init client part, dummy for now"

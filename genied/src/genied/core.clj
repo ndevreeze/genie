@@ -5,10 +5,10 @@
             [genied.client :as client]
             [genied.diagnostics :as diag]
             [genied.state :as state]
-            [ndevreeze.logger :as log]
+            [me.raynes.fs :as fs]
             [ndevreeze.cmdline :as cl]
-            [nrepl.server :as nrepl]
-            [me.raynes.fs :as fs]))
+            [ndevreeze.logger :as log]
+            [nrepl.server :as nrepl]))
 
 (def cli-options
   "Command line options"

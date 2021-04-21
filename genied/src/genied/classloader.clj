@@ -7,8 +7,8 @@
             [clojure.edn :as edn]
             [genied.diagnostics :as diag]
             [genied.state :as state]
-            [ndevreeze.logger :as log]
-            [me.raynes.fs :as fs]))
+            [me.raynes.fs :as fs]
+            [ndevreeze.logger :as log]))
 
 ;; 2021-03-13: this one from discussion in clojure threads.
 (defn ensure-dynamic-classloader
