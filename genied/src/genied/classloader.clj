@@ -100,13 +100,13 @@
    So they won't be loaded again, either from server or client/script."
   []
   ;; copied from project.clj - how to keep in sync?
-  (doseq [coord '[[org.clojure/clojure "1.10.1"]
-                  [org.clojure/tools.cli "1.0.194"]
+  (doseq [coord '[[org.clojure/clojure "1.10.3"]
+                  [org.clojure/tools.cli "1.0.206"]
                   [clj-commons/fs "1.6.307"]
                   [nrepl "0.8.3"]
-                  [clj-commons/pomegranate "1.2.0"]
-                  [ndevreeze/logger "0.3.0"]
-                  [ndevreeze/cmdline "0.1.2"]]]
+                  [clj-commons/pomegranate "1.2.1"]
+                  [ndevreeze/logger "0.4.0"]
+                  [ndevreeze/cmdline "0.2.0"]]]
     (log/info (str "Mark as loaded from project.clj: " coord))
     (state/add-dep! coord)))
 
