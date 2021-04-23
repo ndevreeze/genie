@@ -95,20 +95,42 @@
          (log/debug "Result of add-dependencies: " res)
          res)))))
 
+(def project-libraries
+  "Same list as in project.clj"
+  '[[org.clojure/clojure "1.10.3"]
+    [org.clojure/tools.cli "1.0.206"]
+    [clj-commons/fs "1.6.307"]
+    [nrepl "0.8.3"]
+    [clj-commons/pomegranate "1.2.1"]
+    [org.apache.httpcomponents/httpclient "4.5.9"]
+    [org.slf4j/slf4j-nop "1.7.30"]
+    [org.jsoup/jsoup "1.13.1"]
+    [ndevreeze/logger "0.4.0"]
+    [ndevreeze/cmdline "0.2.0"]])
+
 (defn mark-project-libraries
   "Mark libraries in project.clj as loaded.
    So they won't be loaded again, either from server or client/script."
   []
   ;; copied from project.clj - how to keep in sync?
-  (doseq [coord '[[org.clojure/clojure "1.10.3"]
-                  [org.clojure/tools.cli "1.0.206"]
-                  [clj-commons/fs "1.6.307"]
-                  [nrepl "0.8.3"]
-                  [clj-commons/pomegranate "1.2.1"]
-                  [ndevreeze/logger "0.4.0"]
-                  [ndevreeze/cmdline "0.2.0"]]]
+  (doseq [coord project-libraries]
     (log/info (str "Mark as loaded from project.clj: " coord))
     (state/add-dep! coord)))
+
+#_(defn mark-project-libraries
+    "Mark libraries in project.clj as loaded.
+   So they won't be loaded again, either from server or client/script."
+    []
+    ;; copied from project.clj - how to keep in sync?
+    (doseq [coord '[[org.clojure/clojure "1.10.3"]
+                    [org.clojure/tools.cli "1.0.206"]
+                    [clj-commons/fs "1.6.307"]
+                    [nrepl "0.8.3"]
+                    [clj-commons/pomegranate "1.2.1"]
+                    [ndevreeze/logger "0.4.0"]
+                    [ndevreeze/cmdline "0.2.0"]]]
+      (log/info (str "Mark as loaded from project.clj: " coord))
+      (state/add-dep! coord)))
 
 ;; TODO - support other (non-maven) coordinates?
 (defn load-libraries
