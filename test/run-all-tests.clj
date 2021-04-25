@@ -138,21 +138,21 @@
 (defn start-daemon
   "Start daemon using genie.clj client"
   [opt]
-  (let [p (p/process ["../client/genie.clj" "--start-daemon" "-p" (:port opt)])]
+  (let [p (p/process ["bb" "../client/genie.clj" "--start-daemon" "-p" (:port opt)])]
     (info "Started daemon process, waiting to be ready...")
     (info "Result of waiting: " @p ", " p)))
 
 (defn stop-daemon
   "Stop daemon using genie.clj client"
   [opt]
-  (let [p (p/process ["../client/genie.clj" "--stop-daemon" "-p" (:port opt)])]
+  (let [p (p/process ["bb" "../client/genie.clj" "--stop-daemon" "-p" (:port opt)])]
     (Thread/sleep 500)
     (info "Stopped daemon process...")
     (info "Result of waiting: " @p ", " p)))
 
 (defn run-test
   [{:keys [port]} script cmdline-opts]
-  (let [proc (p/process (concat ["../client/genie.clj" "-p" port script] cmdline-opts)
+  (let [proc (p/process (concat ["bb" "../client/genie.clj" "-p" port script] cmdline-opts)
                         {:in "foo" :out :string :err :string})]
     (info "Started test: " script ", with options: " (str/join " " cmdline-opts))
     (deref proc)

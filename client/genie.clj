@@ -60,9 +60,16 @@
         (io/file path))))
 
 (defn normalized
-  "From Raynes/fs, combination of absolutize and normalize"
+  "From Raynes/fs, combination of absolutize and normalize.
+   Also replace backslashes by forward slashes, wrt calling nRepl"
   [path]
-  (fs/normalize (fs/absolutize path)))
+  (str/replace (fs/normalize (fs/absolutize path))
+               #"\\" "/"))
+
+#_(defn normalized
+    "From Raynes/fs, combination of absolutize and normalize"
+    [path]
+    (fs/normalize (fs/absolutize path)))
 
 (def cli-options
   "Genie client command line options"
@@ -167,20 +174,21 @@
   (when-let [logdir (:logdir opt)]
     (fs/file logdir (format "genie-%s.log" (current-timestamp-file)))))
 
-;; some functions to determine locations of java, genied.jar and config.
-(defn java-binary
-  "Determine location of java binary.
-   By checking in this order:
-   - GENIE_JAVA_CMD
-   - JAVA_CMD
-   - JAVA_HOME
-   - java"
-  []
-  (or (System/getenv "GENIE_JAVA_CMD")
-      (System/getenv "JAVA_CMD")
-      (when-let [java-home (System/getenv "JAVA_HOME")]
-        (str (fs/file java-home "bin" "java")))
-      "java"))
+(defn first-file
+  "Find first file according to glob-specs in dir.
+   Return nil if none found, a string otherwise. Search in dir (no
+  sub-dirs). Check glob-specs seq in order"
+  [dir glob-specs]
+  (println "Called first file with:" dir ", and: " glob-specs)
+  (when (and dir (seq glob-specs))
+    (println "within when")
+    (if-let [files (seq (fs/glob (fs/file dir) (first glob-specs)))]
+      (do
+        (println "if-let ok, files=" files)
+        (str (first files)))
+      (do
+        (println "if-let not-ok, so recur with: " (rest glob-specs))
+        (recur dir (rest glob-specs))))))
 
 (defn first-file
   "Find first file according to glob-specs in dir.
@@ -188,9 +196,52 @@
   sub-dirs). Check glob-specs seq in order"
   [dir glob-specs]
   (when (and dir (seq glob-specs))
-    (if-let [files (fs/glob (fs/file dir) (first glob-specs))]
+    (if-let [files (seq (fs/glob (fs/file dir) (first glob-specs)))]
       (str (first files))
       (recur dir (rest glob-specs)))))
+
+(defn first-executable
+  "Find first file according to glob-specs in dir.
+   Return nil if none found, a string otherwise. Search in dir (no
+  sub-dirs). Check glob-specs seq in order"
+  [opt dir names]
+  (when (:verbose opt)
+    (debug "called first-executable with:" dir ", and:" names))
+  (when (and dir (seq names))
+    (let [file (fs/file dir (first names))]
+      (if (fs/executable? file)
+        file
+        (recur opt dir (rest names))))))
+
+#_(defn first-executable
+    "Find first file according to glob-specs in dir.
+   Return nil if none found, a string otherwise. Search in dir (no
+  sub-dirs). Check glob-specs seq in order"
+    [dir names]
+    (println "Called first file with:" dir ", and: " names)
+    (when (and dir (seq names))
+      (println "within when")
+      (let [file (fs/file dir (first names))]
+        (println "combined file:" file)
+        (if (fs/executable? file)
+          (do
+            (println "Ok, file found: " file)
+            file)
+          (do
+            (println "file not found, so recur:" file)
+            (recur dir (rest names)))))))
+
+(defn find-in-path
+  "Find executable in system PATH.
+   Use fs/exec-paths.
+   names is a seq of e.g. [\"java\" \"java.exe\"]"
+  ([opt names]
+   (find-in-path opt names (fs/exec-paths)))
+  ([opt names paths]
+   (when (seq paths)
+     (if-let [first-exec (first-executable opt (first paths) names)]
+       first-exec
+       (recur opt names (rest paths))))))
 
 (defn first-existing-dir
   "Find first dir in dirs seq that exists and return it.
@@ -201,6 +252,37 @@
       (if (fs/exists? dir)
         (str dir)
         (recur (rest dirs))))))
+
+;; some functions to determine locations of java, genied.jar and config.
+(defn java-binary
+  "Determine location of java binary.
+   By checking in this order:
+   - GENIE_JAVA_CMD
+   - JAVA_CMD
+   - JAVA_HOME
+   - java in system PATH"
+  [opt]
+  (or (System/getenv "GENIE_JAVA_CMD")
+      (System/getenv "JAVA_CMD")
+      #_(when-let [java-home (System/getenv "JAVA_HOME")]
+          (str (fs/file java-home "bin" "java")))
+      (when-let [java-home (System/getenv "JAVA_HOME")]
+        (first-executable opt java-home ["java" "java.exe"]))
+      (find-in-path opt ["java" "java.exe"])))
+
+#_(defn java-binary
+    "Determine location of java binary.
+   By checking in this order:
+   - GENIE_JAVA_CMD
+   - JAVA_CMD
+   - JAVA_HOME
+   - java in system PATH"
+    []
+    (or (System/getenv "GENIE_JAVA_CMD")
+        (System/getenv "JAVA_CMD")
+        (when-let [java-home (System/getenv "JAVA_HOME")]
+          (str (fs/file java-home "bin" "java")))
+        "java"))
 
 (defn daemon-dir
   "Determine location of genie daemon dir.
@@ -610,9 +692,24 @@
   (if (and java-bin (fs/exists? genied-jar))
     [[java-bin '-jar genied-jar '-p (:port opt)]
      {:dir (str (fs/parent genied-jar))}]
-    [['lein 'run '-- '-p (:port opt)]
+    [[(find-in-path opt ["bash" "bash.exe"]) 'lein 'run '-- '-p (:port opt)]
      {:dir (str (normalized (fs/file *file* ".." ".." "genied")))
       :inherit true}]))
+
+#_(defn genied-command
+    "Create command to start genied.
+   Based on java-bin and genied-jar.
+   Or failing that, Leiningen.
+   Return vector of command and process options (cwd to use).
+   Also set :inherit true to see the daemon starting, but this
+   does not seem to work"
+    [opt java-bin genied-jar]
+    (if (and java-bin (fs/exists? genied-jar))
+      [[java-bin '-jar genied-jar '-p (:port opt)]
+       {:dir (str (fs/parent genied-jar))}]
+      [['lein 'run '-- '-p (:port opt)]
+       {:dir (str (normalized (fs/file *file* ".." ".." "genied")))
+        :inherit true}]))
 
 ;; TODO - check if process already started. Although starting twice
 ;; does not seem harmful: (process) returns quickly, old process still
@@ -623,7 +720,7 @@
   binary and genied.jar"
   [opt]
   (println "Starting daemon on port:" (:port opt))
-  (let [java-bin (java-binary)
+  (let [java-bin (java-binary opt)
         genied-jar (daemon-jar opt)
         [command command-opt] (genied-command opt java-bin genied-jar)]
     (debug "java binary:" java-bin)
