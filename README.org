@@ -21,17 +21,18 @@ Another way of mitigating the slow startup of Clojure on the JVM, by starting a 
 
 Install directories may be given:
 #+begin_src text :tangle yes
-install.clj - babashka script to install genie:
-  daemon, client, config, scripts and template
-      --daemon DAEMON      Daemon directory
-      --client CLIENT      Client directory
-      --config CONFIG      Config directory
-      --logdir LOGDIR      Logging dir for daemon and client
-      --scripts SCRIPTS    Scripts directory
-      --template TEMPLATE  Template directory
-      --dryrun             Show what would have been done
-      --force              Force re-creating uberjar
-  -h, --help
+  $ bb ./install.clj -h
+  install.clj - babashka script to install genie:
+    daemon, client, config, scripts and template
+        --daemon DAEMON      Daemon directory
+        --client CLIENT      Client directory
+        --config CONFIG      Config directory
+        --logdir LOGDIR      Logging dir for daemon and client
+        --scripts SCRIPTS    Scripts directory
+        --template TEMPLATE  Template directory
+        --dryrun             Show what would have been done
+        --force              Force re-creating uberjar
+    -h, --help               Show help
 #+end_src
 
 With default locations:
