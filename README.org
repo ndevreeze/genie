@@ -11,9 +11,10 @@ Another way of mitigating the slow startup of Clojure on the JVM, by starting a 
 - Fast startup of the script
 - It might help to see the daemon as part of the OS
 * Installation
-Genie uses [[https://book.babashka.org][Babashka]] for the client and installation. So make sure you have this installed.
-
-Then:
+** Prerequisites
+- Genie uses [[https://book.babashka.org][Babashka]] for the client and installation. So make sure you have this installed.
+- [[https://leiningen.org][Leiningen]] is used for creating an uberjar. This will reduce daemon startup time
+** Install with Babashka
 #+begin_src bash :tangle yes
   bb ./install.clj
 #+end_src
@@ -34,8 +35,7 @@ install.clj - babashka script to install genie:
 #+end_src
 
 With default locations:
-
-| item       | location                 | specs, env-vars                           |
+| item       | default location         | Related environment variables             |
 |------------+--------------------------+-------------------------------------------|
 | java       | <system>                 | GENIE_JAVA_CMD, JAVA_CMD, JAVA_HOME, java |
 | daemon/jar | ~/tools/genie, lein run  | GENIE_DAEMON_DIR (also genied.sh)         |
@@ -44,9 +44,8 @@ With default locations:
 | templates  | ~/.config/genie/template | GENIE_TEMPLATE_DIR, GENIE_CONFIG_DIR      |
 | scripts    | ~/bin                    | GENIE_SCRIPTS_DIR                         |
 | client     | ~/bin                    | GENIE_CLIENT_DIR                          |
-
+** Set environment variables
 You might want to add the following environment vars to your .profile:
-
 #+begin_src emacs-lisp :tangle yes
 export GENIE_CLIENT_DIR=~/bin
 export GENIE_DAEMON_DIR=~/tools/genie
@@ -56,7 +55,7 @@ export GENIE_LOG_DIR=~/log
 export GENIE_TEMPLATE_DIR=~/.config/genie/template
 export GENIE_SCRIPTS_DIR=~/bin
 #+end_src
-
+** Start automatically at system boot
 And add a crontab entry so the Genie daemon starts automatically:
 #+begin_src emacs-lisp :tangle yes
 @reboot /home/your-user-name/tools/genie/genied.sh
