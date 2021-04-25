@@ -23,7 +23,6 @@
     ([] homedir)
     ([user] (if (empty? user) homedir (io/file usersdir user)))))
 
-;; from raynes.fs, no home functions in babashka.fs
 (defn expand-home
   "If `path` begins with a tilde (`~`), expand the tilde to the value
   of the `user.home` system property. If the `path` begins with a
@@ -31,15 +30,34 @@
   be a username. This is expanded to the path to that user's home
   directory. This is (naively) assumed to be a directory with the same
   name as the user relative to the parent of the current value of
-  `user.home`."
+  `user.home`. Return nil if path is nil"
   [path]
-  (let [path (str path)]
-    (if (.startsWith path "~")
-      (let [sep (.indexOf path File/separator)]
-        (if (neg? sep)
-          (home (subs path 1))
-          (io/file (home (subs path 1 sep)) (subs path (inc sep)))))
-      (io/file path))))
+  (when path
+    (let [path (str (fs/normalize path))]
+      (if (.startsWith path "~")
+        (let [sep (.indexOf path File/separator)]
+          (if (neg? sep)
+            (home (subs path 1))
+            (io/file (home (subs path 1 sep)) (subs path (inc sep)))))
+        (io/file path)))))
+
+;; from raynes.fs, no home functions in babashka.fs
+#_(defn expand-home
+    "If `path` begins with a tilde (`~`), expand the tilde to the value
+  of the `user.home` system property. If the `path` begins with a
+  tilde immediately followed by some characters, they are assumed to
+  be a username. This is expanded to the path to that user's home
+  directory. This is (naively) assumed to be a directory with the same
+  name as the user relative to the parent of the current value of
+  `user.home`."
+    [path]
+    (let [path (str path)]
+      (if (.startsWith path "~")
+        (let [sep (.indexOf path File/separator)]
+          (if (neg? sep)
+            (home (subs path 1))
+            (io/file (home (subs path 1 sep)) (subs path (inc sep)))))
+        (io/file path))))
 
 (defn normalized
   "From Raynes/fs, combination of absolutize and normalize"
@@ -201,7 +219,15 @@
    By checking the dirs as in `daemon-dir`.
    Return nil iff nothing found."
   [opt]
-  (fs/file (daemon-dir opt) "genied.jar"))
+  (when-let [dir (daemon-dir opt)]
+    (fs/file dir "genied.jar")))
+
+#_(defn daemon-jar
+    "Determine install location of genied jar file
+   By checking the dirs as in `daemon-dir`.
+   Return nil iff nothing found."
+    [opt]
+    (fs/file (daemon-dir opt) "genied.jar"))
 
 (defn bytes->str
   "If `x` is a byte-array, convert it to a string.

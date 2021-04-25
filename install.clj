@@ -1,7 +1,6 @@
 #! /usr/bin/env bb
 
 ;; TODO other locations needed on Windows and Mac?
-
 (ns install
   "Installer for genie.
    Locations are determined like this:
@@ -14,38 +13,48 @@
      - template in ~/.config/genie/template"
   (:require [clojure.tools.cli :as cli]
             [clojure.java.io :as io]
+            [clojure.string :as str]
             [babashka.fs :as fs]
             [babashka.process :as p])
   (:import [java.io File]))
 
+(load-file (fs/file (fs/parent *file*) "client/genie.clj"))
+
 ;; from raynes.fs, no home functions in babashka.fs
-(let [homedir (io/file (System/getProperty "user.home"))
-      usersdir (.getParent homedir)]
-  (defn home
-    "With no arguments, returns the current value of the `user.home` system
+#_(let [homedir (io/file (System/getProperty "user.home"))
+        usersdir (.getParent homedir)]
+    (defn home
+      "With no arguments, returns the current value of the `user.home` system
      property. If a `user` is passed, returns that user's home directory. It
      is naively assumed to be a directory with the same name as the `user`
      located relative to the parent of the current value of `user.home`."
-    ([] homedir)
-    ([user] (if (empty? user) homedir (io/file usersdir user)))))
+      ([] homedir)
+      ([user] (if (empty? user) homedir (io/file usersdir user)))))
+
+#_(defn expand-home
+    [path]
+    (genie/expand-home path))
 
 ;; from raynes.fs, no home functions in babashka.fs
-(defn expand-home
-  "If `path` begins with a tilde (`~`), expand the tilde to the value
+;; add: return nil iff path is nil.
+;; add: call to fs/normalize, tot convert ~/bin to ~\\bin on Windows.
+#_(defn expand-home
+    "If `path` begins with a tilde (`~`), expand the tilde to the value
   of the `user.home` system property. If the `path` begins with a
   tilde immediately followed by some characters, they are assumed to
   be a username. This is expanded to the path to that user's home
   directory. This is (naively) assumed to be a directory with the same
   name as the user relative to the parent of the current value of
-  `user.home`."
-  [path]
-  (let [path (str path)]
-    (if (.startsWith path "~")
-      (let [sep (.indexOf path File/separator)]
-        (if (neg? sep)
-          (home (subs path 1))
-          (io/file (home (subs path 1 sep)) (subs path (inc sep)))))
-      (io/file path))))
+  `user.home`. Return nil if path is nil"
+    [path]
+    (when path
+      (let [path (str (fs/normalize path))]
+        (if (.startsWith path "~")
+          (let [sep (.indexOf path File/separator)]
+            (if (neg? sep)
+              (home (subs path 1))
+              (io/file (home (subs path 1 sep)) (subs path (inc sep)))))
+          (io/file path)))))
 
 (def cli-options
   "Cmdline options"
@@ -90,7 +99,7 @@
    Return nil if none found."
   [dirs]
   (when-let [dir (first dirs)]
-    (let [dir (expand-home dir)]
+    (let [dir (genie/expand-home dir)]
       (if (dir-writable? dir)
         (str dir)
         (recur (rest dirs))))))
@@ -98,7 +107,7 @@
 (defn template-dir
   "Determine template directory to use"
   [opt]
-  (expand-home
+  (genie/expand-home
    (cond (:template opt) (:template opt)
          (System/getenv "GENIE_TEMPLATE_DIR") (System/getenv "GENIE_TEMPLATE_DIR")
          (System/getenv "GENIE_CONFIG_DIR")
@@ -107,17 +116,17 @@
          "~/.config/genie/template")))
 
 ;; these functions are the same in genie.clj, so could put in include/library.
-(defn daemon-dir
-  "Determine location of genie daemon dir.
+#_(defn daemon-dir
+    "Determine location of genie daemon dir.
    By checking in this order:
    - daemon in cmdline options
    - GENIE_DAEMON_DIR
    - ~/tools/genie"
-  [opt]
-  (expand-home
-   (or (:daemon opt)
-       (System/getenv "GENIE_DAEMON_DIR")
-       (first-creatable-dir [ "~/tools/genie"]))))
+    [opt]
+    (genie/expand-home
+     (or (:daemon opt)
+         (System/getenv "GENIE_DAEMON_DIR")
+         (first-creatable-dir [ "~/tools/genie"]))))
 
 (defn client-dir
   "Determine location of client directory
@@ -126,7 +135,7 @@
    - GENIE_CLIENT_DIR
    - ~/bin"
   [opt]
-  (expand-home
+  (genie/expand-home
    (or (:client opt)
        (System/getenv "GENIE_CLIENT_DIR")
        "~/bin")))
@@ -138,7 +147,7 @@
    - GENIE_LOG_DIR
    - ~/log"
   [opt]
-  (expand-home
+  (genie/expand-home
    (or (:logdir opt)
        (System/getenv "GENIE_LOG_DIR")
        "~/log")))
@@ -150,7 +159,7 @@
    - GENIE_CONFIG_DIR
    - ~/bin"
   [opt]
-  (expand-home
+  (genie/expand-home
    (or (:config opt)
        (System/getenv "GENIE_CONFIG_DIR")
        "~/.config/genie")))
@@ -162,24 +171,26 @@
    - GENIE_SCRIPTS_DIR
    - ~/bin"
   [opt]
-  (expand-home
+  (genie/expand-home
    (or (:scripts opt)
        (System/getenv "GENIE_SCRIPTS_DIR")
        "~/bin")))
 
 ;; rename, so same name as in genie.clj
-(defn daemon-jar
-  "Determine install location of genied jar file
+#_(defn daemon-jar
+    "Determine install location of genied jar file
    By checking the dirs as in `daemon-dir`.
    Return nil iff nothing found."
-  [opt]
-  (fs/file (daemon-dir opt) "genied.jar"))
+    [opt]
+    (when-let [dir (daemon-dir opt)]
+      (fs/file dir "genied.jar")))
 
 (defn source-jar
   "Determine path of source uberjar, iff it exists.
    Return nil otherwise"
   []
-  (first (fs/glob (fs/file "genied/target/uberjar") "*standalone*.jar")))
+  (when (fs/exists? "genied/target/uberjar")
+    (first (fs/glob (fs/file "genied/target/uberjar") "*standalone*.jar"))))
 
 (defn do-make-uberjar!
   "Make uberjar.
@@ -215,24 +226,30 @@
    Create target dirs if needed
    With options:
    :replace - true - copy even if already exists. False - not
-   :dryrun - true - show what would be copied"
+   :dryrun - true - show what would be copied
+  if either src or dest is nil, don't install anything and print a warning"
   [src dest {:keys [replace dryrun]}]
-  (when (or replace (not (fs/exists? dest)))
-    (if dryrun
-      (println "Dryrun:" (str src) "=>" (str dest))
-      (do
-        (println "Install:" (str src) "=>" (str dest))
-        (fs/create-dirs (fs/parent dest))
-        (fs/copy src dest {:replace-existing true})))))
+  (if (or (nil? src) (nil? dest))
+    (println "ERROR: Either src or rest is nil, don't copy. src=" src ", dest=" dest)
+    (when (or replace (not (fs/exists? dest)))
+      (if dryrun
+        (println "Dryrun:" (str src) "=>" (str dest))
+        (do
+          (println "Install:" (str src) "=>" (str dest))
+          (fs/create-dirs (fs/parent dest))
+          (fs/copy src dest {:replace-existing true}))))))
 
 (defn install-daemon
   "Install daemon uberjar and bash script to target location"
   [opt]
   (let [src (make-uberjar opt)
-        dest (daemon-jar opt)]
-    (install-file src dest (merge opt {:replace true}))
-    (install-file "genied/genied.sh" (fs/file (fs/parent dest) "genied.sh")
-                  (merge opt {:replace true}))))
+        dest (genie/daemon-jar opt)]
+    (if (and src dest)
+      (do
+        (install-file src dest (merge opt {:replace true}))
+        (install-file "genied/genied.sh" (fs/file (fs/parent dest) "genied.sh")
+                      (merge opt {:replace true})))
+      (println "ERROR: Either src or rest is nil, don't install. src=" src ", dest=" dest))))
 
 (defn install-clients
   "Install clients to given clients dir"
@@ -265,23 +282,28 @@
         src "genied/genie.edn"]
     (install-file src (fs/file target-dir (fs/file-name src)) (merge opt {:replace false}))))
 
+(defn unix-path
+  "Replace backslashes (\\) with forward slashes (/) for putting in bash config"
+  [path]
+  (str/replace (str path) #"\\" "/"))
+
 (defn show-bash-config
   "Show lines to put in .profile or .bashrc"
   [opt]
   (println "\nAdd the following lines to your ~/.profile:")
-  (println (str "export GENIE_CLIENT_DIR=" (client-dir opt)))
-  (println (str "export GENIE_DAEMON_DIR=" (daemon-dir opt)))
+  (println (str "export GENIE_CLIENT_DIR=" (unix-path (client-dir opt))))
+  (println (str "export GENIE_DAEMON_DIR=" (unix-path (genie/daemon-dir opt))))
   (println (str "export GENIE_JAVA_CMD=java"))
-  (println (str "export GENIE_CONFIG_DIR=" (config-dir opt)))
-  (println (str "export GENIE_LOG_DIR=" (log-dir opt)))
-  (println (str "export GENIE_TEMPLATE_DIR=" (template-dir opt)))
-  (println (str "export GENIE_SCRIPTS_DIR=" (scripts-dir opt))))
+  (println (str "export GENIE_CONFIG_DIR=" (unix-path (config-dir opt))))
+  (println (str "export GENIE_LOG_DIR=" (unix-path (log-dir opt))))
+  (println (str "export GENIE_TEMPLATE_DIR=" (unix-path (template-dir opt))))
+  (println (str "export GENIE_SCRIPTS_DIR=" (unix-path (scripts-dir opt)))))
 
 (defn show-crontab
   "Show command to add to crontab"
   [opt]
   (println "\nAdd the following to your crontab:")
-  (println "@reboot" (str (fs/file (daemon-dir opt) "genied.sh"))))
+  (println "@reboot" (unix-path (fs/file (genie/daemon-dir opt) "genied.sh"))))
 
 (defn install
   "Install daemon, client, config, templates"
