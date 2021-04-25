@@ -164,6 +164,7 @@ Also from the 'test' directory:
 | test_two_namespaces.clj | Test with 2 namespaces in a file                   |
 | test_write_file.clj     | Test writing a text file                           |
 * Todo
+- See [[https://github.com/ndevreeze/genie/issues][Issues on Github]]
 - See [[file:docs/todo.org]] for details.
 - More real world using and testing
 * Related projects
