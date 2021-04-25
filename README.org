@@ -6,11 +6,14 @@ Another way of mitigating the slow startup of Clojure on the JVM, by starting a 
 - [[https://nrepl.org/nrepl/index.html][nRepl]] - for running the daemon and providing client connections (using bencode).
 - [[https://github.com/clj-commons/pomegranate][Pomegranate]] - for dynamically loading libraries
 - [[https://book.babashka.org][Babashka]] - for the client and installation script.
+* Starting points
+- Every script that can be executed by clj (using deps.edn) should also be able to be executed using genie
+- Fast startup of the script
+- It might help to see the daemon as part of the OS
 * Installation
 Genie uses [[https://book.babashka.org][Babashka]] for the client and installation. So make sure you have this installed.
 
 Then:
-
 #+begin_src bash :tangle yes
   bb ./install.clj
 #+end_src
@@ -58,6 +61,8 @@ And add a crontab entry so the Genie daemon starts automatically:
 #+begin_src emacs-lisp :tangle yes
 @reboot /home/your-user-name/tools/genie/genied.sh
 #+end_src
+
+Or, in Windows: TBD
 * Test without installation
 If you want to check out Genie without installing it, assuming you have Babashka and Leiningen installed (this uses 'lein run'):
 #+begin_src bash :tangle yes
@@ -159,10 +164,6 @@ Also from the 'test' directory:
 | test_stdout_stderr.clj  | Test output to stdout and stderr                   |
 | test_two_namespaces.clj | Test with 2 namespaces in a file                   |
 | test_write_file.clj     | Test writing a text file                           |
-* Starting points
-- Every script that can be executed by clj (using deps.edn) should also be able to be executed using genie
-- Fast startup of the script
-- It might help to see the daemon as part of the OS
 * Todo
 - See [[file:docs/todo.org]] for details.
 - More real world using and testing
