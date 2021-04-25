@@ -22,7 +22,7 @@
   ;; 2021-04-21: from check-namespace-decls, do not use prefixes, is not standard.
   :check-namespace-decls {:prefix-rewriting false}
 
-  :codox {:output-path "codox"
+  :codox {:output-path "../docs/api"
           :doc-paths ["../docs"]
           :metadata {:doc/format :markdown}
           :source-uri "https://github.com/ndevreeze/genie/blob/main/genied/{filepath}#L{line}"}
