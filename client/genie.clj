@@ -302,7 +302,9 @@
    Return nil iff nothing found."
   [opt]
   (when-let [dir (daemon-dir opt)]
-    (fs/file dir "genied.jar")))
+    (let [genied-jar (fs/file dir "genied.jar")]
+      (when (fs/exists? genied-jar)
+        genied-jar))))
 
 #_(defn daemon-jar
     "Determine install location of genied jar file
@@ -689,7 +691,8 @@
    Also set :inherit true to see the daemon starting, but this
    does not seem to work"
   [opt java-bin genied-jar]
-  (if (and java-bin (fs/exists? genied-jar))
+  ;; fs/exists? throws on nil, so check.
+  (if (and java-bin genied-jar (fs/exists? genied-jar))
     [[java-bin '-jar genied-jar '-p (:port opt)]
      {:dir (str (fs/parent genied-jar))}]
     [[(find-in-path opt ["bash" "bash.exe"]) 'lein 'run '-- '-p (:port opt)]
