@@ -764,6 +764,20 @@
            stop-daemon restart-daemon]}]
   (or list-sessions kill-sessions start-daemon stop-daemon restart-daemon))
 
+(defn print-context
+  "Print context vars when verbose is given"
+  [opts opt args]
+  (when *verbose*
+    (debug "*command-line-args* = " *command-line-args*)
+    (debug "opts = " opts)
+    (debug "opt=" opt ", args=" args)
+    (doseq [env-var ["JAVA_HOME" "JAVA_CMD" "GENIE_JAVA_CMD"
+                     "GENIE_CLIENT_DIR" "GENIE_CONFIG_DIR" "GENIE_DAEMON_DIR"
+                     "GENIE_LOG_DIR" "GENIE_SCRIPTS_DIR" "GENIE_TEMPLATE_DIR" ]]
+      (debug "ENV VAR" env-var "=" (System/getenv env-var)))
+    (doseq [path (fs/exec-paths)]
+      (debug "in PATH:" path))))
+
 (defn main
   "Main function"
   []
@@ -772,9 +786,7 @@
         args (:arguments opts)]
     (binding [*verbose* (-> opts :options :verbose)
               *logfile* (log-file (:options opts))]
-      (debug "*command-line-args* = " *command-line-args*)
-      (debug "opts = " opts)
-      (debug "opt=" opt ", args=" args)
+      (print-context opts opt args)
       (cond (admin-command? opt)
             (admin-command! opt args)
             (or (:help opt) (:errors opts) (empty? args))
