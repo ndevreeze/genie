@@ -689,13 +689,15 @@
    Or failing that, Leiningen.
    Return vector of command and process options (cwd to use).
    Also set :inherit true to see the daemon starting, but this
-   does not seem to work"
+   does not seem to work.
+   If client is started with verbose, so will daemon"
   [opt java-bin genied-jar]
   ;; fs/exists? throws on nil, so check.
   (if (and java-bin genied-jar (fs/exists? genied-jar))
-    [[java-bin '-jar genied-jar '-p (:port opt)]
+    [[java-bin '-jar genied-jar (if *verbose* '-v "") '-p (:port opt)]
      {:dir (str (fs/parent genied-jar))}]
-    [[(find-in-path ["bash" "bash.exe"]) 'lein 'run '-- '-p (:port opt)]
+    [[(find-in-path ["bash" "bash.exe"]) (find-in-path ["lein"]) 'run
+      '-- (if *verbose* '-v "") '-p (:port opt)]
      {:dir (str (normalized (fs/file *file* ".." ".." "genied")))
       :inherit true}]))
 
