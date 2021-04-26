@@ -204,14 +204,14 @@
   "Find first file according to glob-specs in dir.
    Return nil if none found, a string otherwise. Search in dir (no
   sub-dirs). Check glob-specs seq in order"
-  [opt dir names]
-  (when (:verbose opt)
+  [dir names]
+  (when *verbose*
     (debug "called first-executable with:" dir ", and:" names))
   (when (and dir (seq names))
     (let [file (fs/file dir (first names))]
       (if (fs/executable? file)
         file
-        (recur opt dir (rest names))))))
+        (recur dir (rest names))))))
 
 #_(defn first-executable
     "Find first file according to glob-specs in dir.
@@ -235,13 +235,13 @@
   "Find executable in system PATH.
    Use fs/exec-paths.
    names is a seq of e.g. [\"java\" \"java.exe\"]"
-  ([opt names]
-   (find-in-path opt names (fs/exec-paths)))
-  ([opt names paths]
+  ([names]
+   (find-in-path names (fs/exec-paths)))
+  ([names paths]
    (when (seq paths)
-     (if-let [first-exec (first-executable opt (first paths) names)]
+     (if-let [first-exec (first-executable (first paths) names)]
        first-exec
-       (recur opt names (rest paths))))))
+       (recur names (rest paths))))))
 
 (defn first-existing-dir
   "Find first dir in dirs seq that exists and return it.
@@ -267,8 +267,8 @@
       #_(when-let [java-home (System/getenv "JAVA_HOME")]
           (str (fs/file java-home "bin" "java")))
       (when-let [java-home (System/getenv "JAVA_HOME")]
-        (first-executable opt java-home ["java" "java.exe"]))
-      (find-in-path opt ["java" "java.exe"])))
+        (first-executable java-home ["java" "java.exe"]))
+      (find-in-path ["java" "java.exe"])))
 
 #_(defn java-binary
     "Determine location of java binary.
@@ -695,7 +695,7 @@
   (if (and java-bin genied-jar (fs/exists? genied-jar))
     [[java-bin '-jar genied-jar '-p (:port opt)]
      {:dir (str (fs/parent genied-jar))}]
-    [[(find-in-path opt ["bash" "bash.exe"]) 'lein 'run '-- '-p (:port opt)]
+    [[(find-in-path ["bash" "bash.exe"]) 'lein 'run '-- '-p (:port opt)]
      {:dir (str (normalized (fs/file *file* ".." ".." "genied")))
       :inherit true}]))
 
