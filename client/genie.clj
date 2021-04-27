@@ -258,11 +258,23 @@
   "Find first dir in dirs seq that exists and return it.
    Return nil if none found."
   [dirs]
+  (when *verbose*
+    (debug "called first-existing-dir with:" dirs))
   (when-let [dir (first dirs)]
     (let [dir (expand-home dir)]
       (if (fs/exists? dir)
         (str dir)
         (recur (rest dirs))))))
+
+#_(defn first-existing-dir
+    "Find first dir in dirs seq that exists and return it.
+   Return nil if none found."
+    [dirs]
+    (when-let [dir (first dirs)]
+      (let [dir (expand-home dir)]
+        (if (fs/exists? dir)
+          (str dir)
+          (recur (rest dirs))))))
 
 ;; some functions to determine locations of java, genied.jar and config.
 (defn java-binary
@@ -295,6 +307,21 @@
           (str (fs/file java-home "bin" "java")))
         "java"))
 
+#_(defn daemon-dir
+    "Determine location of genie daemon dir.
+   By checking in this order:
+   - daemon in cmdline options
+   - GENIE_DAEMON_DIR
+   - ~/tools/genie
+   - genied/target/uberjar"
+    [opt]
+    (expand-home
+     (or (:daemon opt)
+         (System/getenv "GENIE_DAEMON_DIR")
+         (first-existing-dir
+          ["~/tools/genie"
+           (fs/normalize (fs/file *file* "../../genied/target/uberjar"))]))))
+
 (defn daemon-dir
   "Determine location of genie daemon dir.
    By checking in this order:
@@ -313,9 +340,19 @@
    Return nil iff nothing found."
   [opt]
   (when-let [dir (daemon-dir opt)]
+    (debug "Found daemon-dir:" dir)
     (let [genied-jar (fs/file dir "genied.jar")]
       (when (fs/exists? genied-jar)
         genied-jar))))
+
+(defn source-jar
+  "Determine path of source uberjar, iff it exists.
+   Return nil otherwise"
+  []
+  (let [genie-src-root (fs/normalize (fs/file *file* "../.."))
+        uberjar-dir (fs/file genie-src-root "genied/target/uberjar")]
+    (when (fs/exists? uberjar-dir)
+      (first (fs/glob uberjar-dir "*standalone*.jar")))))
 
 #_(defn daemon-jar
     "Determine install location of genied jar file
@@ -784,7 +821,7 @@
     (println "Running on Windows, starting daemon is tricky."
              "If this fails, try starting the Genie daemon manually."))
   (let [java-bin (java-binary opt)
-        genied-jar (daemon-jar opt)
+        genied-jar (or (daemon-jar opt) (source-jar))
         [command command-opt] (genied-command opt java-bin genied-jar)]
     (if command
       (do
