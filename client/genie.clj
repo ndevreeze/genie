@@ -71,6 +71,17 @@
     [path]
     (fs/normalize (fs/absolutize path)))
 
+(defn os-name
+  "Return name of operating system
+   using (System/getProperty \"os.name\")"
+  []
+  (System/getProperty "os.name"))
+
+(defn windows?
+  "Return true iff os-name has Windows"
+  []
+  (boolean (re-find #"^Windows" (os-name))))
+
 (def cli-options
   "Genie client command line options"
   [["-p" "--port PORT" "Genie daemon port number"
@@ -616,8 +627,10 @@
 (defn admin-list-sessions
   "List currently open/running sessions/scripts"
   [opt]
+  (debug "Connecting to daemon on port:" (:port opt))
   (let [admin-session (connect-nrepl opt)]
     (try
+      (debug "Connected, now send list-sessions command")
       (let [sessions
             (-> (do-admin-command admin-session
                                   {"op" "eval"
@@ -690,16 +703,58 @@
    Return vector of command and process options (cwd to use).
    Also set :inherit true to see the daemon starting, but this
    does not seem to work.
-   If client is started with verbose, so will daemon"
+   If client is started with verbose, so will daemon.
+   Return nil iff no suitable command found"
   [opt java-bin genied-jar]
   ;; fs/exists? throws on nil, so check.
-  (if (and java-bin genied-jar (fs/exists? genied-jar))
-    [[java-bin '-jar genied-jar (if *verbose* '-v "") '-p (:port opt)]
-     {:dir (str (fs/parent genied-jar))}]
-    [[(find-in-path ["bash" "bash.exe"]) (find-in-path ["lein"]) 'run
-      '-- (if *verbose* '-v "") '-p (:port opt)]
-     {:dir (str (normalized (fs/file *file* ".." ".." "genied")))
-      :inherit true}]))
+  (cond (and java-bin genied-jar (fs/exists? genied-jar))
+        [[java-bin '-jar genied-jar (if *verbose* '-v "") '-p (:port opt)]
+         {:dir (str (fs/parent genied-jar))}]
+        (find-in-path ["lein"])
+        [[(find-in-path ["lein"]) 'run
+          '-- (if *verbose* '-v "") '-p (:port opt)]
+         {:dir (str (normalized (fs/file *file* ".." ".." "genied")))
+          :inherit true}]
+        :else
+        [nil nil]))
+
+#_(defn genied-command
+    "Create command to start genied.
+   Based on java-bin and genied-jar.
+   Or failing that, Leiningen.
+   Return vector of command and process options (cwd to use).
+   Also set :inherit true to see the daemon starting, but this
+   does not seem to work.
+   If client is started with verbose, so will daemon.
+   Return nil iff no suitable command found"
+    [opt java-bin genied-jar]
+    ;; fs/exists? throws on nil, so check.
+    (if (and java-bin genied-jar (fs/exists? genied-jar))
+      [[java-bin '-jar genied-jar (if *verbose* '-v "") '-p (:port opt)]
+       {:dir (str (fs/parent genied-jar))}]
+      [[(find-in-path ["lein"]) 'run
+        '-- (if *verbose* '-v "") '-p (:port opt)]
+       {:dir (str (normalized (fs/file *file* ".." ".." "genied")))
+        :inherit true}]))
+
+#_(defn genied-command
+    "Create command to start genied.
+   Based on java-bin and genied-jar.
+   Or failing that, Leiningen.
+   Return vector of command and process options (cwd to use).
+   Also set :inherit true to see the daemon starting, but this
+   does not seem to work.
+   If client is started with verbose, so will daemon.
+   This version uses bash as well, wrt Windows."
+    [opt java-bin genied-jar]
+    ;; fs/exists? throws on nil, so check.
+    (if (and java-bin genied-jar (fs/exists? genied-jar))
+      [[java-bin '-jar genied-jar (if *verbose* '-v "") '-p (:port opt)]
+       {:dir (str (fs/parent genied-jar))}]
+      [[(find-in-path ["bash" "bash.exe"]) (find-in-path ["lein"]) 'run
+        '-- (if *verbose* '-v "") '-p (:port opt)]
+       {:dir (str (normalized (fs/file *file* ".." ".." "genied")))
+        :inherit true}]))
 
 #_(defn genied-command
     "Create command to start genied.
@@ -725,18 +780,25 @@
   binary and genied.jar"
   [opt]
   (println "Starting daemon on port:" (:port opt))
+  (when (windows?)
+    (println "Running on Windows, starting daemon is tricky."
+             "If this fails, try starting the Genie daemon manually."))
   (let [java-bin (java-binary opt)
         genied-jar (daemon-jar opt)
         [command command-opt] (genied-command opt java-bin genied-jar)]
-    (debug "java binary:" java-bin)
-    (debug "genied-jar:" genied-jar)
-    (println "cmd:" (str/join " " command) ", cwd:" (:dir command-opt))
-    (let [proc (p/process command command-opt)]
-      (println "Process started, waiting (max 60 sec) until port is available")
-      (if-let [res (wait/wait-for-port "localhost" (:port opt)
-                                       {:timeout 60000 :pause 200})]
-        (println "Ok, started in" (:took res) "msec")
-        (println "Failed to start server, process =" proc)))))
+    (if command
+      (do
+        (debug "java binary:" java-bin)
+        (debug "genied-jar:" genied-jar)
+        (println "cmd:" (str/join " " command) ", cwd:" (:dir command-opt))
+        (let [proc (p/process command command-opt)]
+          (println "Process started, waiting (max 60 sec) until port is available")
+          (if-let [res (wait/wait-for-port "localhost" (:port opt)
+                                           {:timeout 60000 :pause 200})]
+            (println "Ok, started in" (:took res) "msec")
+            (println "Failed to start server, process =" proc))))
+      (println "No suitable command found to start Genie daemon."
+               "Try running with -v"))))
 
 (defn admin-restart-daemon!
   "Restart the daemon process on given port."
