@@ -185,12 +185,12 @@
     (when-let [dir (daemon-dir opt)]
       (fs/file dir "genied.jar")))
 
-(defn source-jar
-  "Determine path of source uberjar, iff it exists.
+#_(defn source-jar
+    "Determine path of source uberjar, iff it exists.
    Return nil otherwise"
-  []
-  (when (fs/exists? "genied/target/uberjar")
-    (first (fs/glob (fs/file "genied/target/uberjar") "*standalone*.jar"))))
+    []
+    (when (fs/exists? "genied/target/uberjar")
+      (first (fs/glob (fs/file "genied/target/uberjar") "*standalone*.jar"))))
 
 (defn do-make-uberjar!
   "Make uberjar.
@@ -207,13 +207,13 @@
         (if (zero? exit-code)
           (println "... Success")
           (println "... Non-zero exit-code:" exit-code)))
-      (source-jar))))
+      (genie/source-jar))))
 
 (defn make-uberjar
   "Make uberjar iff it does not exist yet, or --force given.
    Return path of existing or just created uberjar"
   [opt]
-  (if-let [uberjar (source-jar)]
+  (if-let [uberjar (genie/source-jar)]
     (if (:force opt)
       (do-make-uberjar! opt)
       (do
