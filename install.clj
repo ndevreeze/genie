@@ -66,6 +66,7 @@
    [nil "--template TEMPLATE" "Template directory"]
    [nil "--dryrun" "Show what would have been done"]
    [nil "--force" "Force re-creating uberjar"]
+   ["-v" "--verbose" "Verbose output"]
    ["-h" "--help" "Show help"]])
 
 (defn error
@@ -198,6 +199,10 @@
    Return path of existing or just created uberjar"
   [opt]
   (println "Creating uberjar")
+  (when (genie/windows?)
+    (println "Running on Windows, starting Leiningen from"
+             "Babashka/Genie is tricky."
+             "\nIf this fails, try 'cd genied' and 'lein uberjar' manually."))
   (if (:dryrun opt)
     (println "  Dry run")
     (do
@@ -333,9 +338,10 @@
   []
   (let [opts (cli/parse-opts *command-line-args* cli-options :in-order true)
         opt (:options opts)]
-    (if (or (:help opt) (:errors opts))
-      (print-help opts)
-      (install opt))))
+    (binding [genie/*verbose* (-> opts :options :verbose)]
+      (if (or (:help opt) (:errors opts))
+        (print-help opts)
+        (install opt)))))
 
 (if (= *file* (System/getProperty "babashka.file"))
   (main)
