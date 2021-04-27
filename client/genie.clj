@@ -118,6 +118,24 @@
    Used by function `log` below"
   nil)
 
+;; need *file* value during load-time. During call-time (of source-jar), it has been changed to install.clj.
+#_(def genie-client-path
+    "var, used by source-jar function.
+   need *file* value during load-time. During call-time (of
+  source-jar), it has been changed to install.clj."
+    *file*)
+
+(def genie-src-root
+  "var, used by source-jar function.
+   need *file* value during load-time. During call-time (of
+  source-jar), it has been changed to install.clj."
+  (fs/normalize (fs/file *file* "../..")))
+
+#_(println "Values when loading genie.clj:")
+#_(println "*file* :" *file*)
+#_(println "babashka.file property:" (System/getProperty "babashka.file"))
+#_(println "genie-client-path: " genie-client-path)
+
 (def log-time-pattern
   "log timestamp format.
   Using ndevreeze/logger and also java-time in Babashka gives some
@@ -345,14 +363,30 @@
       (when (fs/exists? genied-jar)
         genied-jar))))
 
+;; use property babashka file instead of *file*, for when this file is
+;; included (load-file) by install.clj
 (defn source-jar
   "Determine path of source uberjar, iff it exists.
    Return nil otherwise"
   []
-  (let [genie-src-root (fs/normalize (fs/file *file* "../.."))
-        uberjar-dir (fs/file genie-src-root "genied/target/uberjar")]
+  (let [uberjar-dir (fs/file genie-src-root "genied/target/uberjar")]
+    (debug "*file* :" *file*)
+    (debug "babashka.file property:" (System/getProperty "babashka.file"))
+    (debug "genie-src-root: " (str genie-src-root))
+    (debug "  uberjar-dir:" uberjar-dir)
     (when (fs/exists? uberjar-dir)
       (first (fs/glob uberjar-dir "*standalone*.jar")))))
+
+#_(defn source-jar
+    "Determine path of source uberjar, iff it exists.
+   Return nil otherwise"
+    []
+    (let [genie-src-root (fs/normalize (fs/file *file* "../.."))
+          uberjar-dir (fs/file genie-src-root "genied/target/uberjar")]
+      (debug "genie-src-root: " (str genie-src-root))
+      (debug "  uberjar-dir:" uberjar-dir)
+      (when (fs/exists? uberjar-dir)
+        (first (fs/glob uberjar-dir "*standalone*.jar")))))
 
 #_(defn daemon-jar
     "Determine install location of genied jar file
@@ -902,7 +936,7 @@
               (catch Exception e
                 (warn "caught exception: " e))))
       ;; do not print/return the result of the last expression:
-      nil)))
+      nil)    ))
 
 ;; wrt linting with leiningen/bikeshed etc.
 ;; see https://book.babashka.org/#main_file
