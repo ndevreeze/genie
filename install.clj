@@ -65,7 +65,7 @@
    [nil "--scripts SCRIPTS" "Scripts directory"]
    [nil "--template TEMPLATE" "Template directory"]
    [nil "--dryrun" "Show what would have been done"]
-   [nil "--force" "Force re-creating uberjar"]
+   [nil "--create-uberjar" "Force (re-)creating uberjar"]
    ["-v" "--verbose" "Verbose output"]
    ["-h" "--help" "Show help"]])
 
@@ -217,7 +217,7 @@
    Return path of existing or just created uberjar"
   [opt]
   (if-let [uberjar (genie/source-jar)]
-    (if (:force opt)
+    (if (:create-uberjar opt)
       (do-make-uberjar! opt)
       (do
         (println "Uberjar already created:" (str uberjar))
@@ -234,13 +234,14 @@
   [src dest {:keys [replace dryrun]}]
   (if (or (nil? src) (nil? dest))
     (println "ERROR: Either src or dest is nil, don't copy. src=" src ", dest=" dest)
-    (when (or replace (not (fs/exists? dest)))
+    (if (or replace (not (fs/exists? dest)))
       (if dryrun
         (println "Dryrun:" (str src) "=>" (str dest))
         (do
           (println "Install:" (str src) "=>" (str dest))
           (fs/create-dirs (fs/parent dest))
-          (fs/copy src dest {:replace-existing true}))))))
+          (fs/copy src dest {:replace-existing true})))
+      (println "Not copying over existing file:" (str dest)))))
 
 (defn install-daemon
   "Install daemon uberjar and bash script to target location"
