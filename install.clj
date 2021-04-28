@@ -116,18 +116,17 @@
          :else
          "~/.config/genie/template")))
 
-;; these functions are the same in genie.clj, so could put in include/library.
-#_(defn daemon-dir
-    "Determine location of genie daemon dir.
+(defn installable-daemon-dir
+  "Determine location where daemon can be installed.
    By checking in this order:
    - daemon in cmdline options
    - GENIE_DAEMON_DIR
    - ~/tools/genie"
-    [opt]
-    (genie/expand-home
-     (or (:daemon opt)
-         (System/getenv "GENIE_DAEMON_DIR")
-         (first-creatable-dir [ "~/tools/genie"]))))
+  [opt]
+  (genie/expand-home
+   (or (:daemon opt)
+       (System/getenv "GENIE_DAEMON_DIR")
+       (first-creatable-dir [ "~/tools/genie"]))))
 
 (defn client-dir
   "Determine location of client directory
@@ -177,14 +176,13 @@
        (System/getenv "GENIE_SCRIPTS_DIR")
        "~/bin")))
 
-;; rename, so same name as in genie.clj
-#_(defn daemon-jar
-    "Determine install location of genied jar file
-   By checking the dirs as in `daemon-dir`.
+(defn installable-daemon-jar
+  "Determine installable location of genied jar file
+   By checking the dirs as in `installable-daemon-dir`.
    Return nil iff nothing found."
-    [opt]
-    (when-let [dir (daemon-dir opt)]
-      (fs/file dir "genied.jar")))
+  [opt]
+  (when-let [dir (installable-daemon-dir opt)]
+    (fs/file dir "genied.jar")))
 
 #_(defn source-jar
     "Determine path of source uberjar, iff it exists.
@@ -235,7 +233,7 @@
   if either src or dest is nil, don't install anything and print a warning"
   [src dest {:keys [replace dryrun]}]
   (if (or (nil? src) (nil? dest))
-    (println "ERROR: Either src or rest is nil, don't copy. src=" src ", dest=" dest)
+    (println "ERROR: Either src or dest is nil, don't copy. src=" src ", dest=" dest)
     (when (or replace (not (fs/exists? dest)))
       (if dryrun
         (println "Dryrun:" (str src) "=>" (str dest))
@@ -248,13 +246,13 @@
   "Install daemon uberjar and bash script to target location"
   [opt]
   (let [src (make-uberjar opt)
-        dest (genie/daemon-jar opt)]
+        dest (installable-daemon-jar opt)]
     (if (and src dest)
       (do
         (install-file src dest (merge opt {:replace true}))
         (install-file "genied/genied.sh" (fs/file (fs/parent dest) "genied.sh")
                       (merge opt {:replace true})))
-      (println "ERROR: Either src or rest is nil, don't install. src=" src ", dest=" dest))))
+      (println "ERROR: Either src or dest is nil, don't install. src=" src ", dest=" dest))))
 
 (defn install-clients
   "Install clients to given clients dir"
