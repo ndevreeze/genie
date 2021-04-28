@@ -106,7 +106,11 @@
    [nil "--kill-sessions SESSIONS" "csv list of (part of) sessions, or 'all'"]
    [nil "--start-daemon" "Start daemon running on port"]
    [nil "--stop-daemon" "Stop daemon running on port"]
-   [nil "--restart-daemon" "Restart daemon running on port"]])
+   [nil "--restart-daemon" "Restart daemon running on port"]
+   [nil "--max-wait-daemon MAX_WAIT_SEC" "Max seconds to wait for daemon to start"
+    :default 90
+    :parse-fn #(Integer/parseInt %)
+    :validate [pos? "Must be a number greater than 0"]]])
 
 (def ^:dynamic *verbose*
   "Dynamic var, set to true when -verbose cmdline option given.
@@ -863,9 +867,11 @@
         (debug "genied-jar:" genied-jar)
         (println "cmd:" (str/join " " command) ", cwd:" (:dir command-opt))
         (let [proc (p/process command command-opt)]
-          (println "Process started, waiting (max 60 sec) until port is available")
+          (println (format "Process started, waiting (max %d sec) %s"
+                           (:max-wait-daemon opt)
+                           "until port is available"))
           (if-let [res (wait/wait-for-port "localhost" (:port opt)
-                                           {:timeout 60000 :pause 200})]
+                                           {:timeout (* 1000 (:max-wait-daemon opt)) :pause 200})]
             (println "Ok, started in" (:took res) "msec")
             (println "Failed to start server, process =" proc))))
       (println "No suitable command found to start Genie daemon."
