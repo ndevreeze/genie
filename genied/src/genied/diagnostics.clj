@@ -12,8 +12,11 @@
 (defn- print-classloader-hierarchy
   "Use doseq to really print the lazy seq"
   [tip]
-  (doseq [loader (pom/classloader-hierarchy tip)]
-    (log/debug loader))
+  (log/debug "getting classloader hierarchy from: " tip)
+  (let [hier (pom/classloader-hierarchy tip)]
+    (log/debug "Got hierarchy, now printing each loader...")
+    (doseq [loader hier]
+      (log/debug loader)))
   (log/debug "-----"))
 
 (defn- print-classpath
@@ -75,6 +78,7 @@
     (print-classloader-hierarchy
      (.. Thread currentThread getContextClassLoader))
     (log/debug "Classloader hierarchy for base classloader:")
+    (log/debug "baseLoader: " (clojure.lang.RT/baseLoader))
     (print-classloader-hierarchy (clojure.lang.RT/baseLoader))
     (print-classpath "thread" (.. Thread currentThread getContextClassLoader))
     (print-classpath "base" (clojure.lang.RT/baseLoader))
