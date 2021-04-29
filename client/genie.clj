@@ -857,7 +857,8 @@
   (println "Starting daemon on port:" (:port opt))
   (when (windows?)
     (println "Running on Windows, starting daemon is tricky."
-             "If this fails, try starting the Genie daemon manually."))
+             "If this fails, try starting the Genie daemon manually.")
+    (debug "Running with -v is especially tricky, long log-waits are expected"))
   (let [java-bin (java-binary opt)
         genied-jar (or (daemon-jar opt) (source-jar))
         [command command-opt] (genied-command opt java-bin genied-jar)]
