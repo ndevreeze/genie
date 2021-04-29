@@ -870,10 +870,11 @@
           (println (format "Process started, waiting (max %d sec) %s"
                            (:max-wait-daemon opt)
                            "until port is available"))
-          (if-let [res (wait/wait-for-port "localhost" (:port opt)
-                                           {:timeout (* 1000 (:max-wait-daemon opt)) :pause 200})]
-            (println "Ok, started in" (:took res) "msec")
-            (println "Failed to start server, process =" proc))))
+          #_(if-let [res (wait/wait-for-port "localhost" (:port opt)
+                                             {:timeout (* 1000 (:max-wait-daemon opt)) :pause 200})]
+              (println "Ok, started in" (:took res) "msec")
+              (println "Failed to start server, process =" proc))
+          (Thread/sleep 30000)))
       (println "No suitable command found to start Genie daemon."
                "Try running with -v"))))
 
