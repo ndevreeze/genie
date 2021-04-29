@@ -37,9 +37,6 @@
   (diag/print-diagnostic-info "start of do-script (genied)")
   (loader/init-dynamic-classloader!)
 
-  (doseq [i (range 50)]
-    (log/debug "Test loop until 50: " i))
-
   (log/debug "init dynamic classloader done: " (state/get-classloader))
   (diag/print-diagnostic-info "after init-dynamic-classloader!")
 
