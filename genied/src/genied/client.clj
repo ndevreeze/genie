@@ -77,11 +77,15 @@
   [& forms]
   (log/log (log/get-logger (:err (state/get-out-streams))) :warn forms))
 
+(def supported-protocol-versions
+  "Seq of supported protocol versions"
+  ["0.1.0"])
+
 (defn supported-protocol-version?
   "Return true if protocol version is supported
    Not really used now, may be handy for future versions"
   [{:keys [protocol-version]}]
-  (= protocol-version "0.1.0"))
+  (= protocol-version (first supported-protocol-versions)))
 
 (defn exec-script
   "Wrapper around load-script-libraries, load-file, and call-main."
@@ -94,10 +98,12 @@
     (print-diagnostic-info {} "start client")
     (when-not (supported-protocol-version? ctx)
       (log-daemon-warn "Unsupported protocol version:" (:protocol-version ctx)
-                       "for script:" script)
+                       "for script:" script
+                       ". Expected: " supported-protocol-versions                       )
       (binding [*out* *err*]
         (println "WARNING - Unsupported protocol version:"
-                 (:protocol-version ctx))))
+                 (:protocol-version ctx)
+                 ". Expected: " supported-protocol-versions)))
     (when-not (:nosetloader opt)
       (set-dynamic-classloader!)
       (print-diagnostic-info {} "after set-dyn3!"))
