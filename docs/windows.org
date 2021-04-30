@@ -1,2 +1,26 @@
 #+STARTUP: content indent
-#+title: Genie - Todo
+#+title: Windows
+* Introduction
+Windows gives some challenges in getting Genie to work correctly. Here some are described, including workarounds.
+* Running Leiningen fom the client
+The genie.clj client has a --start-daemon option for starting the daemon process. Thie will first look for an uberjar. Failing that it will try to do a 'lein run'. On Linux this works with the Leiningen bash script, but on Windows it does not. There are quite a few ways Leiningen could be started:
+- using a bash shell
+- from the default cmd.exe
+- from a PowerShell
+
+Currently this is not implemented, which leaves the following workarounds:
+- starting the daemon with 'lein run' manually from a shell.
+- creating or getting an uberjar, and using this to start from the client.
+* Slow startup of the daemon when started from the client
+Even when using an uberjar, there still might be issues starting the daemon from the client on Windows. When the -v (verbose) options is used to investigate, this might slow down the daemon startup process:
+- the daemon process is started from the client.
+- the client waits till the daemon TCP port is available.
+- meanwhile the daemon starts, but pauses at some point.
+- the client finished waiting, and gives up.
+- after this, the daemon continues to start and is available.
+
+Even without periodically checking the TCP port, the daemon prcocess still waits. With a small dummy loop that uses debug logging, we see it pauses after the second iteration of the loop. So some strange behaviour.
+
+This could have something to do with an old, slow and/or encrypted disk, combined with a virusscanner. Without admin-access, it's hard to check further. Again some workarounds:
+- start the daemon from the client without the -v option. Although this leaves you in the dark a bit.
+- start the daemon manually, with or without the -v option
