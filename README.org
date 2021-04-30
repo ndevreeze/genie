@@ -183,6 +183,7 @@ Some earlier projects, which do not seem to be actively maintained:
 * More docs
 - [[file:docs/todo.org]]
 - [[file:docs/background.org]]
+- [[file:docs/windows.org]] - Specific issues when running on Windows.
 - [[file:genied/codox/index.html][API docs]]
 * License
 Copyright © 2021 Nico de Vreeze
