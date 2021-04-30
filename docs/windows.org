@@ -2,11 +2,17 @@
 #+title: Windows
 * Introduction
 Windows gives some challenges in getting Genie to work correctly. Here some are described, including workarounds.
-* Running Leiningen fom the client
-The genie.clj client has a --start-daemon option for starting the daemon process. Thie will first look for an uberjar. Failing that it will try to do a 'lein run'. On Linux this works with the Leiningen bash script, but on Windows it does not. There are quite a few ways Leiningen could be started:
+* Creating uberjar with Leiningen from the install script
+The install.clj script will try to create the uberjar if it does not exist yet, or if --create-uberjar is given. For this it will try to invoke 'lein uberjar' in the genied dir. On Linux this works with the Leiningen bash script, but on Windows it does not. There are quite a few ways Leiningen could be started:
 - using a bash shell
 - from the default cmd.exe
 - from a PowerShell
+- something with WSL (1 or 2)
+- install with chocolatey, scoop.
+
+The workaround for this is to create the uberjar from the prompt yourself, with 'lein uberjar' in the genied directory.
+* Starting daemon with Leiningen fom the client
+The genie.clj client has a --start-daemon option for starting the daemon process. Thie will first look for an uberjar. Failing that it will try to do a 'lein run'. On Linux this works with the Leiningen bash script, but on Windows it does not. The same applies as in the section above (creating uberjar)
 
 Currently this is not implemented, which leaves the following workarounds:
 - starting the daemon with 'lein run' manually from a shell.
@@ -24,3 +30,9 @@ Even without periodically checking the TCP port, the daemon prcocess still waits
 This could have something to do with an old, slow and/or encrypted disk, combined with a virusscanner. Without admin-access, it's hard to check further. Again some workarounds:
 - start the daemon from the client without the -v option. Although this leaves you in the dark a bit.
 - start the daemon manually, with or without the -v option
+* Symbolic links
+Symbolic links are always tricky on Windows. Staying within bash/cygwin it works, but e.g. Babashka does not read cygwin symlinks, which is to be expected. Junctions at directory level will work, see junction.exe from SysInternals.
+
+This means a symbolic for java will not work here, Babashka needs to be able to find the actual java.exe. It will do so checking GENIE_JAVA_CMD, JAVA_CMD and then looking in the PATH spec. So set your environment vars accordingly.
+* Re-installing the daemon
+If the daemon has been installed and is running, the uberjar-file will be in use. This means a re-install will fail, e.g. for a new version. The workaround here is stopping the daemon, installing the new version and restarting it.
