@@ -16,15 +16,18 @@
     :parse-fn #(Integer/parseInt %)]
    ["-d" "--delay DELAY" "Delay in msec after writing each line"
     :default 1000
-    :parse-fn #(Integer/parseInt %)]])
+    :parse-fn #(Integer/parseInt %)]
+   [nil "--delete-file" "Delete file at end (for automatic testing)"]])
 
 (defn write-file
   "Write a file according to options given"
-  [{:keys [file lines delay]}]
+  [{:keys [file lines delay delete-file]}]
   (fs/delete file)
   (doseq [i (range lines)]
     (spit file (str "Line: " i "\n") :append true)
-    (Thread/sleep delay)))
+    (Thread/sleep delay))
+  (when delete-file
+    (fs/delete file)))
 
 (defn script
   "Main script called from `main` and `-main`"

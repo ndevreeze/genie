@@ -43,7 +43,6 @@
   [path]
   (fs/normalize (fs/absolutize path)))
 
-;; TODO - do I need any cmdline options here?
 (def cli-options
   "Genie client command line options"
   [["-p" "--port PORT" "Genie daemon port number for test"
@@ -53,10 +52,7 @@
    ["-l" "--logdir LOGDIR" "Directory for client log. Empty: no logging"]
    ["-v" "--verbose" "Verbose output"]
    ["-h" "--help" "Show help"]
-
-   ;; new for run-all-tests, clean up above
-   [nil "--no-start-stop-daemon" "Do not start a daemon before the tests"]
-   ])
+   [nil "--no-start-stop-daemon" "Do not start a daemon before the tests"]])
 
 (def ^:dynamic *verbose*
   "Dynamic var, set to true when -verbose cmdline option given.
@@ -188,7 +184,7 @@
   (run-test opt "test_add_numbers.clj" ["1" "2" "3"])
 
   (fs/delete-if-exists "test_write_file.out")
-  (run-test opt "test_write_file.clj" ["--file" "./test_write_file.out"])
+  (run-test opt "test_write_file.clj" ["--file" "./test_write_file.out" "--delete-file"])
 
   (run-test opt "test_stdin.clj" ["--stdin"])
 
