@@ -108,7 +108,7 @@
    [nil "--stop-daemon" "Stop daemon running on port"]
    [nil "--restart-daemon" "Restart daemon running on port"]
    [nil "--max-wait-daemon MAX_WAIT_SEC" "Max seconds to wait for daemon to start"
-    :default 90
+    :default 60
     :parse-fn #(Integer/parseInt %)
     :validate [pos? "Must be a number greater than 0"]]])
 
