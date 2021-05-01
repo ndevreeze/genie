@@ -66,6 +66,11 @@
    [nil "--template TEMPLATE" "Template directory"]
    [nil "--dryrun" "Show what would have been done"]
    [nil "--create-uberjar" "Force (re-)creating uberjar"]
+   [nil "--start-on-system-boot" "Install Windows genied.bat in startup folder"]
+   ["-p" "--port PORT" "Genie daemon port number (for start-on-system-boot)"
+    :default 7888
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
    ["-v" "--verbose" "Verbose output"]
    ["-h" "--help" "Show help"]])
 
@@ -309,6 +314,41 @@
   (println "\nAdd the following to your crontab:")
   (println "@reboot" (unix-path (fs/file (genie/daemon-dir opt) "genied.sh"))))
 
+(defn windows-startup-folder
+  "Return Windows user startup folder.
+   Return nil iff not found."
+  [opt]
+  (let [startup-dir
+        (fs/normalize (fs/file (System/getenv "APPDATA")
+                               "Microsoft/Windows/Start Menu/Programs/Startup"))]
+    (when (fs/exists? startup-dir)
+      startup-dir)))
+
+(defn genied-bat-contents
+  "Return string/line with genied startup command.
+   Use found files and given environment vars"
+  [opt]
+  (let [java-bin (genie/java-binary opt)
+        genied-jar (genie/daemon-jar opt)
+        [command command-opt] (genie/genied-command opt java-bin genied-jar)]
+    (if command
+      (str (str/join " " command) "\r\n")
+      (println "No suitable command found to start Genie daemon."))))
+
+(defn install-startup-bat
+  "Create genied.bat startup script in the Windows user startup folder"
+  [opt]
+  (let [bat-file (fs/file (windows-startup-folder opt) "genied.bat")
+        contents (genied-bat-contents opt)]
+    (if (and bat-file contents)
+      (do
+        (spit bat-file contents)
+        (println "\nCreated:" (str bat-file)))
+      (do
+        (println "An error occured: either batch-file location or contents")
+        (println "Location:" (str bat-file))
+        (println "Contents:" contents)))))
+
 (defn install
   "Install daemon, client, config, templates"
   [opt]
@@ -318,7 +358,12 @@
   (install-template opt)
   (install-scripts opt)
   (show-bash-config opt)
-  (show-crontab opt))
+  (show-crontab opt)
+  (when (genie/windows?)
+    (if (:start-on-system-boot opt)
+      (install-startup-bat opt)
+      (println "\nConsider --start-on-system-boot to create a genied.bat"
+               "in your Windows startup folder"))))
 
 (defn print-help
   "Print help when --help given, or errors"
