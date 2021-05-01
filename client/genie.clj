@@ -307,13 +307,14 @@
    - JAVA_HOME
    - java in system PATH"
   [opt]
-  (or (System/getenv "GENIE_JAVA_CMD")
-      (System/getenv "JAVA_CMD")
-      #_(when-let [java-home (System/getenv "JAVA_HOME")]
-          (str (fs/file java-home "bin" "java")))
-      (when-let [java-home (System/getenv "JAVA_HOME")]
-        (first-executable java-home ["java" "java.exe"]))
-      (find-in-path ["java" "java.exe"])))
+  (fs/normalize
+   (or (System/getenv "GENIE_JAVA_CMD")
+       (System/getenv "JAVA_CMD")
+       #_(when-let [java-home (System/getenv "JAVA_HOME")]
+           (str (fs/file java-home "bin" "java")))
+       (when-let [java-home (System/getenv "JAVA_HOME")]
+         (first-executable java-home ["java" "java.exe"]))
+       (find-in-path ["java" "java.exe"]))))
 
 #_(defn java-binary
     "Determine location of java binary.
@@ -943,7 +944,7 @@
               (catch Exception e
                 (warn "caught exception: " e))))
       ;; do not print/return the result of the last expression:
-      nil)    ))
+      nil)))
 
 ;; wrt linting with leiningen/bikeshed etc.
 ;; see https://book.babashka.org/#main_file
