@@ -646,7 +646,7 @@
 (defn print-help
   "Print help when --help given, or errors, or no script"
   [{:keys [summary options arguments errors]}]
-  (println "genie.clj - babashka script to run scripts in Genie daemon")
+  (println "genie.clj - Babashka script to run scripts in Genie daemon")
   (println summary)
   (println)
   (println "Current options:" options)
