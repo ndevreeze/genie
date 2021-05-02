@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2021-05-02 zo 11:47 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Windows</title>
+<meta name="generator" content="Org mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
+<!--/*--><![CDATA[/*><!--*/
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Windows</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org699c00d">1. Introduction</a></li>
+<li><a href="#org5c0e25a">2. Creating uberjar with Leiningen from the install script</a></li>
+<li><a href="#orgb84c27f">3. Re-installing the daemon</a></li>
+<li><a href="#org75a4291">4. Starting daemon with Leiningen fom the client</a></li>
+<li><a href="#orgee119c3">5. Running with different shells</a>
+<ul>
+<li><a href="#org1efffd4">5.1. Cygwin/Bash</a></li>
+<li><a href="#orge5810b0">5.2. Cmd</a></li>
+<li><a href="#org43523be">5.3. Powershell</a></li>
+<li><a href="#org02e1182">5.4. 4NT</a></li>
+</ul>
+</li>
+<li><a href="#orge8c2209">6. Starting the daemon at system boot time</a></li>
+<li><a href="#org5e70f0e">7. Symbolic links</a></li>
+<li><a href="#org0616a94">8. Slow startup of the daemon when started from the client</a></li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org699c00d" class="outline-2">
+<h2 id="org699c00d"><span class="section-number-2">1</span> Introduction</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Windows gives some challenges in getting Genie to work correctly. Here some are described, including workarounds.
+</p>
+</div>
+</div>
+<div id="outline-container-org5c0e25a" class="outline-2">
+<h2 id="org5c0e25a"><span class="section-number-2">2</span> Creating uberjar with Leiningen from the install script</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+The install.clj script will try to create the uberjar if it does not exist yet, or if &#x2013;create-uberjar is given. For this it will try to invoke &rsquo;lein uberjar&rsquo; in the genied dir. On Linux this works with the Leiningen bash script, but on Windows it does not. There are quite a few ways Leiningen could be started:
+</p>
+<ul class="org-ul">
+<li>using a bash shell</li>
+<li>from the default cmd.exe</li>
+<li>from a PowerShell</li>
+<li>something with WSL (1 or 2)</li>
+<li>install with chocolatey, scoop.</li>
+</ul>
+
+<p>
+The workaround for this is to create the uberjar from the prompt yourself, with &rsquo;lein uberjar&rsquo; in the genied directory.
+</p>
+</div>
+</div>
+<div id="outline-container-orgb84c27f" class="outline-2">
+<h2 id="orgb84c27f"><span class="section-number-2">3</span> Re-installing the daemon</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+If the daemon has been installed and is running, the uberjar-file will be in use. This means a re-install will fail, e.g. for a new version. The workaround here is stopping the daemon, installing the new version and restarting it.
+</p>
+</div>
+</div>
+<div id="outline-container-org75a4291" class="outline-2">
+<h2 id="org75a4291"><span class="section-number-2">4</span> Starting daemon with Leiningen fom the client</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+The genie.clj client has a &#x2013;start-daemon option for starting the daemon process. Thie will first look for an uberjar. Failing that it will try to do a &rsquo;lein run&rsquo;. On Linux this works with the Leiningen bash script, but on Windows it does not. The same applies as in the section above (creating uberjar)
+</p>
+
+<p>
+Currently this is not implemented, which leaves the following workarounds:
+</p>
+<ul class="org-ul">
+<li>starting the daemon with &rsquo;lein run&rsquo; manually from a shell.</li>
+<li>creating or getting an uberjar, and using this to start from the client.</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgee119c3" class="outline-2">
+<h2 id="orgee119c3"><span class="section-number-2">5</span> Running with different shells</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+There are quite a few shells available on Windows, each having their own challenges.
+</p>
+</div>
+<div id="outline-container-org1efffd4" class="outline-3">
+<h3 id="org1efffd4"><span class="section-number-3">5.1</span> Cygwin/Bash</h3>
+<div class="outline-text-3" id="text-5-1">
+<p>
+Cygwin paths like /cygdrive/c can conflict with default windows paths like c:\ or c:/. The following should work:
+</p>
+<div class="org-src-container">
+<pre class="src src-bash"><span style="color: #006FE0;">export</span> <span style="color: #BA36A5;">GENIE_CLIENT_DIR</span>=C:/Users/username/bin
+<span style="color: #006FE0;">export</span> <span style="color: #BA36A5;">GENIE_DAEMON_DIR</span>=C:/Users/username/tools/genie
+<span style="color: #006FE0;">export</span> <span style="color: #BA36A5;">GENIE_JAVA_CMD</span>=java
+<span style="color: #006FE0;">export</span> <span style="color: #BA36A5;">GENIE_CONFIG_DIR</span>=C:/Users/username/.config/genie
+<span style="color: #006FE0;">export</span> <span style="color: #BA36A5;">GENIE_LOG_DIR</span>=C:/Users/username/log
+<span style="color: #006FE0;">export</span> <span style="color: #BA36A5;">GENIE_TEMPLATE_DIR</span>=C:/Users/username/.config/genie/template
+<span style="color: #006FE0;">export</span> <span style="color: #BA36A5;">GENIE_SCRIPTS_DIR</span>=C:/Users/username/bin
+
+alias <span style="color: #BA36A5;">bb</span>=<span style="color: #008000;">'c:/path/to/babashka/bb.exe'</span>
+alias <span style="color: #BA36A5;">genie</span>=<span style="color: #008000;">'bb $GENIE_CLIENT_DIR/genie.clj'</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orge5810b0" class="outline-3">
+<h3 id="orge5810b0"><span class="section-number-3">5.2</span> Cmd</h3>
+</div>
+<div id="outline-container-org43523be" class="outline-3">
+<h3 id="org43523be"><span class="section-number-3">5.3</span> Powershell</h3>
+</div>
+<div id="outline-container-org02e1182" class="outline-3">
+<h3 id="org02e1182"><span class="section-number-3">5.4</span> 4NT</h3>
+</div>
+</div>
+
+<div id="outline-container-orge8c2209" class="outline-2">
+<h2 id="orge8c2209"><span class="section-number-2">6</span> Starting the daemon at system boot time</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+With the install.clj option &#x2013;start-on-system-boot, a Windows batch-file (genied.bat) will be created in the user&rsquo;s startup folder, e.g. C:\Users\username\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup. This has a side-effect of keeping a command window open, which you might want to hide by default. Some options:
+</p>
+<ul class="org-ul">
+<li>Use NirCmd (<a href="https://www.nirsoft.net/utils/nircmd.html">https://www.nirsoft.net/utils/nircmd.html</a>) with options &rsquo;exec hide&rsquo;.</li>
+<li>check <a href="https://www.raymond.cc/blog/hidden-start-runs-batch-files-silently-without-flickering-console/">https://www.raymond.cc/blog/hidden-start-runs-batch-files-silently-without-flickering-console/</a></li>
+<li>check <a href="https://stackoverflow.com/questions/3677773/how-can-i-run-a-windows-batch-file-but-hide-the-command-window">https://stackoverflow.com/questions/3677773/how-can-i-run-a-windows-batch-file-but-hide-the-command-window</a></li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org5e70f0e" class="outline-2">
+<h2 id="org5e70f0e"><span class="section-number-2">7</span> Symbolic links</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+Symbolic links are always tricky on Windows. Staying within bash/cygwin it works, but e.g. Babashka does not read cygwin symlinks, which is to be expected. Junctions at directory level will work, see junction.exe from SysInternals.
+</p>
+
+<p>
+This means a symbolic for java will not work here, Babashka needs to be able to find the actual java.exe. It will do so checking GENIE<sub>JAVA</sub><sub>CMD</sub>, JAVA<sub>CMD</sub> and then looking in the PATH spec. So set your environment vars accordingly.
+</p>
+</div>
+</div>
+<div id="outline-container-org0616a94" class="outline-2">
+<h2 id="org0616a94"><span class="section-number-2">8</span> Slow startup of the daemon when started from the client</h2>
+<div class="outline-text-2" id="text-8">
+<p>
+Even when using an uberjar, there still might be issues starting the daemon from the client on Windows. When the -v (verbose) options is used to investigate, this might slow down the daemon startup process:
+</p>
+<ul class="org-ul">
+<li>the daemon process is started from the client.</li>
+<li>the client waits till the daemon TCP port is available.</li>
+<li>meanwhile the daemon starts, but pauses at some point.</li>
+<li>the client finished waiting, and gives up.</li>
+<li>after this, the daemon continues to start and is available.</li>
+</ul>
+
+<p>
+Even without periodically checking the TCP port, the daemon prcocess still waits. With a small dummy loop that uses debug logging, we see it pauses after the second iteration of the loop. So some strange behaviour.
+</p>
+
+<p>
+This could have something to do with an old, slow and/or encrypted disk, combined with a virusscanner. Without admin-access, it&rsquo;s hard to check further. Again some workarounds:
+</p>
+<ul class="org-ul">
+<li>start the daemon from the client without the -v option. Although this leaves you in the dark a bit.</li>
+<li>start the daemon manually, with or without the -v option</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2021-05-02 zo 11:47</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
