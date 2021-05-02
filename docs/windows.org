@@ -11,12 +11,43 @@ The install.clj script will try to create the uberjar if it does not exist yet, 
 - install with chocolatey, scoop.
 
 The workaround for this is to create the uberjar from the prompt yourself, with 'lein uberjar' in the genied directory.
+* Re-installing the daemon
+If the daemon has been installed and is running, the uberjar-file will be in use. This means a re-install will fail, e.g. for a new version. The workaround here is stopping the daemon, installing the new version and restarting it.
 * Starting daemon with Leiningen fom the client
 The genie.clj client has a --start-daemon option for starting the daemon process. Thie will first look for an uberjar. Failing that it will try to do a 'lein run'. On Linux this works with the Leiningen bash script, but on Windows it does not. The same applies as in the section above (creating uberjar)
 
 Currently this is not implemented, which leaves the following workarounds:
 - starting the daemon with 'lein run' manually from a shell.
 - creating or getting an uberjar, and using this to start from the client.
+* Running with different shells
+There are quite a few shells available on Windows, each having their own challenges.
+** Cygwin/Bash
+Cygwin paths like /cygdrive/c can conflict with defalt windows paths like c:\ or c:/. The following should work:
+#+begin_src bash :tangle yes
+export GENIE_CLIENT_DIR=C:/Users/username/bin
+export GENIE_DAEMON_DIR=C:/Users/username/tools/genie
+export GENIE_JAVA_CMD=java
+export GENIE_CONFIG_DIR=C:/Users/username/.config/genie
+export GENIE_LOG_DIR=C:/Users/username/log
+export GENIE_TEMPLATE_DIR=C:/Users/username/.config/genie/template
+export GENIE_SCRIPTS_DIR=C:/Users/username/bin
+
+alias bb='c:/path/to/babashka/bb.exe'
+alias genie='bb $GENIE_CLIENT_DIR/genie.clj'
+#+end_src
+** Cmd
+** Powershell
+** 4NT
+
+* Starting the daemon at system boot time
+With the install.clj option --start-on-system-boot, a Windows batch-file (genied.bat) will be created in the user's startup folder, e.g. C:\Users\username\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup. This has a side-effect of keeping a command window open, which you might want to hide by default. Some options:
+- Use NirCmd (https://www.nirsoft.net/utils/nircmd.html) with options 'exec hide'.
+- check https://www.raymond.cc/blog/hidden-start-runs-batch-files-silently-without-flickering-console/
+- check https://stackoverflow.com/questions/3677773/how-can-i-run-a-windows-batch-file-but-hide-the-command-window
+* Symbolic links
+Symbolic links are always tricky on Windows. Staying within bash/cygwin it works, but e.g. Babashka does not read cygwin symlinks, which is to be expected. Junctions at directory level will work, see junction.exe from SysInternals.
+
+This means a symbolic for java will not work here, Babashka needs to be able to find the actual java.exe. It will do so checking GENIE_JAVA_CMD, JAVA_CMD and then looking in the PATH spec. So set your environment vars accordingly.
 * Slow startup of the daemon when started from the client
 Even when using an uberjar, there still might be issues starting the daemon from the client on Windows. When the -v (verbose) options is used to investigate, this might slow down the daemon startup process:
 - the daemon process is started from the client.
@@ -30,14 +61,3 @@ Even without periodically checking the TCP port, the daemon prcocess still waits
 This could have something to do with an old, slow and/or encrypted disk, combined with a virusscanner. Without admin-access, it's hard to check further. Again some workarounds:
 - start the daemon from the client without the -v option. Although this leaves you in the dark a bit.
 - start the daemon manually, with or without the -v option
-* Symbolic links
-Symbolic links are always tricky on Windows. Staying within bash/cygwin it works, but e.g. Babashka does not read cygwin symlinks, which is to be expected. Junctions at directory level will work, see junction.exe from SysInternals.
-
-This means a symbolic for java will not work here, Babashka needs to be able to find the actual java.exe. It will do so checking GENIE_JAVA_CMD, JAVA_CMD and then looking in the PATH spec. So set your environment vars accordingly.
-* Re-installing the daemon
-If the daemon has been installed and is running, the uberjar-file will be in use. This means a re-install will fail, e.g. for a new version. The workaround here is stopping the daemon, installing the new version and restarting it.
-* Starting the daemon at system boot time
-With the install.clj option --start-on-system-boot, a Windows batch-file (genied.bat) will be created in the user's startup folder, e.g. C:\Users\username\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup. This has a side-effect of keeping a command window open, which you might want to hide by default. Some options:
-- Use NirCmd (https://www.nirsoft.net/utils/nircmd.html) with options 'exec hide'.
-- check https://www.raymond.cc/blog/hidden-start-runs-batch-files-silently-without-flickering-console/
-- check https://stackoverflow.com/questions/3677773/how-can-i-run-a-windows-batch-file-but-hide-the-command-window

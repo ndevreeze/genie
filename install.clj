@@ -299,14 +299,15 @@
 (defn show-bash-config
   "Show lines to put in .profile or .bashrc"
   [opt]
-  (println "\nAdd the following lines to your ~/.profile:")
+  (println "\nAdd the following lines to your ~/.profile or ~/.bash_profile:")
   (println (str "export GENIE_CLIENT_DIR=" (unix-path (client-dir opt))))
   (println (str "export GENIE_DAEMON_DIR=" (unix-path (genie/daemon-dir opt))))
   (println (str "export GENIE_JAVA_CMD=java"))
   (println (str "export GENIE_CONFIG_DIR=" (unix-path (config-dir opt))))
   (println (str "export GENIE_LOG_DIR=" (unix-path (log-dir opt))))
   (println (str "export GENIE_TEMPLATE_DIR=" (unix-path (template-dir opt))))
-  (println (str "export GENIE_SCRIPTS_DIR=" (unix-path (scripts-dir opt)))))
+  (println (str "export GENIE_SCRIPTS_DIR=" (unix-path (scripts-dir opt))))
+  (println (str "alias genie='$GENIE_CLIENT_DIR/genie.clj'")))
 
 (defn show-crontab
   "Show command to add to crontab"
@@ -368,7 +369,7 @@
 (defn print-help
   "Print help when --help given, or errors"
   [{:keys [summary options arguments errors]}]
-  (println "install.clj - babashka script to install genie:
+  (println "install.clj - Babashka script to install Genie:
   daemon, client, config, scripts and template")
   (println summary)
   (println)
