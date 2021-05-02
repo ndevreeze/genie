@@ -68,7 +68,7 @@ doskey genie=c:\path\to\\babashka\bb.exe %GENIE_CLIENT_DIR%\genie.clj $*
 
 See the following link for more information:
 - [[https://stackoverflow.com/questions/20530996/aliases-in-windows-command-prompt]]
-** Powershell
+** PowerShell
 Define aliases in PowerShell as follows:
 #+begin_src powershell :tangle yes
 Set-Alias -Name bb -Value c:\path\to\babashka\bb.exe
@@ -80,7 +80,7 @@ Function FGenie {
 Set-Alias -Name genie -Value FGenie
 #+end_src
 
-You might also want to set environment variables and use them in the alias and function above. Some Microsoft documentation might me useful:
+You might also want to set environment variables and use them in the alias and function above. Some Microsoft documentation might be useful:
 - [[https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/set-alias?view=powershell-7.1][set-alias]]
 - [[https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_functions?view=powershell-7.1][about functions]]
 - [[https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_aliases?view=powershell-7.1][about aliases]]
