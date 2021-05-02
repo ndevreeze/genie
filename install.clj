@@ -296,6 +296,11 @@
   [path]
   (str/replace (str path) #"\\" "/"))
 
+(defn windows-path
+  "Replace forward slashes (/) with backslashes (\\) for putting in Windows config"
+  [path]
+  (str/replace (str path) #"/" "\\"))
+
 (defn show-bash-config
   "Show lines to put in .profile or .bashrc"
   [opt]
@@ -308,6 +313,20 @@
   (println (str "export GENIE_TEMPLATE_DIR=" (unix-path (template-dir opt))))
   (println (str "export GENIE_SCRIPTS_DIR=" (unix-path (scripts-dir opt))))
   (println (str "alias genie='$GENIE_CLIENT_DIR/genie.clj'")))
+
+(defn show-windows-config
+  "Show lines to put in Windows environment (or 4start.bat)"
+  [opt]
+  (println "\nAdd the following lines to your Windows environment (and/or 4start.bat)")
+  (println (str "set GENIE_CLIENT_DIR=" (windows-path (client-dir opt))))
+  (println (str "set GENIE_DAEMON_DIR=" (windows-path (genie/daemon-dir opt))))
+  (println (str "set GENIE_JAVA_CMD=" (genie/java-binary opt)))
+  (println (str "set GENIE_CONFIG_DIR=" (windows-path (config-dir opt))))
+  (println (str "set GENIE_LOG_DIR=" (windows-path (log-dir opt))))
+  (println (str "set GENIE_TEMPLATE_DIR=" (windows-path (template-dir opt))))
+  (println (str "set GENIE_SCRIPTS_DIR=" (windows-path (scripts-dir opt))))
+  (println "\nAnd an alias if possible:")
+  (println "genie bb %GENIE_CLIENT_DIR%\\genie.clj"))
 
 (defn show-crontab
   "Show command to add to crontab"
@@ -361,6 +380,7 @@
   (show-bash-config opt)
   (show-crontab opt)
   (when (genie/windows?)
+    (show-windows-config opt)
     (if (:start-on-system-boot opt)
       (install-startup-bat opt)
       (println "\nConsider --start-on-system-boot to create a genied.bat"
