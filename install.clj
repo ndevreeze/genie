@@ -302,7 +302,7 @@
   (println "\nAdd the following lines to your ~/.profile or ~/.bash_profile:")
   (println (str "export GENIE_CLIENT_DIR=" (unix-path (client-dir opt))))
   (println (str "export GENIE_DAEMON_DIR=" (unix-path (genie/daemon-dir opt))))
-  (println (str "export GENIE_JAVA_CMD=java"))
+  (println (str "export GENIE_JAVA_CMD=" (genie/normalized (genie/java-binary opt))))
   (println (str "export GENIE_CONFIG_DIR=" (unix-path (config-dir opt))))
   (println (str "export GENIE_LOG_DIR=" (unix-path (log-dir opt))))
   (println (str "export GENIE_TEMPLATE_DIR=" (unix-path (template-dir opt))))
