@@ -41,7 +41,21 @@ alias genie='bb $GENIE_CLIENT_DIR/genie.clj'
 ** Cmd
 ** Powershell
 ** 4NT
+- Showing of line-endings in console might be tricky: with new-lines being interpreter as such, without carriage returns. Mostly for Babashka, with the Genie scripts it seems ok.
 
+#+begin_src text :tangle yes
+  rem in 4start.bat:
+  set GENIE_CLIENT_DIR=C:\Users\username\bin
+  set GENIE_DAEMON_DIR=C:\Users\username\tools\genie
+  set GENIE_JAVA_CMD=C:\Program Files (x86)\Common Files\Oracle\Java\javapath\java.exe
+  set GENIE_CONFIG_DIR=C:\Users\username\.config\genie
+  set GENIE_LOG_DIR=C:\Users\username\log
+  set GENIE_TEMPLATE_DIR=C:\Users\username\.config\genie\template
+  set GENIE_SCRIPTS_DIR=C:\Users\username\bin
+
+  :in 4NT alias file:
+  genie bb %GENIE_CLIENT_DIR%\genie.clj
+#+end_src
 * Starting the daemon at system boot time
 With the install.clj option --start-on-system-boot, a Windows batch-file (genied.bat) will be created in the user's startup folder, e.g. C:\Users\username\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup. This has a side-effect of keeping a command window open, which you might want to hide by default. Some options:
 - Use NirCmd (https://www.nirsoft.net/utils/nircmd.html) with options 'exec hide'.
