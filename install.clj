@@ -325,8 +325,10 @@
   (println (str "set GENIE_LOG_DIR=" (windows-path (log-dir opt))))
   (println (str "set GENIE_TEMPLATE_DIR=" (windows-path (template-dir opt))))
   (println (str "set GENIE_SCRIPTS_DIR=" (windows-path (scripts-dir opt))))
-  (println "\nAnd an alias if possible:")
-  (println "genie bb %GENIE_CLIENT_DIR%\\genie.clj"))
+  (println "\nAnd an alias if possible (e.g. with doskey):")
+  (println "genie bb %GENIE_CLIENT_DIR%\\genie.clj")
+  (println "doskey genie=\\path\\to\\babashka\\bb.exe %GENIE_CLIENT_DIR%\\genie.clj $*")
+  (println "\nSee docs/windows.org for more information and work-arounds"))
 
 (defn show-crontab
   "Show command to add to crontab"
