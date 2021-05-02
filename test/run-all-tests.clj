@@ -131,24 +131,34 @@
   (when-let [logdir (:logdir opt)]
     (fs/file logdir (format "genie-%s.log" (current-timestamp-file)))))
 
+(defn genie-clj
+  "Determine normalized path to genie.clj script"
+  [opt]
+  (normalized (fs/file *file* "../../client/genie.clj")))
+
 (defn start-daemon
   "Start daemon using genie.clj client"
   [opt]
-  (let [p (p/process ["bb" "../client/genie.clj" "--start-daemon" "-p" (:port opt)])]
+  (let [p (p/process ["bb" (genie-clj opt) "--start-daemon" "-p" (:port opt)])]
     (info "Started daemon process, waiting to be ready...")
     (info "Result of waiting: " @p ", " p)))
 
 (defn stop-daemon
   "Stop daemon using genie.clj client"
   [opt]
-  (let [p (p/process ["bb" "../client/genie.clj" "--stop-daemon" "-p" (:port opt)])]
+  (let [p (p/process ["bb" (genie-clj opt) "--stop-daemon" "-p" (:port opt)])]
     (Thread/sleep 500)
     (info "Stopped daemon process...")
     (info "Result of waiting: " @p ", " p)))
 
+(defn test-dir
+  "Determine normalized path of test-dir"
+  [opt]
+  (normalized (fs/parent *file*)))
+
 (defn run-test
-  [{:keys [port]} script cmdline-opts]
-  (let [proc (p/process (concat ["bb" "../client/genie.clj" "-p" port script] cmdline-opts)
+  [{:keys [port] :as opt} script cmdline-opts]
+  (let [proc (p/process (concat ["bb" (genie-clj opt) "-p" port script] cmdline-opts)
                         {:in "foo" :out :string :err :string})]
     (info "Started test: " script ", with options: " (str/join " " cmdline-opts))
     (deref proc)
@@ -165,6 +175,11 @@
         (re-find #"_lib.clj" script) false
         :else true))
 
+(defn in-test-dir
+  "Convert test-script.clj file to normalized path in the test-dir"
+  [opt script-name]
+  (fs/file (test-dir opt) script-name))
+
 (defn run-all-tests
   "Run all tests in this dir.
    Possibly start/stop daemon around the tests"
@@ -172,21 +187,21 @@
   (when-not no-start-stop-daemon
     (start-daemon opt))
 
-  (doseq [script (->> (fs/glob "." "*.clj")
+  (doseq [script (->> (fs/glob (test-dir opt) "*.clj")
                       (map str)
                       (filter run-script?))]
     (run-test opt script []))
 
-  (run-test opt "test.clj" ["-a"])
-  (run-test opt "test_params.clj" ["a" "b" "third" "4"])
+  (run-test opt (in-test-dir opt "test.clj") ["-a"])
+  (run-test opt (in-test-dir opt "test_params.clj") ["a" "b" "third" "4"])
   ;;test_stdin
-  (run-test opt "test_head.clj" ["test_head.clj"])
-  (run-test opt "test_add_numbers.clj" ["1" "2" "3"])
+  (run-test opt (in-test-dir opt "test_head.clj") ["test_head.clj"])
+  (run-test opt (in-test-dir opt "test_add_numbers.clj") ["1" "2" "3"])
 
   (fs/delete-if-exists "test_write_file.out")
-  (run-test opt "test_write_file.clj" ["--file" "./test_write_file.out" "--delete-file"])
+  (run-test opt (in-test-dir opt "test_write_file.clj") ["--file" "./test_write_file.out" "--delete-file"])
 
-  (run-test opt "test_stdin.clj" ["--stdin"])
+  (run-test opt (in-test-dir opt "test_stdin.clj") ["--stdin"])
 
   (when-not no-start-stop-daemon
     (stop-daemon opt)))
