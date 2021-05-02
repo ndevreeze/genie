@@ -39,9 +39,53 @@ alias bb='c:/path/to/babashka/bb.exe'
 alias genie='bb $GENIE_CLIENT_DIR/genie.clj'
 #+end_src
 ** Cmd
+You may want a batch-file to run automatically when you start cmd.exe, e.g. with:
+#+begin_src batch :tangle yes
+cmd.exe /k c:\apps\cmd\env-and-aliases.cmd
+#+end_src
+
+Or changing the Windows registry, with a .reg file like:
+#+begin_src text :tangle yes
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\Microsoft\Command Processor]
+"AutoRun"="%USERPROFILE%\\env-and-aliases.cmd"
+#+end_src
+
+With contents similar to:
+#+begin_src text :tangle yes
+set GENIE_CLIENT_DIR=C:\Users\username\bin
+set GENIE_DAEMON_DIR=C:\Users\username\tools\genie
+set GENIE_JAVA_CMD=C:\Program Files (x86)\Common Files\Oracle\Java\javapath\java.exe
+set GENIE_CONFIG_DIR=C:\Users\username\.config\genie
+set GENIE_LOG_DIR=C:\Users\username\log
+set GENIE_TEMPLATE_DIR=C:\Users\username\.config\genie\template
+set GENIE_SCRIPTS_DIR=C:\Users\username\bin
+
+doskey bb=c:\path\to\\babashka\bb.exe $*
+doskey genie=c:\path\to\\babashka\bb.exe %GENIE_CLIENT_DIR%\genie.clj $*
+#+end_src
+
+See the following link for more information:
+- [[https://stackoverflow.com/questions/20530996/aliases-in-windows-command-prompt]]
 ** Powershell
+Define aliases in PowerShell as follows:
+#+begin_src powershell :tangle yes
+Set-Alias -Name bb -Value c:\path\to\babashka\bb.exe
+
+Function FGenie {
+    bb C:\Users\username\bin\genie.clj $args
+}
+
+Set-Alias -Name genie -Value FGenie
+#+end_src
+
+You might also want to set environment variables and use them in the alias and function above. Some Microsoft documentation might me useful:
+- [[https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/set-alias?view=powershell-7.1][set-alias]]
+- [[https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_functions?view=powershell-7.1][about functions]]
+- [[https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_aliases?view=powershell-7.1][about aliases]]
 ** 4NT
-- Showing of line-endings in console might be tricky: with new-lines being interpreter as such, without carriage returns. Mostly for Babashka, with the Genie scripts it seems ok.
+- Showing of line-endings in console might be tricky: with new-lines being interpreted as such, without carriage returns. Mostly for Babashka, with the Genie scripts it seems ok.
 
 #+begin_src text :tangle yes
   rem in 4start.bat:
