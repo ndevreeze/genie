@@ -23,7 +23,7 @@ Currently this is not implemented, which leaves the following workarounds:
 * Running with different shells
 There are quite a few shells available on Windows, each having their own challenges.
 ** Cygwin/Bash
-Cygwin paths like /cygdrive/c can conflict with default windows paths like c:\. The following should work:
+Cygwin paths like /cygdrive/c/Windows can conflict with default windows paths like c:\Windows. The following should work:
 #+begin_src bash :tangle yes
 export GENIE_CLIENT_DIR=C:/Users/username/bin
 export GENIE_DAEMON_DIR=C:/Users/username/tools/genie
