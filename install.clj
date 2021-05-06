@@ -312,7 +312,8 @@
   (println (str "export GENIE_LOG_DIR=" (unix-path (log-dir opt))))
   (println (str "export GENIE_TEMPLATE_DIR=" (unix-path (template-dir opt))))
   (println (str "export GENIE_SCRIPTS_DIR=" (unix-path (scripts-dir opt))))
-  (println (str "alias genie='$GENIE_CLIENT_DIR/genie.clj'")))
+  (println (str "alias genie='$GENIE_CLIENT_DIR/genie.clj'"))
+  (println (str "alias genie-new='$GENIE_SCRIPTS_DIR/genie_new.clj'")))
 
 (defn show-windows-config
   "Show lines to put in Windows environment (or 4start.bat)"
