@@ -5,11 +5,11 @@
   (:require
    [clojure.string :as str]
    [me.raynes.fs :as fs]
+   [ndevreeze.logger :as log]
    [ndevreeze.cmdline :as cl]))
 
 ;; TODO - add deps.edn-template to use as a param.
 
-;; TODO - no default in cmdline params, but use env-vars or defaults.
 (def cli-options
   "Command line options for creating new Genie script"
   [["-n" "--namespace NAMESPACE" "Namespace, by default determined from script"]
@@ -17,6 +17,7 @@
    ["-t" "--template TEMPLATE" "template file to use, within template dir"
     :default "template.clj"]
    ["-f" "--force" "Overwrite existing script, if it exists"]
+   ["-v" "--verbose" "Verbose/debug logging"]
    ["-h" "--help" "Show this help"]])
 
 (defn dash->underscore
@@ -29,10 +30,19 @@
   [path]
   (str/replace path "_" "-"))
 
+(defn expand-home
+  "fs/expand-home does not work correctly on Windows with paths with slashes"
+  [path]
+  (fs/expand-home (str/replace path "/" (System/getProperty "file.separator"))))
+
 (defn template-dir
   "Determine template directory to use"
   [opt]
-  (fs/expand-home
+  (log/debug "GENIE_TEMPLATE_DIR:" (System/getenv "GENIE_TEMPLATE_DIR"))
+  (log/debug "GENIE_CONFIG_DIR:" (System/getenv "GENIE_CONFIG_DIR"))
+  (log/debug "~/.config/genie/template expanded: "
+             (expand-home "~/.config/genie/template"))
+  (expand-home
    (or (:directory opt)
        (System/getenv "GENIE_TEMPLATE_DIR")
        (when (System/getenv "GENIE_CONFIG_DIR")
@@ -106,6 +116,9 @@
   "Create a new genie script.
   Arguments contains the script(s) to be created as a relative path."
   [opt arguments ctx]
+  (log/init {:location :home :name "genie-new" :cwd (:cwd ctx)
+             :level (if (:verbose opt) :debug :info)})
+  (log/debug "ctx:" ctx)
   (doseq [script arguments]
     (create-script opt (make-absolute-clj-script ctx script))))
 
