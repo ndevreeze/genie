@@ -319,6 +319,7 @@
   "Show lines to put in Windows environment (or 4start.bat)"
   [opt]
   (println "\nAdd the following lines to your Windows environment (and/or 4start.bat)")
+  (println "Consider 'setx env-var env-value' as well")
   (println (str "set GENIE_CLIENT_DIR=" (windows-path (client-dir opt))))
   (println (str "set GENIE_DAEMON_DIR=" (windows-path (genie/daemon-dir opt))))
   (println (str "set GENIE_JAVA_CMD=" (genie/java-binary opt)))
