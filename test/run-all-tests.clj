@@ -195,7 +195,9 @@
   (run-test opt (in-test-dir opt "test.clj") ["-a"])
   (run-test opt (in-test-dir opt "test_params.clj") ["a" "b" "third" "4"])
   ;;test_stdin
-  (run-test opt (in-test-dir opt "test_head.clj") ["test_head.clj"])
+  ;;(run-test opt (in-test-dir opt "test_head.clj") ["test_head.clj"])
+  (run-test opt (in-test-dir opt "test_head.clj") [(in-test-dir opt "test_head.clj")])
+
   (run-test opt (in-test-dir opt "test_add_numbers.clj") ["1" "2" "3"])
 
   (fs/delete-if-exists "test_write_file.out")
