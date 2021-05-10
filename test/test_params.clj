@@ -28,7 +28,7 @@
   [opt arguments _ctx]
   ;;  (println "ctx: " ctx)
   (println "Given cmdline options: " opt)
-  (println "Given cmdline arugments: " arguments))
+  (println "Given cmdline arguments: " arguments))
 
 (defn main
   "Main from genie"
