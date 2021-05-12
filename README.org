@@ -170,16 +170,16 @@ Also from the 'test' directory:
 - More real world using and testing
 * Related projects
 Some Clojure-like languages having fast startup, but not all Clojure/JVM functionality:
-- Babashka
-- Janet
-- Hy
+- [[https://babashka.org/][Babashka]]
+- [[https://janet-lang.org/][Janet]]
+- [[https://docs.hylang.org/en/alpha/][Hy]]
 - more...
 
 Some earlier projects, which do not seem to be actively maintained:
-- Grenchman
-- Cake
+- [[https://leiningen.org/grench.html][Grenchman]]
+- [[https://github.com/ninjudd/cake][Cake]]
+- [[http://inlein.org/][Inlein]] - mostly for setting up classpath, a new JVM is started for each script-run.
 - more...
-
 * More docs
 - [[file:docs/todo.org]]
 - [[file:docs/background.org]]
