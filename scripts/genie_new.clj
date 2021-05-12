@@ -21,9 +21,14 @@
    ["-h" "--help" "Show this help"]])
 
 (defn dash->underscore
-  "Replace dashes in path to underscores"
+  "Replace dashes in path to underscores.
+   Only in the final part (the filename), not the parent-directory."
   [path]
-  (str/replace path "-" "_")  )
+  (let [filename (fs/base-name path)
+        dir (str/replace path filename "")
+        ;; cannot use fs/parent here, will add current dir and backslashes.
+        filename2 (str/replace filename "-" "_")]
+    (str dir filename2)))
 
 (defn underscore->dash
   "Replace underscores in path to dashes, for namespace"
@@ -86,7 +91,7 @@
       (create-from-template (fs/file dir (:template opt))
                             script
                             {:namespace full-ns
-                             :script (str script)})
+                             :script (str/replace (str script) "\\" "/")})
       (fs/chmod "+x" script)
       (let [deps-target (fs/file (fs/parent script) "deps.edn")]
         (if (fs/exists? deps-target)
