@@ -62,7 +62,9 @@ And add a crontab entry so the Genie daemon starts automatically:
 @reboot /home/your-user-name/tools/genie/genied.sh
 #+end_src
 
-Or, in Windows: TBD
+Check genied.sh for giving java options like -Xmx.
+
+Or, in Windows: see [[file:docs/windows.org]].
 * Test without installation
 If you want to check out Genie without installing it, assuming you have Babashka and Leiningen installed (this uses 'lein run'):
 #+begin_src bash :tangle yes

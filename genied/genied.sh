@@ -25,4 +25,5 @@ else
     fi
 fi
 
-$JAVA -jar $script_dir/genied.jar > $LOG_DIR/genied-$DATETIME.log 2>&1 &
+# By default max 1GB of memory
+$JAVA -Xmx1g -jar $script_dir/genied.jar > $LOG_DIR/genied-$DATETIME.log 2>&1 &
