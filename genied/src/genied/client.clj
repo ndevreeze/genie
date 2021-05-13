@@ -99,7 +99,7 @@
     (when-not (supported-protocol-version? ctx)
       (log-daemon-warn "Unsupported protocol version:" (:protocol-version ctx)
                        "for script:" script
-                       ". Expected: " supported-protocol-versions                       )
+                       ". Expected: " supported-protocol-versions)
       (binding [*out* *err*]
         (println "WARNING - Unsupported protocol version:"
                  (:protocol-version ctx)
