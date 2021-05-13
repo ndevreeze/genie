@@ -21,12 +21,18 @@
     :default 7888 :parse-fn #(Integer/parseInt %)]
    ["-v" "--verbose" "Diagnostics wrt classloaders; log-level DEBUG"]])
 
+(defn log-location
+  "Determine log-file location from options and env"
+  [_opt]
+  (or (System/getenv "GENIE_LOG_DIR")
+      :home))
+
 (defn do-script
   "Main user defined function for genied"
   [{:keys [port config verbose] :as opt} arguments ctx]
   (when (:verbose opt)
     (alter-var-root #'diag/*verbose* (constantly true)))
-  (log/init {:location :home :name "genied"
+  (log/init {:location (log-location opt) :name "genied"
              :level (if verbose :debug :info)})
   (log/debug "genied started")
   (log/info "Using config: " config)

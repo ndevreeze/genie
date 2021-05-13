@@ -105,7 +105,7 @@
     [org.apache.httpcomponents/httpclient "4.5.13"]
     [org.slf4j/slf4j-nop "1.7.30"]
     [org.jsoup/jsoup "1.13.1"]
-    [ndevreeze/logger "0.5.0"]
+    [ndevreeze/logger "0.5.1"]
     [ndevreeze/cmdline "0.2.0"]])
 
 (defn mark-project-libraries
