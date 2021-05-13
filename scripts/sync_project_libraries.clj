@@ -79,14 +79,17 @@
 
 (defn script [opt _arguments _ctx]
   (println "script: /home/nico/cljlib/genie/scripts/sync_project_libraries.clj")
-  (println "project to read: " (str (fs/normalized (:project opt))))
-  (let [prj-deps (read-prj-deps (fs/file (:project opt) "project.clj"))
-        mark-deps (read-mark-deps (fs/file (:project opt) "src/genied/classloader.clj"))]
-    (println "prj-deps: " prj-deps)
-    (println "mark-deps: " mark-deps)
-    (if (= prj-deps mark-deps)
-      (println "Ok, both dependency lists are the same")
-      (print-diffs prj-deps mark-deps))))
+  (if (:project opt)
+    (do
+      (println "project to read: " (str (fs/normalized (:project opt))))
+      (let [prj-deps (read-prj-deps (fs/file (:project opt) "project.clj"))
+            mark-deps (read-mark-deps (fs/file (:project opt) "src/genied/classloader.clj"))]
+        (println "prj-deps: " prj-deps)
+        (println "mark-deps: " mark-deps)
+        (if (= prj-deps mark-deps)
+          (println "Ok, both dependency lists are the same")
+          (print-diffs prj-deps mark-deps))))
+    (println "--project is mandatory (genied directory)")))
 
 (defn main [ctx args]
   (cl/check-and-exec "" cli-options script args ctx))
