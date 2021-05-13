@@ -1,9 +1,9 @@
 (ns genied.core-test
   "No real tests for now. Most functions are stateful, so harder to test.
    Main testing is done with the scripts in the test-directory."
-  (:require [clojure.test :refer :all] ;; use standard test...
+  (:require [clojure.test :as test] ;; use standard test...
             [midje.sweet :as midje]    ;; ... or midje.
-            [genied.core :refer :all]))
+            [genied.core :as genie]))
 
 (midje/facts
  "Test several facts"
