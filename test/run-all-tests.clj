@@ -2,11 +2,12 @@
 
 (ns run-all-tests
   "Run all tests in this directory"
-  (:require [babashka.process :as p]
+  (:require [babashka.fs :as fs]
+            [babashka.process :as p]
+            [babashka.wait :as wait]
             [clojure.tools.cli :as cli]
             [clojure.string :as str]
-            [clojure.java.io :as io]
-            [babashka.fs :as fs])
+            [clojure.java.io :as io])
   (:import [java.io File]))
 
 ;; from raynes.fs, no home functions in babashka.fs
@@ -133,15 +134,24 @@
 
 (defn genie-clj
   "Determine normalized path to genie.clj script"
-  [opt]
+  [_opt]
   (normalized (fs/file *file* "../../client/genie.clj")))
 
 (defn start-daemon
   "Start daemon using genie.clj client"
   [opt]
-  (let [p (p/process ["bb" (genie-clj opt) "--start-daemon" "-p" (:port opt)])]
+  (let [cmd ["bb" (str (genie-clj opt)) "--start-daemon" "-p" (:port opt) "--max-wait-daemon" 10]
+        _ (debug "cmd:" cmd)
+        p (p/process cmd)]
     (info "Started daemon process, waiting to be ready...")
     (info "Result of waiting: " @p ", " p)))
+
+(defn daemon-started?
+  "Return true iff daemon was started.
+   Either before or just now from this script"
+  [opt]
+  (boolean (wait/wait-for-port "localhost" (:port opt)
+                               {:timeout 1000 :pause 200})))
 
 (defn stop-daemon
   "Stop daemon using genie.clj client"
@@ -153,7 +163,7 @@
 
 (defn test-dir
   "Determine normalized path of test-dir"
-  [opt]
+  [_opt]
   (normalized (fs/parent *file*)))
 
 (defn run-test
@@ -183,27 +193,29 @@
 (defn run-all-tests
   "Run all tests in this dir.
    Possibly start/stop daemon around the tests"
-  [{:keys [no-start-stop-daemon] :as opt}]
+  [{:keys [no-start-stop-daemon port] :as opt}]
   (when-not no-start-stop-daemon
     (start-daemon opt))
+  (if (daemon-started? opt)
+    (do
+      (doseq [script (->> (fs/glob (test-dir opt) "*.clj")
+                          (map str)
+                          (filter run-script?))]
+        (run-test opt script []))
 
-  (doseq [script (->> (fs/glob (test-dir opt) "*.clj")
-                      (map str)
-                      (filter run-script?))]
-    (run-test opt script []))
+      (run-test opt (in-test-dir opt "test.clj") ["-a"])
+      (run-test opt (in-test-dir opt "test_params.clj") ["a" "b" "third" "4"])
+      ;;test_stdin
+      ;;(run-test opt (in-test-dir opt "test_head.clj") ["test_head.clj"])
+      (run-test opt (in-test-dir opt "test_head.clj") [(in-test-dir opt "test_head.clj")])
 
-  (run-test opt (in-test-dir opt "test.clj") ["-a"])
-  (run-test opt (in-test-dir opt "test_params.clj") ["a" "b" "third" "4"])
-  ;;test_stdin
-  ;;(run-test opt (in-test-dir opt "test_head.clj") ["test_head.clj"])
-  (run-test opt (in-test-dir opt "test_head.clj") [(in-test-dir opt "test_head.clj")])
+      (run-test opt (in-test-dir opt "test_add_numbers.clj") ["1" "2" "3"])
 
-  (run-test opt (in-test-dir opt "test_add_numbers.clj") ["1" "2" "3"])
-
-  (fs/delete-if-exists "test_write_file.out")
-  (run-test opt (in-test-dir opt "test_write_file.clj") ["--file" "./test_write_file.out" "--delete-file"])
-
-  (run-test opt (in-test-dir opt "test_stdin.clj") ["--stdin"])
+      (fs/delete-if-exists "test_write_file.out")
+      (run-test opt (in-test-dir opt "test_write_file.clj") ["--file" "./test_write_file.out"
+                                                             "--delete-file"])
+      (run-test opt (in-test-dir opt "test_stdin.clj") ["--stdin"]))
+    (println "Daemon not started on port:" port ", cannot run tests"))
 
   (when-not no-start-stop-daemon
     (stop-daemon opt)))
@@ -225,12 +237,13 @@
   (let [opts (cli/parse-opts *command-line-args* cli-options :in-order true)
         opt (:options opts)
         args (:arguments opts)]
-    (debug "*command-line-args* = " *command-line-args*)
-    (debug "opts = " opts)
-    (debug "opt=" opt ", args=" args)
-    (if (or (:help opt) (:errors opts))
-      (print-help opts)
-      (run-all-tests opt))))
+    (binding [*verbose* (:verbose opt)]
+      (debug "*command-line-args* = " *command-line-args*)
+      (debug "opts = " opts)
+      (debug "opt=" opt ", args=" args)
+      (if (or (:help opt) (:errors opts))
+        (print-help opts)
+        (run-all-tests opt)))))
 
 ;; wrt linting with leiningen/bikeshed etc.
 ;; see https://book.babashka.org/#main_file
