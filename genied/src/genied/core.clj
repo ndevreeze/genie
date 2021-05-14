@@ -65,6 +65,3 @@
   [& args]
   (cl/check-and-exec "Description of genied"
                      cli-options do-script args))
-
-(comment
-  (-main "-p" "7889"))
