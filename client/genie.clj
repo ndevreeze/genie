@@ -23,6 +23,7 @@
     ([] homedir)
     ([user] (if (empty? user) homedir (io/file usersdir user)))))
 
+;; from raynes.fs, no home functions in babashka.fs
 (defn expand-home
   "If `path` begins with a tilde (`~`), expand the tilde to the value
   of the `user.home` system property. If the `path` begins with a
@@ -41,35 +42,12 @@
             (io/file (home (subs path 1 sep)) (subs path (inc sep)))))
         (io/file path)))))
 
-;; from raynes.fs, no home functions in babashka.fs
-#_(defn expand-home
-    "If `path` begins with a tilde (`~`), expand the tilde to the value
-  of the `user.home` system property. If the `path` begins with a
-  tilde immediately followed by some characters, they are assumed to
-  be a username. This is expanded to the path to that user's home
-  directory. This is (naively) assumed to be a directory with the same
-  name as the user relative to the parent of the current value of
-  `user.home`."
-    [path]
-    (let [path (str path)]
-      (if (.startsWith path "~")
-        (let [sep (.indexOf path File/separator)]
-          (if (neg? sep)
-            (home (subs path 1))
-            (io/file (home (subs path 1 sep)) (subs path (inc sep)))))
-        (io/file path))))
-
 (defn normalized
   "From Raynes/fs, combination of absolutize and normalize.
    Also replace backslashes by forward slashes, wrt calling nRepl"
   [path]
   (str/replace (fs/normalize (fs/absolutize path))
                #"\\" "/"))
-
-#_(defn normalized
-    "From Raynes/fs, combination of absolutize and normalize"
-    [path]
-    (fs/normalize (fs/absolutize path)))
 
 (defn os-name
   "Return name of operating system
@@ -122,23 +100,11 @@
    Used by function `log` below"
   nil)
 
-;; need *file* value during load-time. During call-time (of source-jar), it has been changed to install.clj.
-#_(def genie-client-path
-    "var, used by source-jar function.
-   need *file* value during load-time. During call-time (of
-  source-jar), it has been changed to install.clj."
-    *file*)
-
 (def genie-src-root
   "var, used by source-jar function.
    need *file* value during load-time. During call-time (of
   source-jar), it has been changed to install.clj."
   (fs/normalize (fs/file *file* "../..")))
-
-#_(println "Values when loading genie.clj:")
-#_(println "*file* :" *file*)
-#_(println "babashka.file property:" (System/getProperty "babashka.file"))
-#_(println "genie-client-path: " genie-client-path)
 
 (def log-time-pattern
   "log timestamp format.
@@ -207,22 +173,6 @@
   (when-let [logdir (:logdir opt)]
     (fs/file logdir (format "genie-%s.log" (current-timestamp-file)))))
 
-#_(defn first-file
-    "Find first file according to glob-specs in dir.
-   Return nil if none found, a string otherwise. Search in dir (no
-  sub-dirs). Check glob-specs seq in order"
-    [dir glob-specs]
-    (println "Called first file with:" dir ", and: " glob-specs)
-    (when (and dir (seq glob-specs))
-      (println "within when")
-      (if-let [files (seq (fs/glob (fs/file dir) (first glob-specs)))]
-        (do
-          (println "if-let ok, files=" files)
-          (str (first files)))
-        (do
-          (println "if-let not-ok, so recur with: " (rest glob-specs))
-          (recur dir (rest glob-specs))))))
-
 (defn first-file
   "Find first file according to glob-specs in dir.
    Return nil if none found, a string otherwise. Search in dir (no
@@ -245,24 +195,6 @@
       (if (fs/executable? file)
         file
         (recur dir (rest names))))))
-
-#_(defn first-executable
-    "Find first file according to glob-specs in dir.
-   Return nil if none found, a string otherwise. Search in dir (no
-  sub-dirs). Check glob-specs seq in order"
-    [dir names]
-    (println "Called first file with:" dir ", and: " names)
-    (when (and dir (seq names))
-      (println "within when")
-      (let [file (fs/file dir (first names))]
-        (println "combined file:" file)
-        (if (fs/executable? file)
-          (do
-            (println "Ok, file found: " file)
-            file)
-          (do
-            (println "file not found, so recur:" file)
-            (recur dir (rest names)))))))
 
 (defn find-in-path
   "Find executable in system PATH.
@@ -288,16 +220,6 @@
         (str dir)
         (recur (rest dirs))))))
 
-#_(defn first-existing-dir
-    "Find first dir in dirs seq that exists and return it.
-   Return nil if none found."
-    [dirs]
-    (when-let [dir (first dirs)]
-      (let [dir (expand-home dir)]
-        (if (fs/exists? dir)
-          (str dir)
-          (recur (rest dirs))))))
-
 ;; some functions to determine locations of java, genied.jar and config.
 (defn java-binary
   "Determine location of java binary.
@@ -310,40 +232,9 @@
   (fs/normalize
    (or (System/getenv "GENIE_JAVA_CMD")
        (System/getenv "JAVA_CMD")
-       #_(when-let [java-home (System/getenv "JAVA_HOME")]
-           (str (fs/file java-home "bin" "java")))
        (when-let [java-home (System/getenv "JAVA_HOME")]
          (first-executable java-home ["java" "java.exe"]))
        (find-in-path ["java" "java.exe"]))))
-
-#_(defn java-binary
-    "Determine location of java binary.
-   By checking in this order:
-   - GENIE_JAVA_CMD
-   - JAVA_CMD
-   - JAVA_HOME
-   - java in system PATH"
-    []
-    (or (System/getenv "GENIE_JAVA_CMD")
-        (System/getenv "JAVA_CMD")
-        (when-let [java-home (System/getenv "JAVA_HOME")]
-          (str (fs/file java-home "bin" "java")))
-        "java"))
-
-#_(defn daemon-dir
-    "Determine location of genie daemon dir.
-   By checking in this order:
-   - daemon in cmdline options
-   - GENIE_DAEMON_DIR
-   - ~/tools/genie
-   - genied/target/uberjar"
-    [opt]
-    (expand-home
-     (or (:daemon opt)
-         (System/getenv "GENIE_DAEMON_DIR")
-         (first-existing-dir
-          ["~/tools/genie"
-           (fs/normalize (fs/file *file* "../../genied/target/uberjar"))]))))
 
 (defn daemon-dir
   "Determine location of genie daemon dir.
@@ -381,24 +272,6 @@
     (debug "  uberjar-dir:" uberjar-dir)
     (when (fs/exists? uberjar-dir)
       (first (fs/glob uberjar-dir "*standalone*.jar")))))
-
-#_(defn source-jar
-    "Determine path of source uberjar, iff it exists.
-   Return nil otherwise"
-    []
-    (let [genie-src-root (fs/normalize (fs/file *file* "../.."))
-          uberjar-dir (fs/file genie-src-root "genied/target/uberjar")]
-      (debug "genie-src-root: " (str genie-src-root))
-      (debug "  uberjar-dir:" uberjar-dir)
-      (when (fs/exists? uberjar-dir)
-        (first (fs/glob uberjar-dir "*standalone*.jar")))))
-
-#_(defn daemon-jar
-    "Determine install location of genied jar file
-   By checking the dirs as in `daemon-dir`.
-   Return nil iff nothing found."
-    [opt]
-    (fs/file (daemon-dir opt) "genied.jar"))
 
 (defn bytes->str
   "If `x` is a byte-array, convert it to a string.
@@ -547,7 +420,6 @@
                           "code" expr})
       (loop [it 0]
         (let [res (read-print-result in)]
-          #_(debug "res: " res ", iter=" it)
           (when (:need-input res)
             (debug "Need more input!")
             (let [lines (read-lines opt *in*)]
@@ -795,59 +667,6 @@
           :inherit true}]
         :else
         [nil nil]))
-
-#_(defn genied-command
-    "Create command to start genied.
-   Based on java-bin and genied-jar.
-   Or failing that, Leiningen.
-   Return vector of command and process options (cwd to use).
-   Also set :inherit true to see the daemon starting, but this
-   does not seem to work.
-   If client is started with verbose, so will daemon.
-   Return nil iff no suitable command found"
-    [opt java-bin genied-jar]
-    ;; fs/exists? throws on nil, so check.
-    (if (and java-bin genied-jar (fs/exists? genied-jar))
-      [[java-bin '-jar genied-jar (if *verbose* '-v "") '-p (:port opt)]
-       {:dir (str (fs/parent genied-jar))}]
-      [[(find-in-path ["lein"]) 'run
-        '-- (if *verbose* '-v "") '-p (:port opt)]
-       {:dir (str (normalized (fs/file *file* ".." ".." "genied")))
-        :inherit true}]))
-
-#_(defn genied-command
-    "Create command to start genied.
-   Based on java-bin and genied-jar.
-   Or failing that, Leiningen.
-   Return vector of command and process options (cwd to use).
-   Also set :inherit true to see the daemon starting, but this
-   does not seem to work.
-   If client is started with verbose, so will daemon.
-   This version uses bash as well, wrt Windows."
-    [opt java-bin genied-jar]
-    ;; fs/exists? throws on nil, so check.
-    (if (and java-bin genied-jar (fs/exists? genied-jar))
-      [[java-bin '-jar genied-jar (if *verbose* '-v "") '-p (:port opt)]
-       {:dir (str (fs/parent genied-jar))}]
-      [[(find-in-path ["bash" "bash.exe"]) (find-in-path ["lein"]) 'run
-        '-- (if *verbose* '-v "") '-p (:port opt)]
-       {:dir (str (normalized (fs/file *file* ".." ".." "genied")))
-        :inherit true}]))
-
-#_(defn genied-command
-    "Create command to start genied.
-   Based on java-bin and genied-jar.
-   Or failing that, Leiningen.
-   Return vector of command and process options (cwd to use).
-   Also set :inherit true to see the daemon starting, but this
-   does not seem to work"
-    [opt java-bin genied-jar]
-    (if (and java-bin (fs/exists? genied-jar))
-      [[java-bin '-jar genied-jar '-p (:port opt)]
-       {:dir (str (fs/parent genied-jar))}]
-      [['lein 'run '-- '-p (:port opt)]
-       {:dir (str (normalized (fs/file *file* ".." ".." "genied")))
-        :inherit true}]))
 
 ;; TODO - check if process already started. Although starting twice
 ;; does not seem harmful: (process) returns quickly, old process still

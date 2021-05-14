@@ -22,9 +22,7 @@
   "Default script"
   [opt _arguments ctx]
   (println "ctx: " ctx)
-  (lib/data-csv opt ctx)
-  ;; classpath only contains Maven/.m2 jars.
-  #_(println "classpath here: " (cp/classpath)))
+  (lib/data-csv opt ctx))
 
 (defn  main
   "Main for genie"

@@ -20,42 +20,6 @@
 
 (load-file (fs/file (fs/parent *file*) "client/genie.clj"))
 
-;; from raynes.fs, no home functions in babashka.fs
-#_(let [homedir (io/file (System/getProperty "user.home"))
-        usersdir (.getParent homedir)]
-    (defn home
-      "With no arguments, returns the current value of the `user.home` system
-     property. If a `user` is passed, returns that user's home directory. It
-     is naively assumed to be a directory with the same name as the `user`
-     located relative to the parent of the current value of `user.home`."
-      ([] homedir)
-      ([user] (if (empty? user) homedir (io/file usersdir user)))))
-
-#_(defn expand-home
-    [path]
-    (genie/expand-home path))
-
-;; from raynes.fs, no home functions in babashka.fs
-;; add: return nil iff path is nil.
-;; add: call to fs/normalize, tot convert ~/bin to ~\\bin on Windows.
-#_(defn expand-home
-    "If `path` begins with a tilde (`~`), expand the tilde to the value
-  of the `user.home` system property. If the `path` begins with a
-  tilde immediately followed by some characters, they are assumed to
-  be a username. This is expanded to the path to that user's home
-  directory. This is (naively) assumed to be a directory with the same
-  name as the user relative to the parent of the current value of
-  `user.home`. Return nil if path is nil"
-    [path]
-    (when path
-      (let [path (str (fs/normalize path))]
-        (if (.startsWith path "~")
-          (let [sep (.indexOf path File/separator)]
-            (if (neg? sep)
-              (home (subs path 1))
-              (io/file (home (subs path 1 sep)) (subs path (inc sep)))))
-          (io/file path)))))
-
 (def cli-options
   "Cmdline options"
   [[nil "--daemon DAEMON" "Daemon directory"]
@@ -188,13 +152,6 @@
   [opt]
   (when-let [dir (installable-daemon-dir opt)]
     (fs/file dir "genied.jar")))
-
-#_(defn source-jar
-    "Determine path of source uberjar, iff it exists.
-   Return nil otherwise"
-    []
-    (when (fs/exists? "genied/target/uberjar")
-      (first (fs/glob (fs/file "genied/target/uberjar") "*standalone*.jar"))))
 
 (defn do-make-uberjar!
   "Make uberjar.
