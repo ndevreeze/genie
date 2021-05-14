@@ -78,7 +78,6 @@
     (println coord)))
 
 (defn script [opt _arguments _ctx]
-  (println "script: /home/nico/cljlib/genie/scripts/sync_project_libraries.clj")
   (if (:project opt)
     (do
       (println "project to read: " (str (fs/normalized (:project opt))))
