@@ -207,21 +207,21 @@
   (when-let [logdir (:logdir opt)]
     (fs/file logdir (format "genie-%s.log" (current-timestamp-file)))))
 
-(defn first-file
-  "Find first file according to glob-specs in dir.
+#_(defn first-file
+    "Find first file according to glob-specs in dir.
    Return nil if none found, a string otherwise. Search in dir (no
   sub-dirs). Check glob-specs seq in order"
-  [dir glob-specs]
-  (println "Called first file with:" dir ", and: " glob-specs)
-  (when (and dir (seq glob-specs))
-    (println "within when")
-    (if-let [files (seq (fs/glob (fs/file dir) (first glob-specs)))]
-      (do
-        (println "if-let ok, files=" files)
-        (str (first files)))
-      (do
-        (println "if-let not-ok, so recur with: " (rest glob-specs))
-        (recur dir (rest glob-specs))))))
+    [dir glob-specs]
+    (println "Called first file with:" dir ", and: " glob-specs)
+    (when (and dir (seq glob-specs))
+      (println "within when")
+      (if-let [files (seq (fs/glob (fs/file dir) (first glob-specs)))]
+        (do
+          (println "if-let ok, files=" files)
+          (str (first files)))
+        (do
+          (println "if-let not-ok, so recur with: " (rest glob-specs))
+          (recur dir (rest glob-specs))))))
 
 (defn first-file
   "Find first file according to glob-specs in dir.
@@ -306,7 +306,7 @@
    - JAVA_CMD
    - JAVA_HOME
    - java in system PATH"
-  [opt]
+  [_opt]
   (fs/normalize
    (or (System/getenv "GENIE_JAVA_CMD")
        (System/getenv "JAVA_CMD")
@@ -784,7 +784,9 @@
   [opt java-bin genied-jar]
   ;; fs/exists? throws on nil, so check.
   (cond (and java-bin genied-jar (fs/exists? genied-jar))
-        [[java-bin '-jar genied-jar (if *verbose* '-v "") '-p (:port opt)]
+        ;; nil/empty options (wrt verbose) should be last, stops named
+        ;; parameter processing.
+        [[java-bin '-jar genied-jar '-p (:port opt) (when *verbose* '-v)]
          {:dir (str (fs/parent genied-jar))}]
         (find-in-path ["lein"])
         [[(find-in-path ["lein"]) 'run
@@ -875,7 +877,7 @@
           (if-let [res (wait/wait-for-port "localhost" (:port opt)
                                            {:timeout (* 1000 (:max-wait-daemon opt)) :pause 200})]
             (println "Ok, started in" (:took res) "msec")
-            (println "Failed to start server, process =" proc))))
+            (println "Failed to start server, process =" proc))          ))
       (println "No suitable command found to start Genie daemon."
                "Try running with -v"))))
 
