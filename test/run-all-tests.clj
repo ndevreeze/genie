@@ -53,6 +53,7 @@
    ["-l" "--logdir LOGDIR" "Directory for client log. Empty: no logging"]
    ["-v" "--verbose" "Verbose output"]
    ["-h" "--help" "Show help"]
+   [nil "--clj" "Use clj instead of genie to run scripts"]
    [nil "--no-start-stop-daemon" "Do not start a daemon before the tests"]])
 
 (def ^:dynamic *verbose*
@@ -166,9 +167,34 @@
   [_opt]
   (normalized (fs/parent *file*)))
 
+;; copied from genie.clj
+(defn last-namespace
+  "Determine last namespace in the script.
+   read ns-decl from the script-file.
+   use the last ns-decl in the script.
+   If no ns-decl found, return nil"
+  [script]
+  (debug "Determine main function from script: " script)
+  (with-open [rdr (clojure.java.io/reader (fs/file script))]
+    (when-let [namespaces
+               (seq (for [line (line-seq rdr)
+                          :let [[_ ns] (re-find #"^\(ns ([^ \(\)]+)" line)]
+                          :when (re-find #"^\(ns " line)]
+                      ns))]
+      (debug "namespaces found in script: " namespaces)
+      (last namespaces))))
+
+(defn test-cmdline
+  "Create cmd-line for test-script.
+   Normally with genie, but could be clj too"
+  [{:keys [port clj] :as opt} script cmdline-opts]
+  (if clj
+    (concat ["clj" "-m" (last-namespace script)] cmdline-opts)
+    (concat ["bb" (genie-clj opt) "-p" port script] cmdline-opts)))
+
 (defn run-test
-  [{:keys [port] :as opt} script cmdline-opts]
-  (let [proc (p/process (concat ["bb" (genie-clj opt) "-p" port script] cmdline-opts)
+  [opt script cmdline-opts]
+  (let [proc (p/process (test-cmdline opt script cmdline-opts)
                         {:in "foo" :out :string :err :string})]
     (info "Started test: " script ", with options: " (str/join " " cmdline-opts))
     (deref proc)
@@ -193,10 +219,10 @@
 (defn run-all-tests
   "Run all tests in this dir.
    Possibly start/stop daemon around the tests"
-  [{:keys [no-start-stop-daemon port] :as opt}]
+  [{:keys [no-start-stop-daemon port clj] :as opt}]
   (when-not no-start-stop-daemon
     (start-daemon opt))
-  (if (daemon-started? opt)
+  (if (or (daemon-started? opt) clj)
     (do
       (doseq [script (->> (fs/glob (test-dir opt) "*.clj")
                           (map str)
@@ -205,10 +231,7 @@
 
       (run-test opt (in-test-dir opt "test.clj") ["-a"])
       (run-test opt (in-test-dir opt "test_params.clj") ["a" "b" "third" "4"])
-      ;;test_stdin
-      ;;(run-test opt (in-test-dir opt "test_head.clj") ["test_head.clj"])
       (run-test opt (in-test-dir opt "test_head.clj") [(in-test-dir opt "test_head.clj")])
-
       (run-test opt (in-test-dir opt "test_add_numbers.clj") ["1" "2" "3"])
 
       (fs/delete-if-exists "test_write_file.out")
