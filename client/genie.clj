@@ -447,6 +447,22 @@
      :protocol-version "0.1.0"
      :eval-id (msg-id)}))
 
+(defn last-namespace
+  "Determine last namespace in the script.
+   read ns-decl from the script-file.
+   use the last ns-decl in the script.
+   If no ns-decl found, return nil"
+  [script]
+  (debug "Determine main function from script: " script)
+  (with-open [rdr (clojure.java.io/reader (fs/file script))]
+    (when-let [namespaces
+               (seq (for [line (line-seq rdr)
+                          :let [[_ ns] (re-find #"^\(ns ([^ \(\)]+)" line)]
+                          :when (re-find #"^\(ns " line)]
+                      ns))]
+      (debug "namespaces found in script: " namespaces)
+      (last namespaces))))
+
 (defn det-main-fn
   "Determine main function from the script.
    read ns-decl from the script-file, add '/main'
@@ -455,16 +471,28 @@
   [opt script]
   (debug "Determine main function from script: " script)
   (or (:main opt)
-      (with-open [rdr (clojure.java.io/reader (fs/file script))]
-        (if-let [namespaces
-                 (seq (for [line (line-seq rdr)
-                            :let [[_ ns] (re-find #"^\(ns ([^ \(\)]+)" line)]
-                            :when (re-find #"^\(ns " line)]
-                        ns))]
-          (do
-            (debug "namespaces found in script: " namespaces)
-            (str (last namespaces) "/main"))
-          "main"))))
+      (if-let [namespace (last-namespace script)]
+        (str namespace "/main")
+        "main")))
+
+#_(defn det-main-fn
+    "Determine main function from the script.
+   read ns-decl from the script-file, add '/main'
+   use the last ns-decl in the script.
+   If no ns-decl found, return `main` (root-ns)"
+    [opt script]
+    (debug "Determine main function from script: " script)
+    (or (:main opt)
+        (with-open [rdr (clojure.java.io/reader (fs/file script))]
+          (if-let [namespaces
+                   (seq (for [line (line-seq rdr)
+                              :let [[_ ns] (re-find #"^\(ns ([^ \(\)]+)" line)]
+                              :when (re-find #"^\(ns " line)]
+                          ns))]
+            (do
+              (debug "namespaces found in script: " namespaces)
+              (str (last namespaces) "/main"))
+            "main"))))
 
 (defn normalize-param
   "file normalise a parameter, so the daemon-process can find it.
