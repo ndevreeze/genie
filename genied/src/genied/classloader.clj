@@ -130,11 +130,21 @@
   [opt]
   (load-libraries opt))
 
-;; TODO - check ctx if different deps.edn is mentioned.
+(defn det-deps-edn
+  "Determine deps.edn file based on script and ctx.
+   Also check parent dir of script, when default src-dir is used"
+  [{:keys [deps] :as ctx} script]
+  (cond deps deps
+        (fs/exists? (fs/file (fs/parent script) "deps.edn"))
+        (fs/file (fs/parent script) "deps.edn")
+        (fs/exists? (fs/file (fs/parent (fs/parent script)) "deps.edn"))
+        (fs/file (fs/parent (fs/parent script)) "deps.edn")))
+
 (defn load-script-libraries
   "Load libraries as found in deps.edn in script-dir or ctx"
-  [script]
-  (let [deps-edn (fs/file (fs/parent script) "deps.edn")]
+  [ctx script]
+  (let [deps-edn (det-deps-edn ctx script)]
     (when (fs/exists? deps-edn)
       (let [script-opt (edn/read-string (slurp deps-edn))]
-        (load-libraries script-opt)))))
+        (load-libraries script-opt)))
+    deps-edn))

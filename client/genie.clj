@@ -68,6 +68,7 @@
     :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
    ["-m" "--main MAIN" "main ns/fn to call. Empty: get from script ns-decl"]
    ["-l" "--logdir LOGDIR" "Directory for client log. Empty: no logging"]
+   [nil "--deps DEPS" "Use different deps.edn file"]
    ["-v" "--verbose" "Verbose output"]
    ["-h" "--help" "Show help"]
    [nil "--max-lines MAX-LINES" "Max #lines to read/pass in one message"
@@ -434,18 +435,7 @@
         (read-result in)
         (reset! session-atom nil)))))
 
-(defn create-context
-  "Create script context, with current working directory (cwd)"
-  [opt script]
-  (let [script (normalized script)
-        cwd (normalized ".")]
-    {:cwd (str cwd)
-     :client "babashka"
-     :script (str script)
-     :opt opt
-     :client-version "0.1.0"
-     :protocol-version "0.1.0"
-     :eval-id (msg-id)}))
+
 
 (defn last-namespace
   "Determine last namespace in the script.
@@ -512,6 +502,27 @@
   "Quote parameters in 'cmd-line' with double quotes"
   [params]
   (str/join " " (map quote-param params)))
+
+(defn opt-deps
+  "Return normalized deps.edn file, when --deps given
+   if --deps not given, return nil"
+  [{:keys [deps]}]
+  (when deps
+    (normalize-param deps)))
+
+(defn create-context
+  "Create script context, with current working directory (cwd)"
+  [opt script]
+  (let [script (normalized script)
+        cwd (normalized ".")]
+    {:cwd (str cwd)
+     :client "babashka"
+     :script (str script)
+     :deps (opt-deps opt)
+     :opt opt
+     :client-version "0.1.0"
+     :protocol-version "0.1.0"
+     :eval-id (msg-id)}))
 
 (defn exec-script
   "Execute given script with opt and script-params"

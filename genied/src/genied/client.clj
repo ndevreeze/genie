@@ -108,7 +108,8 @@
       (set-dynamic-classloader!)
       (print-diagnostic-info {} "after set-dyn3!"))
     (when-not (:noload opt)
-      (loader/load-script-libraries script)
+      (let [deps-edn (loader/load-script-libraries ctx script)]
+        (log-daemon-debug "deps-edn:" deps-edn))
       (print-diagnostic-info {} "after loading client libraries")
       (binding [*script-dir* (fs/parent script)]
         (load-file script)))
@@ -119,7 +120,7 @@
       ((eval main-fn) ctx script-params))
     (catch Exception e
       (log-daemon-warn "Exception during script exec: " e)
-      ;; client needs to know too
+      ;; client needs to know too:
       (throw e))
     (finally
       (log-daemon-debug "exec main-fn done: " main-fn)
