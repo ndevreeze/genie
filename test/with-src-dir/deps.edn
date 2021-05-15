@@ -1,0 +1,15 @@
+;; 2021-01-25: use maven or clojars refs.
+;; 2021-03-24: replace raynes/fs 1.4.6 with new one: clj-commons/fs/1.6.307/
+{:paths ["src"]
+ :deps
+ {org.clojure/clojure {:mvn/version "1.10.3"}
+  org.clojure/tools.cli {:mvn/version "1.0.206"}
+  org.clojure/data.xml {:mvn/version "0.0.8"}
+  org.clojure/data.csv {:mvn/version "1.0.0"}
+  clojure.java-time {:mvn/version "0.3.2"}
+  clj-commons/fs {:mvn/version "1.6.307"}
+  nrepl {:mvn/version "0.8.3"}
+  commons-codec {:mvn/version "1.13"} 
+  org.clojure/tools.logging {:mvn/version "1.1.0"}
+  ndevreeze/logger {:mvn/version "0.5.0"}
+  ndevreeze/cmdline {:mvn/version "0.2.0"}}}
