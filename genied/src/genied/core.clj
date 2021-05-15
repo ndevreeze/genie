@@ -65,3 +65,10 @@
   [& args]
   (cl/check-and-exec "Description of genied"
                      cli-options do-script args))
+
+(comment
+  ;; starting an nRepl server in Cider:
+  (-main "-p" "7887")
+  (-main "-v" "-p" "7887")
+
+  )
