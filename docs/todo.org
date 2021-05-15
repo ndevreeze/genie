@@ -1,2 +1,22 @@
 #+STARTUP: content indent
 #+title: Genie - Todo
+* Reflective access warning
+When creating an uberjar, a warning is shown:
+#+begin_src bash :tangle yes
+$ lein uberjar
+Compiling genied.classloader
+Compiling genied.client
+Compiling genied.core
+Compiling genied.diagnostics
+Compiling genied.state
+Compiling genied.util
+Created /home/nico/cljlib/genie/genied/target/uberjar/genied-0.1.0-SNAPSHOT.jar
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by clojure.lang.InjectedInvoker/0x0000000840065840 to method com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl.parse(org.xml.sax.InputSource,org.xml.sax.HandlerBase)
+WARNING: Please consider reporting this to the maintainers of clojure.lang.InjectedInvoker/0x0000000840065840
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+Created /home/nico/cljlib/genie/genied/target/uberjar/genied-0.1.0-SNAPSHOT-standalone.jar
+#+end_src
+
+This probably has something to do with Pomegranate, but further investigation is needed.
