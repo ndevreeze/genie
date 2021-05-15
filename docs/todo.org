@@ -20,3 +20,5 @@ Created /home/nico/cljlib/genie/genied/target/uberjar/genied-0.1.0-SNAPSHOT-stan
 #+end_src
 
 This probably has something to do with Pomegranate, but further investigation is needed.
+* Support Inlein style dependencies
+In [[http://inlein.org/][Inlein]] scripts the depencies are contained in the script itself, not in a separate deps.edn file. It might be nice to support this as well.
