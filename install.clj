@@ -371,4 +371,4 @@
 
 (if (= *file* (System/getProperty "babashka.file"))
   (main)
-  (println "Not called/sourced as main, do nothing"))
+  (println "Loaded as library:" (str (fs/normalize *file*))))
