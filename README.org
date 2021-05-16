@@ -19,27 +19,33 @@ Non-goals:
 - Supporting long-running, full applications. Use default Clojure if you need this.
 * Installation
 ** Prerequisites
+- Java (>= v11)
+- Clojure (>= v10)
 - Genie uses [[https://book.babashka.org][Babashka]] for the client and installation. So make sure you have this installed.
-- [[https://leiningen.org][Leiningen]] is used for creating an uberjar. This will reduce daemon startup time
+- [[https://leiningen.org][Leiningen]] is used for creating an uberjar. This will reduce daemon startup time.
 ** Install with Babashka
 #+begin_src bash :tangle yes
   bb ./install.clj
 #+end_src
 
-Install directories may be given:
-#+begin_src text :tangle yes
-  $ bb ./install.clj -h
-  install.clj - babashka script to install genie:
-    daemon, client, config, scripts and template
-        --daemon DAEMON      Daemon directory
-        --client CLIENT      Client directory
-        --config CONFIG      Config directory
-        --logdir LOGDIR      Logging dir for daemon and client
-        --scripts SCRIPTS    Scripts directory
-        --template TEMPLATE  Template directory
-        --dryrun             Show what would have been done
-        --force              Force re-creating uberjar
-    -h, --help               Show help
+Install directories may be given, and some other options:
+#+begin_src bash :tangle yes
+$ bb ./install.clj -h
+install.clj - Babashka script to install Genie:
+  daemon, client, config, scripts and template
+      --daemon DAEMON               Daemon directory
+      --client CLIENT               Client directory
+      --config CONFIG               Config directory
+      --logdir LOGDIR               Logging dir for daemon and client
+      --scripts SCRIPTS             Scripts directory
+      --template TEMPLATE           Template directory
+      --dryrun                      Show what would have been done
+      --create-uberjar              Force (re-)creating uberjar
+      --start-on-system-boot        Install Windows genied.bat in startup folder
+  -p, --port PORT             7888  Genie daemon port number (for start-on-system-boot)
+  -v, --verbose                     Verbose output
+  -h, --help                        Show help
+
 #+end_src
 
 With default locations:
@@ -134,6 +140,31 @@ Or with genie:
 genie.clj ./test.clj
 #+end_src
 
+** Command line options
+The genie.clj Babashka client has several options:
+#+begin_src bash :tangle yes
+$ client/genie.clj -h
+genie.clj - Babashka script to run scripts in Genie daemon
+  -p, --port PORT                     7888  Genie daemon port number
+  -m, --main MAIN                           main ns/fn to call. Empty: get from script ns-decl
+  -l, --logdir LOGDIR                       Directory for client log. Empty: no logging
+      --deps DEPS                           Use different deps.edn file
+  -v, --verbose                             Verbose output
+  -h, --help                                Show help
+      --max-lines MAX-LINES           1024  Max #lines to read/pass in one message
+      --noload                              Do not load libraries and scripts
+      --nocheckdaemon                       Do not perform daemon checks on errors
+      --nosetloader                         Do not set dynamic classloader
+      --nomain                              Do not call main function after loading
+      --nonormalize                         Do not normalize parameters to script (rel. paths)
+      --list-sessions                       List currently open/running sessions/scripts
+      --kill-sessions SESSIONS              csv list of (part of) sessions, or 'all'
+      --start-daemon                        Start daemon running on port
+      --stop-daemon                         Stop daemon running on port
+      --restart-daemon                      Restart daemon running on port
+      --max-wait-daemon MAX_WAIT_SEC  60    Max seconds to wait for daemon to start
+
+#+end_src
 * Creating a script
 To create a script and deps.edn file from templates:
 #+begin_src bash :tangle yes

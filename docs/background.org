@@ -1,3 +1,39 @@
 #+STARTUP: content indent
 #+title: Genie - Background info
+* Introduction
+Here we give some background information, including design decisions and challenges.
+* Class loading
+- Loading a namespace (using Pomegranate) and using it (require) should be done in the same session.
+- After a namespace is loaded and required, it is available for later scripts as well.
+* nRepl and sessions
+Also combination with class loading.
+** Take 1 - Tcl and rep
+** Take 2 - Babashka
+* Streams
+stdin, stdout, stderr.
+* Namespaces and functions
+See API docs.
+* Security
+The daemon should run under a standard (non-root) user. All scripts are executed under this user's credentials. The daemon only listens on localhost. In theory it should be possible to connect over the (local) network, but you probably do not want this.
+* What happens when the daemon starts?
+* What happens when a script is executed?
+The dynamic classloader is set to the one created at startup:
+#+begin_src clojure
+  (set-dynamic-classloader!)
+#+end_src
 
+Script libraries are loaded by checking a deps.edn file in the same dir, the parent dir or a client command line parameter given:
+#+begin_src clojure
+  (loader/load-script-libraries ctx script)
+#+end_src
+
+The script is loaded with the standard load-file function:
+#+begin_src clojure
+  (binding [*script-dir* (fs/parent script)]
+    (load-file script))
+#+end_src
+
+The main function is executed:
+#+begin_src clojure
+  ((eval main-fn) ctx script-params)
+#+end_src

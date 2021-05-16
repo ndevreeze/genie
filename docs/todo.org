@@ -22,3 +22,13 @@ Created /home/nico/cljlib/genie/genied/target/uberjar/genied-0.1.0-SNAPSHOT-stan
 This probably has something to do with Pomegranate, but further investigation is needed.
 * Support Inlein style dependencies
 In [[http://inlein.org/][Inlein]] scripts the depencies are contained in the script itself, not in a separate deps.edn file. It might be nice to support this as well.
+* Other Repl implementations
+nRepl is very versatile, with great support for sessions and stream-handling. But maybe simpler repl's are faster and/or easier.
+* Other wire protocols
+Use bencode over TCP/IP now. Maybe local unix sockets are faster.
+* Other clients
+Babashka works very well here, but it is a binary of 80MB. Some possible alternatives:
+- Tcl with rep(.exe) - the first implementation. This works, but a 2-process overhead is less than ideal.
+- Tcl with bencode (or other protocl)
+- A C implementation (maybe using rep as inspiration)
+- A better C, such as Go or Rust.
