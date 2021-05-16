@@ -1,0 +1,19 @@
+#+STARTUP: content indent
+#+title: Genie - Performance
+* TODO Some tests and results
+* TODO Client cmdline options
+--nosetloader, --nomain, others?
+* TODO Reading and passing stdin lines
+A test with reading a file, with max-lines parameter versus total running time:
+
+| max-lines | time (s) |
+|-----------+----------|
+|         1 |     30.6 |
+|         2 |     15.5 |
+|         3 |     10.5 |
+|         5 |      6.5 |
+|        10 |      3.5 |
+|        20 |      2.1 |
+|        50 |     1.11 |
+|       100 |     0.84 |
+|      1000 |      0.5 |
