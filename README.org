@@ -6,10 +6,17 @@ Another way of mitigating the slow startup of Clojure on the JVM, by starting a 
 - [[https://nrepl.org/nrepl/index.html][nRepl]] - for running the daemon and providing client connections (using bencode).
 - [[https://github.com/clj-commons/pomegranate][Pomegranate]] - for dynamically loading libraries
 - [[https://book.babashka.org][Babashka]] - for the client and installation script.
-* Starting points
-- Every script that can be executed by clj (using deps.edn) should also be able to be executed using genie
-- Fast startup of the script
-- It might help to see the daemon as part of the OS
+
+It might help to see the daemon as part of the OS.
+* Goals
+- Every script that can be executed by clj (using deps.edn) should also be able to be executed using Genie.
+- Fast startup of scripts.
+- Performance similar to Clojure itself, as it is still Clojure on the JVM.
+- Cross-platform: supports Linux, Windows and MacOS.
+
+Non-goals:
+- The fastest possible startup - running with a client/server setup implies some network overhead.
+- Supporting long-running, full applications. Use default Clojure if you need this.
 * Installation
 ** Prerequisites
 - Genie uses [[https://book.babashka.org][Babashka]] for the client and installation. So make sure you have this installed.
@@ -173,9 +180,12 @@ Also from the 'test' directory:
 * Related projects
 Some Clojure-like languages having fast startup, but not all Clojure/JVM functionality:
 - [[https://babashka.org/][Babashka]]
+- [[https://github.com/dundalek/closh][Closh]]
 - [[https://janet-lang.org/][Janet]]
+- [[https://github.com/candid82/joker][Joker]]
 - [[https://docs.hylang.org/en/alpha/][Hy]]
-- more...
+- [[https://github.com/anmonteiro/lumo][Lumo]]
+- [[https://planck-repl.org/][Planck]]
 
 Some earlier projects, which do not seem to be actively maintained:
 - [[https://leiningen.org/grench.html][Grenchman]]
