@@ -8,8 +8,11 @@ Another way of mitigating the slow startup of Clojure on the JVM, by starting a 
 - [[https://book.babashka.org][Babashka]] - for the client and installation script.
 
 It might help to see the daemon as part of the OS.
+
+** TODO Explain name Genie
+Genie, Djinn, Deamon. Like a script-server. But local, so a daemon.
 * Goals
-- Every script that can be executed by clj (using deps.edn) should also be able to be executed using Genie.
+- Every script that can be executed by clj (using deps.edn) should also be able to be executed using Genie. And therefore you can also develop your script using e.g. CIDER.
 - Fast startup of scripts.
 - Performance similar to Clojure itself, as it is still Clojure on the JVM.
 - Cross-platform: supports Linux, Windows and MacOS.
@@ -226,6 +229,7 @@ Some earlier projects, which do not seem to be actively maintained:
 * More docs
 - [[file:docs/todo.org]]
 - [[file:docs/background.org]]
+- [[file:docs/performance.org]]
 - [[file:docs/windows.org]] - Specific issues when running on Windows.
 * License
 Copyright © 2021 Nico de Vreeze

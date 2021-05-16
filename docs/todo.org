@@ -20,15 +20,24 @@ Created /home/nico/cljlib/genie/genied/target/uberjar/genied-0.1.0-SNAPSHOT-stan
 #+end_src
 
 This probably has something to do with Pomegranate, but further investigation is needed.
-* Support Inlein style dependencies
-In [[http://inlein.org/][Inlein]] scripts the depencies are contained in the script itself, not in a separate deps.edn file. It might be nice to support this as well.
+* Other library dependencies
+Currently only Maven/Clojars style libraries are supported. This includes local libraries in your .m2 folder.
+
+Also check periodically if hotload-dependency or standard Clojure functionality (clojure.tools.deps.alpha.repl?) is working again.
+
+The sideloader mentioned in nRepl might be handy, although it's the other way around, with the nRepl server process asking the client for libraries: https://nrepl.org/nrepl/design/middleware.html#sideloading
+
+A fixed alternative would be to put all your libraries in the project.clj of genied, and maybe generate a user/specific genied.jar uberjar, so dynamic loading is not needed. This depends on the direction Clojure will take.
 * Other Repl implementations
-nRepl is very versatile, with great support for sessions and stream-handling. But maybe simpler repl's are faster and/or easier.
+nRepl is very versatile, with great support for sessions and stream-handling. But maybe simpler repl's are faster and/or easier. Distinguishing between stdout and stderr might be an issue then, as well as handling stdin.
 * Other wire protocols
 Use bencode over TCP/IP now. Maybe local unix sockets are faster.
 * Other clients
 Babashka works very well here, but it is a binary of 80MB. Some possible alternatives:
 - Tcl with rep(.exe) - the first implementation. This works, but a 2-process overhead is less than ideal.
 - Tcl with bencode (or other protocl)
+- Tcl/Tk, for local GUI applications. Tk in Java/Clojure has been tried before, but not really successful or complete.
 - A C implementation (maybe using rep as inspiration)
 - A better C, such as Go or Rust.
+* Support Inlein style dependencies
+In [[http://inlein.org/][Inlein]] scripts the depencies are contained in the script itself, not in a separate deps.edn file. It might be nice to support this as well.

@@ -5,17 +5,66 @@ Here we give some background information, including design decisions and challen
 * Class loading
 - Loading a namespace (using Pomegranate) and using it (require) should be done in the same session.
 - After a namespace is loaded and required, it is available for later scripts as well.
-* nRepl and sessions
-Also combination with class loading.
-** Take 1 - Tcl and rep
-** Take 2 - Babashka
-* Streams
-stdin, stdout, stderr.
-* Namespaces and functions
+- Some libraries are needed by the daemon itself, and are marked as already loaded.
+
+Currently only Maven/Clojars style libraries are supported. This includes local libraries in your .m2 folder. See [[file:todo.org]]
+
+nRepl supports an operator 'hotload-dependency', but this is disabled for now with message 'Temporarily disabled until a solution for java 10 is found.'
+** TODO Some quotes and refs, clean up
+- clojure.lang.Compiler/LOADER
+- It looks like pomegranate uses the (.. Thread currentThread getContextClassLoader) to start the search of the classloader to modify, whereas core/load uses RT/baseLoader.
+- (pg/add-dependencies) can take a :classloader parameter
+
+#+begin_src clojure
+(defn ensure-dynamic-classloader []
+  (let [thread (Thread/currentThread)
+        cl (.getContextClassLoader thread)]
+    (when-not (instance? DynamicClassLoader cl)
+      (.setContextClassLoader thread (DynamicClassLoader. cl)))))
+#+end_src
+
+See also the diagnostics.clj source file.
+
+The require function uses load-libs and load-lib, which uses *loaded-libs* and calls clojure.lang.RT/load.
+
+The baseLoader function:
+#+begin_src java
+static public ClassLoader baseLoader(){
+	if(Compiler.LOADER.isBound())
+		return (ClassLoader) Compiler.LOADER.deref();
+	else if(booleanCast(USE_CONTEXT_CLASSLOADER.deref()))
+		return Thread.currentThread().getContextClassLoader();
+	return Compiler.class.getClassLoader();
+}
+#+end_src
+
+So the (dynamic) contextClassLoader could be used, but Compiler.LOADER is set/bound, so this one is used.
+
+When setting a new (dynamic) loader, make sure to create it with the parent set as the existing loader.
+
+When loading/compiling a script, a temporary classloader is created.
+
+** TODO Check current sources
+- [ ] bindRoot()?
+-
+
+** Links
+- https://github.com/nrepl/nrepl/issues/113 - issue with hot class loading and some possible solutions.
+- [[https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/DynamicClassLoader.java][DynamicClassLoader.java]] - these keep a list of loaded classes.
+- [[https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/RT.java][RT.java]] - Clojure runtime.
+* TODO Clients
+** TODO Take 1 - Tcl and rep
+** TODO Take 2 - Babashka
+- [ ] read-loop - also blocking I/O.
+- [ ] --max-lines option too
+-
+* TODO Namespaces and functions
 See API docs.
+- [ ] add ref to API docs.
 * Security
 The daemon should run under a standard (non-root) user. All scripts are executed under this user's credentials. The daemon only listens on localhost. In theory it should be possible to connect over the (local) network, but you probably do not want this.
-* What happens when the daemon starts?
+* TODO What happens when the daemon starts?
+- Load libraries mentioned in genie.clj in config-dir.
 * What happens when a script is executed?
 The dynamic classloader is set to the one created at startup:
 #+begin_src clojure
@@ -33,7 +82,87 @@ The script is loaded with the standard load-file function:
     (load-file script))
 #+end_src
 
-The main function is executed:
+The main function is executed. This is a function called 'main' in the last namespace declaration in the script:
 #+begin_src clojure
   ((eval main-fn) ctx script-params)
 #+end_src
+** TODO Why is (eval main-fn) needed?
+Possibly because main-fn is a string or symbol, as given by the client.
+* TODO Logging
+Logging can be quite complicated in Clojure. With client sessions this is extra complicated, as the correct *err* stream needs to be used.
+- [ ] ref logger project - ook onelog bv.
+  - [ ] root-logger and appenders
+  - [ ] not needing config.xml.
+- [ ] doc state-vars
+- [ ] rebinding for daemon-logging.
+- [ ] log4j (should use log4j2)
+- [ ] client logging (poor man's?)
+-
+* Context
+** Working directory
+A JVM does not really have a concept of a changeable working directory. There is a constant startup-directory (user.dir property), but this is not useful for scripts, that have different working directories, especially when running at the same time. So we give the working directory in the context (ctx) from client to daemon.
+** The environment
+Currently not given from client to daemon at runtime, so it should be set at daemon start time.
+** TODO Other context keys
+Version, client.
+* Command line parameters
+When we give command line parameters to a client script, these might be references to relative files. The client tries to convert these to absolute paths for the daemon:
+- If it's a dot (.) or starts with ./ it is converted to an absolute path
+- If the parameter value exists as a local file, it is converted to an absolute path
+- if --nonormalize is given, this conversion is not done.
+- Scripts can use the (:cwd ctx) value to get the working directory of the script.
+** TODO move to README.org?
+Maybe detailed manual, readme.org can get a bit large.
+** TODO cmdline lib - check-and-exec
+Refer other library, maybe short explanation.
+** TODO Use :in-order option
+Probably in Babashka client.
+* TODO (Mutable) state
+There is quite some state involved:
+- loaded libraries including different versions
+- required libraries
+- scripts loaded, could be different versions
+- sessions including streams (stdin, stdout, stderr)
+
+- [ ] See state.clj
+** TODO Streams
+stdin, stdout, stderr. Also for logging.
+- [ ] maybe a picture: dot or ditaa?
+-
+* TODO genie_new.clj script
+For creating new scripts based on a template.
+- [ ] move to extended manual?
+- [ ] script structure
+- [ ] location of template
+- [ ] generating with template-vars - simple. Use {{var}}
+- [ ] also -main function, for executing with clj with -m option.
+- [ ] use :paths [""] in deps.edn
+- [ ] convert dashes and underscores
+- [ ] use root-namespaces, just a single segment.
+- [ ] quite a few default libraries and requires included.
+  - [ ] always easier to remove than to add.
+  - [ ] clj-kondo can help you here
+  - [ ] you can change the templates.
+* TODO Linters
+- [ ] linters used - several
+- [ ] use main-file check.
+
+#+begin_src clojure
+;; see https://book.babashka.org/#main_file
+(if (= *file* (System/getProperty "babashka.file"))
+  (main)
+  (println "Loaded as library:" (str (fs/normalize *file*))))
+#+end_src
+* TODO Libraries used
+- [ ] Pomegranate
+- [ ] logger
+- [ ] cmdline
+- [ ] nRepl
+- [ ] fs
+  - [ ] clj-commons/raynes
+  - [ ] babashka
+- [ ] others?
+* TODO Test scripts
+- [ ] run-all-tests. With --start-daemon, --clj and other options.
+- [ ] Maybe also in extended manual, not background, for using Genie.
+-
