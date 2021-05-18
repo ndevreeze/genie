@@ -86,7 +86,7 @@
    [nil "--start-daemon" "Start daemon running on port"]
    [nil "--stop-daemon" "Stop daemon running on port"]
    [nil "--restart-daemon" "Restart daemon running on port"]
-   [nil "--max-wait-daemon MAX_WAIT_SEC" "Max seconds to wait for daemon to start"
+   [nil "--max-wait-daemon MAX_WAIT_SEC" "Max sec to wait for daemon to start"
     :default 60
     :parse-fn #(Integer/parseInt %)
     :validate [pos? "Must be a number greater than 0"]]])
@@ -713,10 +713,11 @@
           (println (format "Process started, waiting (max %d sec) %s"
                            (:max-wait-daemon opt)
                            "until port is available"))
-          (if-let [res (wait/wait-for-port "localhost" (:port opt)
-                                           {:timeout (* 1000 (:max-wait-daemon opt)) :pause 200})]
+          (if-let [res (wait/wait-for-port
+                        "localhost" (:port opt)
+                        {:timeout (* 1000 (:max-wait-daemon opt)) :pause 200})]
             (println "Ok, started in" (:took res) "msec")
-            (println "Failed to start server, process =" proc))          ))
+            (println "Failed to start server, process =" proc))))
       (println "No suitable command found to start Genie daemon."
                "Try running with -v"))))
 

@@ -69,6 +69,4 @@
 (comment
   ;; starting an nRepl server in Cider:
   (-main "-p" "7887")
-  (-main "-v" "-p" "7887")
-
-  )
+  (-main "-v" "-p" "7887"))
