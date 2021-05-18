@@ -9,6 +9,7 @@
                  [nrepl "0.8.3"]
                  [clj-commons/pomegranate "1.2.1"] ;; 2021-02-21: for dynamic loading of libraries.
                  [org.apache.httpcomponents/httpclient "4.5.13"] ;; explicit, also 4.5.8 in deps.
+                 [org.apache.httpcomponents/httpcore "4.4.14"] ;; 2021-05-18: also explicit for now, wrt conflicts.
                  [org.slf4j/slf4j-nop "1.7.30"] ;; 2021-04-04: getting rid of SLF warning
                  [org.jsoup/jsoup "1.13.1"] ;; 2021-04-04: try to get rid of reflective warning.
                  [ndevreeze/logger "0.5.1"]
