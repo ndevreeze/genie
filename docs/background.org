@@ -61,6 +61,7 @@ When loading/compiling a script, a temporary classloader is created.
 * TODO Namespaces and functions
 See API docs.
 - [ ] add ref to API docs.
+- [ ] API doc generation and hosting. Also Github pages.
 * Security
 The daemon should run under a standard (non-root) user. All scripts are executed under this user's credentials. The daemon only listens on localhost. In theory it should be possible to connect over the (local) network, but you probably do not want this.
 * TODO What happens when the daemon starts?
@@ -105,6 +106,8 @@ A JVM does not really have a concept of a changeable working directory. There is
 Currently not given from client to daemon at runtime, so it should be set at daemon start time.
 ** TODO Other context keys
 Version, client.
+** TODO Settings and config
+Using cmdline library, ref to this one? Also env-vars.
 * Command line parameters
 When we give command line parameters to a client script, these might be references to relative files. The client tries to convert these to absolute paths for the daemon:
 - If it's a dot (.) or starts with ./ it is converted to an absolute path
@@ -117,6 +120,12 @@ Maybe detailed manual, readme.org can get a bit large.
 Refer other library, maybe short explanation.
 ** TODO Use :in-order option
 Probably in Babashka client.
+* TODO Starting daemon from the client
+Use Babashka process and wait-for-process, check genie.clj.
+- [ ] JAVA location
+- [ ] genied.jar location
+- [ ] with lein run
+-
 * TODO (Mutable) state
 There is quite some state involved:
 - loaded libraries including different versions
@@ -129,6 +138,11 @@ There is quite some state involved:
 stdin, stdout, stderr. Also for logging.
 - [ ] maybe a picture: dot or ditaa?
 -
+* Error handling
+When an exception occurs, it should be communicated to the client. This is done quite trivially by catching and logging the error, and then rethrowing it. nRepl wil then catch it and communicate to the client.
+Another possible issue is a hanging or long running script, or a script that crashes but keeps file handles or similar open. For this we have the option of listing and killing client sessions, using --list-sessions and --kill-sessions. nRepl assigns a session-id by default, so this is relatively easy.
+On the client side a Babashka shutdown hook is defined, which - when triggered with e.g. C-c - will also close the daemon-session.
+** TODO Check with source
 * TODO genie_new.clj script
 For creating new scripts based on a template.
 - [ ] move to extended manual?
@@ -146,6 +160,14 @@ For creating new scripts based on a template.
 * TODO Linters
 - [ ] linters used - several
 - [ ] use main-file check.
+- [X] bikeshed
+- [X] clj-kondo
+- [X] eastwood
+- [X] kibit
+- [X] yagni
+- [ ] vizdeps
+- [ ] ancient
+- [ ] lein deps :tree
 
 #+begin_src clojure
 ;; see https://book.babashka.org/#main_file
@@ -162,7 +184,12 @@ For creating new scripts based on a template.
   - [ ] clj-commons/raynes
   - [ ] babashka
 - [ ] others?
+
+Some checks with mark-project-libraries and script sync-project-libraries. Maybe later read from project.clj, should be available in the uberjar too then. Maybe a symlink to resources dir. Does this work under Windows?
+* TODO Clients and protocol versions
+Not really used currently, maybe for future use.
 * TODO Test scripts
 - [ ] run-all-tests. With --start-daemon, --clj and other options.
 - [ ] Maybe also in extended manual, not background, for using Genie.
+- [ ] No Clojure/Midje tests for now. Daemon is mostly stateful, hard to test, might need to change.
 -
