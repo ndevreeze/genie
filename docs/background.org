@@ -2,18 +2,20 @@
 #+title: Genie - Background info
 * Introduction
 Here we give some background information, including design decisions and challenges.
-* Class loading
+* TODO Class loading
+** Setting and using the root-loader
+The clojure.lang.Compiler/LOADER is used when loading new libraries and source files. So we aim to set this to a dynamic classloader. This is done using both bindRoot() and set() methods on this class. If a current thread binding is already set, it will also be replaced by this new dynamic classloader. See bind-root-loader in classloader.clj. We can also pass this new dynamic classloader to Pomegranate (in add-dependencies).
+** Investigation
+Finding a working solution took quite some time. Here are some pointers:
 - Loading a namespace (using Pomegranate) and using it (require) should be done in the same session.
 - After a namespace is loaded and required, it is available for later scripts as well.
 - Some libraries are needed by the daemon itself, and are marked as already loaded.
+- It looks like pomegranate uses the (.. Thread currentThread getContextClassLoader) to start the search of the classloader to modify, whereas core/load uses RT/baseLoader.
+- (pg/add-dependencies) can take a :classloader parameter
 
 Currently only Maven/Clojars style libraries are supported. This includes local libraries in your .m2 folder. See [[file:todo.org]]
 
 nRepl supports an operator 'hotload-dependency', but this is disabled for now with message 'Temporarily disabled until a solution for java 10 is found.'
-** TODO Some quotes and refs, clean up
-- clojure.lang.Compiler/LOADER
-- It looks like pomegranate uses the (.. Thread currentThread getContextClassLoader) to start the search of the classloader to modify, whereas core/load uses RT/baseLoader.
-- (pg/add-dependencies) can take a :classloader parameter
 
 #+begin_src clojure
 (defn ensure-dynamic-classloader []
@@ -44,51 +46,59 @@ When setting a new (dynamic) loader, make sure to create it with the parent set 
 
 When loading/compiling a script, a temporary classloader is created.
 
-** TODO Check current sources
-- [ ] bindRoot()?
--
-
+To investigate all this, some functionality as given in diagnostics.clj was used. For normal operation it should not be necessary, but it will give detailed classloader-hierarchy information running in --verbose mode. It will then show the information for two trees: one for the current thread, and one for the base-loader.
 ** Links
 - https://github.com/nrepl/nrepl/issues/113 - issue with hot class loading and some possible solutions.
 - [[https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/DynamicClassLoader.java][DynamicClassLoader.java]] - these keep a list of loaded classes.
 - [[https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/RT.java][RT.java]] - Clojure runtime.
-* TODO Clients
-** TODO Take 1 - Tcl and rep
-** TODO Take 2 - Babashka
-- [ ] read-loop - also blocking I/O.
-- [ ] --max-lines option too
--
+- https://github.com/ninjudd/classlojure - create classloaders.
+* Clients
+Two clients are available for communicating with the daemon to start scripts. The second one in Babashka is the most complete one. See [[todo.org]] for ideas on other clients, mainly to improve performance.
+** Take 1 - Tcl and rep
+The first client was made in Tcl using the rep binary for communicating with the nRepl server. It is mainly a proof-of-concept, but might serve as a base for future clients. The current versions needs to start two processes (one for Tcl and one for Rep), so will be less efficient.
+** Take 2 - Babashka
+The second client version runs in Babashka. It is quite big - about 800 lines - and implements the following main functionalities:
+- converting local and user (~) based paths to absolute paths
+- determine main namespace from the script
+- passing the script, context and cmdline parameters to the daemon
+- handling input, output and error streams from the environment to the nRepl session in the daemon, including logging and blocking I/O.
+- client logging functions
+- check cmdline options for minimal functionality: noload, nocheckdaemon, nosetloader, nomain, nonormalize
+- admin commands: list-sessions, kill-sessions, start/stop/restart daemon.
+- a few wrappers around the bencode protocol for communicating with nRepl.
+- killing the script daemon-side when a client shutdown signal is received.
+** Protocol versions
+Some preparations have been made to pass and check the protocol versions between client and daemon. This is mainly for future use, if needed.
 * TODO Namespaces and functions
 See API docs.
 - [ ] add ref to API docs.
 - [ ] API doc generation and hosting. Also Github pages.
-* Security
-The daemon should run under a standard (non-root) user. All scripts are executed under this user's credentials. The daemon only listens on localhost. In theory it should be possible to connect over the (local) network, but you probably do not want this.
-* TODO What happens when the daemon starts?
-- Load libraries mentioned in genie.clj in config-dir.
+* What happens when the daemon starts?
+See core.clj, but in short:
+- Initialize the logger
+- Initialize the dynamic classloader
+- Mark the libraries in project.clj as already loaded
+- Load the libraries mentioned in genie.clj in config-dir.
+- Save the *out* and *err* streams for later use.
+- Start the nRepl deamon on the given port
+- Initialize the client functions
 * What happens when a script is executed?
-The dynamic classloader is set to the one created at startup:
-#+begin_src clojure
-  (set-dynamic-classloader!)
-#+end_src
-
-Script libraries are loaded by checking a deps.edn file in the same dir, the parent dir or a client command line parameter given:
-#+begin_src clojure
-  (loader/load-script-libraries ctx script)
-#+end_src
-
-The script is loaded with the standard load-file function:
-#+begin_src clojure
-  (binding [*script-dir* (fs/parent script)]
-    (load-file script))
-#+end_src
-
-The main function is executed. This is a function called 'main' in the last namespace declaration in the script:
-#+begin_src clojure
-  ((eval main-fn) ctx script-params)
-#+end_src
-** TODO Why is (eval main-fn) needed?
-Possibly because main-fn is a string or symbol, as given by the client.
+** Client
+- Create the context for passing to the daemon. Including current-working-dir (cwd), specific deps.edn file, and name of the script.
+- Determine the main namespace and function to call by reading the script.
+- Normalize the given command line parameters
+- Open a TCP connection to the local nRepl server and create a new session
+- Pass an eval-command to the daemon (nRepl server)
+- Then, in a loop:
+  - Get stdout/stderr output from the daemon and print it to the local stream
+  - Pass local stdin to nRepl session stdin when a :need-input message is received
+  - If an exception occurs, print it and stop the script.
+** Daemon
+On the daemon side, when client/exec-script is called:
+- The dynamic classloader is set to the one created at startup
+- Script libraries are loaded by checking a deps.edn file in the same dir, the parent dir or a client command line parameter given
+- The script is loaded with the standard load-file function:
+- The main function is executed. This is a function called 'main' in the last namespace declaration in the script
 * TODO Logging
 Logging can be quite complicated in Clojure. With client sessions this is extra complicated, as the correct *err* stream needs to be used.
 - [ ] ref logger project - ook onelog bv.
@@ -99,7 +109,7 @@ Logging can be quite complicated in Clojure. With client sessions this is extra 
 - [ ] log4j (should use log4j2)
 - [ ] client logging (poor man's?)
 -
-* Context
+* TODO Context
 ** Working directory
 A JVM does not really have a concept of a changeable working directory. There is a constant startup-directory (user.dir property), but this is not useful for scripts, that have different working directories, especially when running at the same time. So we give the working directory in the context (ctx) from client to daemon.
 ** The environment
@@ -108,14 +118,7 @@ Currently not given from client to daemon at runtime, so it should be set at dae
 Version, client.
 ** TODO Settings and config
 Using cmdline library, ref to this one? Also env-vars.
-* Command line parameters
-When we give command line parameters to a client script, these might be references to relative files. The client tries to convert these to absolute paths for the daemon:
-- If it's a dot (.) or starts with ./ it is converted to an absolute path
-- If the parameter value exists as a local file, it is converted to an absolute path
-- if --nonormalize is given, this conversion is not done.
-- Scripts can use the (:cwd ctx) value to get the working directory of the script.
-** TODO move to README.org?
-Maybe detailed manual, readme.org can get a bit large.
+* TODO Command line parameters
 ** TODO cmdline lib - check-and-exec
 Refer other library, maybe short explanation.
 ** TODO Use :in-order option
@@ -125,25 +128,23 @@ Use Babashka process and wait-for-process, check genie.clj.
 - [ ] JAVA location
 - [ ] genied.jar location
 - [ ] with lein run
--
-* TODO (Mutable) state
+Does this add something?
+* (Mutable) state
 There is quite some state involved:
+- the dynamic classloader to use for all client sessions.
 - loaded libraries including different versions
 - required libraries
 - scripts loaded, could be different versions
 - sessions including streams (stdin, stdout, stderr)
 
-- [ ] See state.clj
-** TODO Streams
-stdin, stdout, stderr. Also for logging.
-- [ ] maybe a picture: dot or ditaa?
--
-* Error handling
+See state.clj for specifics.
+* TODO Error handling
 When an exception occurs, it should be communicated to the client. This is done quite trivially by catching and logging the error, and then rethrowing it. nRepl wil then catch it and communicate to the client.
 Another possible issue is a hanging or long running script, or a script that crashes but keeps file handles or similar open. For this we have the option of listing and killing client sessions, using --list-sessions and --kill-sessions. nRepl assigns a session-id by default, so this is relatively easy.
 On the client side a Babashka shutdown hook is defined, which - when triggered with e.g. C-c - will also close the daemon-session.
 ** TODO Check with source
-* TODO genie_new.clj script
+* TODO Scripts
+** TODO genie_new.clj
 For creating new scripts based on a template.
 - [ ] move to extended manual?
 - [ ] script structure
@@ -157,6 +158,7 @@ For creating new scripts based on a template.
   - [ ] always easier to remove than to add.
   - [ ] clj-kondo can help you here
   - [ ] you can change the templates.
+** TODO sync_project_libraries.clj
 * TODO Linters
 - [ ] linters used - several
 - [ ] use main-file check.
@@ -185,11 +187,11 @@ For creating new scripts based on a template.
   - [ ] babashka
 - [ ] others?
 
+** Clj-commons/fs
+
+** Babashka/fs
+Does not have functions with respect to the user home directory. So we borrowed the versions from clj-commons/fs.
+** TODO Keep libraries in sync
 Some checks with mark-project-libraries and script sync-project-libraries. Maybe later read from project.clj, should be available in the uberjar too then. Maybe a symlink to resources dir. Does this work under Windows?
-* TODO Clients and protocol versions
-Not really used currently, maybe for future use.
-* TODO Test scripts
-- [ ] run-all-tests. With --start-daemon, --clj and other options.
-- [ ] Maybe also in extended manual, not background, for using Genie.
-- [ ] No Clojure/Midje tests for now. Daemon is mostly stateful, hard to test, might need to change.
--
+** TODO Check needed
+Do these descriptions add anything? Maybe just a line per library.

@@ -17,3 +17,11 @@ A test with reading a file, with max-lines parameter versus total running time:
 |        50 |     1.11 |
 |       100 |     0.84 |
 |      1000 |      0.5 |
+* Client/daemon communication
+Currently TCP socket and bencode are used. Maybe Linux pipes are faster, when available.
+* TODO Analysis current 300 msec
+A simple scriptrun takes about 300 milliseconds. Check where this time is spent. Some testcases:
+- Running genie -h (no communication with server)
+- Running genie --list-sessions (no new session, no script and library loading)
+* TODO Test memory usage/leaks
+Create a script that use a lot of memory. Run it a few times, check memory. Maybe also script that creates a lot of classes, they used to be harder to GC.

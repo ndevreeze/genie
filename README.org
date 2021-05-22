@@ -6,11 +6,12 @@ Another way of mitigating the slow startup of Clojure on the JVM, by starting a 
 - [[https://nrepl.org/nrepl/index.html][nRepl]] - for running the daemon and providing client connections (using bencode).
 - [[https://github.com/clj-commons/pomegranate][Pomegranate]] - for dynamically loading libraries
 - [[https://book.babashka.org][Babashka]] - for the client and installation script.
+** Genie?
+From https://www.wordnik.com/words/genie:
+- noun - A supernatural creature who does one's bidding when summoned.
+- noun - A fictional magical being that is typically bound to obey the commands of a mortal possessing its container.
 
-It might help to see the daemon as part of the OS.
-
-** TODO Explain name Genie
-Genie, Djinn, Deamon. Like a script-server. But local, so a daemon.
+So the genie in this case is the daemon process containing the nRepl server, waiting to execute Clojure scripts when summoned. It might help to see the daemon as part of the OS.
 * Goals
 - Every script that can be executed by clj (using deps.edn) should also be able to be executed using Genie. And therefore you can also develop your script using e.g. CIDER.
 - Fast startup of scripts.
@@ -18,7 +19,7 @@ Genie, Djinn, Deamon. Like a script-server. But local, so a daemon.
 - Cross-platform: supports Linux, Windows and MacOS.
 
 Non-goals:
-- The fastest possible startup - running with a client/server setup implies some network overhead.
+- The fastest possible startup - running with a client/server setup implies some (local) network overhead.
 - Supporting long-running, full applications. Use default Clojure if you need this.
 * Installation
 ** Prerequisites
@@ -61,9 +62,17 @@ With default locations:
 | templates  | ~/.config/genie/template | GENIE_TEMPLATE_DIR, GENIE_CONFIG_DIR      |
 | scripts    | ~/bin                    | GENIE_SCRIPTS_DIR                         |
 | client     | ~/bin                    | GENIE_CLIENT_DIR                          |
+
+If you face issues creating an uberjar from the installer, try it directly with Leiningen:
+#+begin_src bash
+cd genied
+lein uberjar
+#+end_src
+
+The installer will try to overwrite binaries and scripts with new versions, but will not touch existing config files and templates.
 ** Set environment variables
-You might want to add the following environment vars to your .profile:
-#+begin_src emacs-lisp :tangle yes
+You might want to add the following environment vars to your .profile (see output of install.clj):
+#+begin_src bash
 export GENIE_CLIENT_DIR=~/bin
 export GENIE_DAEMON_DIR=~/tools/genie
 export GENIE_JAVA_CMD=java
@@ -74,7 +83,7 @@ export GENIE_SCRIPTS_DIR=~/bin
 #+end_src
 ** Start automatically at system boot
 And add a crontab entry so the Genie daemon starts automatically:
-#+begin_src emacs-lisp :tangle yes
+#+begin_src bash
 @reboot /home/your-user-name/tools/genie/genied.sh
 #+end_src
 
@@ -168,13 +177,19 @@ genie.clj - Babashka script to run scripts in Genie daemon
       --max-wait-daemon MAX_WAIT_SEC  60    Max seconds to wait for daemon to start
 
 #+end_src
+** Command line parameters
+When we give command line parameters to a client script, these might be references to relative files. The client tries to convert these to absolute paths for the daemon:
+- If it's a dot (.) or starts with ./ it is converted to an absolute path
+- If the parameter value exists as a local file, it is converted to an absolute path
+- if --nonormalize is given, this conversion is not done.
+- Scripts can use the (:cwd ctx) value to get the working directory of the script.
 * Creating a script
 To create a script and deps.edn file from templates:
 #+begin_src bash :tangle yes
 ./scripts/genie_new.clj /path/to/new/script.clj
 #+end_src
 
-This uses template.clj and deps.edn from the template directory (GENIE_TEMPLATE_DIR)
+This uses template.clj and deps.edn from the template directory (GENIE_TEMPLATE_DIR). For more details see [[file:docs/background.org]].
 * Testing
 See directory test, with these scripts:
 - test.clj - test various parts, including logging and stdout/err handling
@@ -183,7 +198,14 @@ See directory test, with these scripts:
 
 Also from the 'test' directory:
 #+begin_src bash :tangle yes
-./run-all-tests.clj
+$ test/run-all-tests.clj -h
+run-all-tests.clj - run all genie tests in this directory
+  -p, --port PORT             7887  Genie daemon port number for test
+  -l, --logdir LOGDIR               Directory for client log. Empty: no logging
+  -v, --verbose                     Verbose output
+  -h, --help                        Show help
+      --clj                         Use clj instead of genie to run scripts
+      --no-start-stop-daemon        Do not start a daemon before the tests
 #+end_src
 
 | Test                    | Notes                                              |
@@ -207,6 +229,8 @@ Also from the 'test' directory:
 | test_stdout_stderr.clj  | Test output to stdout and stderr                   |
 | test_two_namespaces.clj | Test with 2 namespaces in a file                   |
 | test_write_file.clj     | Test writing a text file                           |
+* Security
+The daemon should run under a standard (non-root) user. All scripts are executed under this user's credentials. The daemon only listens on localhost. In theory it should be possible to connect over the (local) network, but you probably do not want this.
 * Todo
 - See [[https://github.com/ndevreeze/genie/issues][Issues on Github]]
 - See [[file:docs/todo.org]] for details.
@@ -223,12 +247,14 @@ Some Clojure-like languages having fast startup, but not all Clojure/JVM functio
 
 Some earlier projects, which do not seem to be actively maintained:
 - [[https://leiningen.org/grench.html][Grenchman]]
-- [[https://github.com/ninjudd/cake][Cake]]
+- [[https://github.com/ninjudd/cake][Cake]] - merged with Leiningen
+- [[https://github.com/ninjudd/drip][Drip]] - Keeps a JVM in reserve.
 - [[http://inlein.org/][Inlein]] - mostly for setting up classpath, a new JVM is started for each script-run.
-- more...
+- [[http://icylisper.in/jark][Jark]] - seems offline. But [[https://github.com/scottjad/jark][Jark]] still exists.
+- Nailgun - some info [[https://stackoverflow.com/questions/19107683/speed-up-clojure-startup-time-with-nailgun][here]].
 * More docs
 - [[file:docs/todo.org]]
-- [[file:docs/background.org]]
+- [[file:docs/background.org]] - If you want to know the details, and maybe want contribute
 - [[file:docs/performance.org]]
 - [[file:docs/windows.org]] - Specific issues when running on Windows.
 * License
