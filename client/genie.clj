@@ -435,8 +435,6 @@
         (read-result in)
         (reset! session-atom nil)))))
 
-
-
 (defn last-namespace
   "Determine last namespace in the script.
    read ns-decl from the script-file.
