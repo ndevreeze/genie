@@ -1,8 +1,8 @@
 #+STARTUP: content indent
 #+title: Genie - Background info
 * Introduction
-Here we give some background information, including design decisions and challenges.
-* TODO Class loading
+Here we give some background information, including design decisions and challenges. If you just want to create scripts and use Genie, you probably don't need to read this.
+* Class loading
 ** Setting and using the root-loader
 The clojure.lang.Compiler/LOADER is used when loading new libraries and source files. So we aim to set this to a dynamic classloader. This is done using both bindRoot() and set() methods on this class. If a current thread binding is already set, it will also be replaced by this new dynamic classloader. See bind-root-loader in classloader.clj. We can also pass this new dynamic classloader to Pomegranate (in add-dependencies).
 ** Investigation
@@ -69,10 +69,6 @@ The second client version runs in Babashka. It is quite big - about 800 lines - 
 - killing the script daemon-side when a client shutdown signal is received.
 ** Protocol versions
 Some preparations have been made to pass and check the protocol versions between client and daemon. This is mainly for future use, if needed.
-* TODO Namespaces and functions
-See API docs.
-- [ ] add ref to API docs.
-- [ ] API doc generation and hosting. Also Github pages.
 * What happens when the daemon starts?
 See core.clj, but in short:
 - Initialize the logger
@@ -99,36 +95,23 @@ On the daemon side, when client/exec-script is called:
 - Script libraries are loaded by checking a deps.edn file in the same dir, the parent dir or a client command line parameter given
 - The script is loaded with the standard load-file function:
 - The main function is executed. This is a function called 'main' in the last namespace declaration in the script
-* TODO Logging
-Logging can be quite complicated in Clojure. With client sessions this is extra complicated, as the correct *err* stream needs to be used.
-- [ ] ref logger project - ook onelog bv.
-  - [ ] root-logger and appenders
-  - [ ] not needing config.xml.
-- [ ] doc state-vars
-- [ ] rebinding for daemon-logging.
-- [ ] log4j (should use log4j2)
-- [ ] client logging (poor man's?)
--
-* TODO Context
-** Working directory
+* Logging
+Logging can be somewhat complicated in Clojure. Moreso with client sessions, as the correct *out* and *err* stream needs to be used. Some pointers:
+- We use the [[https://github.com/ndevreeze/logger][logger]] library as a wrapper around log4j. This does not need any config XML.
+- With a new nRepl sessions the dynamic vars *out* and *err* get bound to a new instance.
+- The logger uses this *err* stream
+- When the script logs something (e.g. log/info), this is received by the Genie client in the :err slot of the result and put on the stderr stream connected to the client.
+- When the Genie daemon wants to log something in its own log, it needs to rebind the *err* stream first. This and the *out* stream are kept in state.clj.
+- The Genie client does not use an external library; it uses some simple logging functions including generating a timestamp (you have to have timestamps)
+* Context
 A JVM does not really have a concept of a changeable working directory. There is a constant startup-directory (user.dir property), but this is not useful for scripts, that have different working directories, especially when running at the same time. So we give the working directory in the context (ctx) from client to daemon.
-** The environment
-Currently not given from client to daemon at runtime, so it should be set at daemon start time.
-** TODO Other context keys
-Version, client.
-** TODO Settings and config
-Using cmdline library, ref to this one? Also env-vars.
-* TODO Command line parameters
-** TODO cmdline lib - check-and-exec
-Refer other library, maybe short explanation.
-** TODO Use :in-order option
-Probably in Babashka client.
-* TODO Starting daemon from the client
-Use Babashka process and wait-for-process, check genie.clj.
-- [ ] JAVA location
-- [ ] genied.jar location
-- [ ] with lein run
-Does this add something?
+
+The environment is currently not given from client to daemon at runtime, so it should be set at daemon start time.
+* Command line parameters
+For the Genie daemon we use the [[https://github.com/ndevreeze/cmdline][cmdline]] library, which uses values according to this priority:
+- values given on the command line
+- values given in the config file (genie.edn)
+- default values defined in the tool
 * (Mutable) state
 There is quite some state involved:
 - the dynamic classloader to use for all client sessions.
@@ -138,60 +121,43 @@ There is quite some state involved:
 - sessions including streams (stdin, stdout, stderr)
 
 See state.clj for specifics.
-* TODO Error handling
+* Error handling
 When an exception occurs, it should be communicated to the client. This is done quite trivially by catching and logging the error, and then rethrowing it. nRepl wil then catch it and communicate to the client.
-Another possible issue is a hanging or long running script, or a script that crashes but keeps file handles or similar open. For this we have the option of listing and killing client sessions, using --list-sessions and --kill-sessions. nRepl assigns a session-id by default, so this is relatively easy.
-On the client side a Babashka shutdown hook is defined, which - when triggered with e.g. C-c - will also close the daemon-session.
-** TODO Check with source
-* TODO Scripts
-** TODO genie_new.clj
-For creating new scripts based on a template.
-- [ ] move to extended manual?
-- [ ] script structure
-- [ ] location of template
-- [ ] generating with template-vars - simple. Use {{var}}
-- [ ] also -main function, for executing with clj with -m option.
-- [ ] use :paths [""] in deps.edn
-- [ ] convert dashes and underscores
-- [ ] use root-namespaces, just a single segment.
-- [ ] quite a few default libraries and requires included.
-  - [ ] always easier to remove than to add.
-  - [ ] clj-kondo can help you here
-  - [ ] you can change the templates.
-** TODO sync_project_libraries.clj
-* TODO Linters
-- [ ] linters used - several
-- [ ] use main-file check.
-- [X] bikeshed
-- [X] clj-kondo
-- [X] eastwood
-- [X] kibit
-- [X] yagni
-- [ ] vizdeps
-- [ ] ancient
-- [ ] lein deps :tree
 
+Another possible issue is a hanging or long running script, or a script that crashes but keeps file handles or similar open. For this we have the option of listing and killing client sessions, using --list-sessions and --kill-sessions. nRepl assigns a session-id by default, so this is relatively easy.
+
+On the client side a Babashka shutdown hook is defined, which - when triggered with e.g. C-c - will also close the daemon-session.
+* Scripts
+** genie_new.clj
+This script can be used to create new scripts. It will:
+- use the template.clj and deps.edn files as a base.
+- replace {{namespace}} and {{script}} with appropriate values
+- create a main function with default implementation to call script-function using the [[https://github.com/ndevreeze/cmdline][cmdline]] library.
+- create a -main function so the script can also be executed by clj. For this it also set :paths [""] in the deps.edn file.
+- create a namespace declaration with references to some popular libraries. You can change this in the template.
+- convert dashes and underscores according to Clojure rules
+- create a root-namespace, with just a single segment. This should be fine for scripts, not for libraries.
+** sync_project_libraries.clj
+With this script we can check if the libraries marked as already loaded are the same ones as mentioned in project.clj (Leiningen project file). It also serves as an example script.
+* Linters
+We use several linters to keep the code mostly clean:
+- bikeshed
+- clj-kondo
+- cljfmt
+- check-namespace-decls
+- eastwood
+- kibit
+- ancient
+
+And sometimes:
+- yagni
+- vizdeps
+- lein deps :tree (to check conflicting libraries)
+
+To prevent code from executing (genie.clj and install.clj) we use this Babashka trick:
 #+begin_src clojure
 ;; see https://book.babashka.org/#main_file
 (if (= *file* (System/getProperty "babashka.file"))
   (main)
   (println "Loaded as library:" (str (fs/normalize *file*))))
 #+end_src
-* TODO Libraries used
-- [ ] Pomegranate
-- [ ] logger
-- [ ] cmdline
-- [ ] nRepl
-- [ ] fs
-  - [ ] clj-commons/raynes
-  - [ ] babashka
-- [ ] others?
-
-** Clj-commons/fs
-
-** Babashka/fs
-Does not have functions with respect to the user home directory. So we borrowed the versions from clj-commons/fs.
-** TODO Keep libraries in sync
-Some checks with mark-project-libraries and script sync-project-libraries. Maybe later read from project.clj, should be available in the uberjar too then. Maybe a symlink to resources dir. Does this work under Windows?
-** TODO Check needed
-Do these descriptions add anything? Maybe just a line per library.
