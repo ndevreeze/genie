@@ -101,7 +101,7 @@ You might also want to set environment variables and use them in the alias and f
   genie bb %GENIE_CLIENT_DIR%\genie.clj
 #+end_src
 * Starting the daemon at system boot time
-With the install.clj option --start-on-system-boot, a Windows batch-file (genied.bat) will be created in the user's startup folder, e.g. C:\Users\username\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup. This has a side-effect of keeping a command window open, which you might want to hide by default. Some options:
+With the install.clj option --start-on-system-boot, a Windows batch-file (genied.bat) will be created in the user's startup folder, e.g. C:\Users\username\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup. This has a side-effect of keeping a command window open, which you might want to hide. Some options:
 - Use NirCmd (https://www.nirsoft.net/utils/nircmd.html) with options 'exec hide'.
 - check https://www.raymond.cc/blog/hidden-start-runs-batch-files-silently-without-flickering-console/
 - check https://stackoverflow.com/questions/3677773/how-can-i-run-a-windows-batch-file-but-hide-the-command-window

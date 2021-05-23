@@ -116,7 +116,7 @@ See state.clj for specifics.
 * Error handling
 When an exception occurs, it should be communicated to the client. This is done quite trivially by catching and logging the error, and then rethrowing it. nRepl wil then catch it and communicate to the client.
 
-Another possible issue is a hanging or long running script, or a script that crashes but keeps file handles or similar open. For this we have the option of listing and killing client sessions, using --list-sessions and --kill-sessions. nRepl assigns a session-id by default, so this is relatively easy.
+Another possible issue is a hanging or long running script, or a script that crashes but keeps file handles or similar open. For this we have the option of listing and killing client sessions, using --list-sessions and --kill-sessions. nRepl assigns a session-id for each new session, so this is relatively easy.
 
 On the client side a Babashka shutdown hook is defined, which - when triggered with e.g. C-c - will also close the daemon-session.
 * Scripts
@@ -124,7 +124,7 @@ On the client side a Babashka shutdown hook is defined, which - when triggered w
 This script can be used to create new scripts. It will:
 - use the template.clj and deps.edn files as a base.
 - replace {{namespace}} and {{script}} with appropriate values
-- create a main function with default implementation to call script-function using the [[https://github.com/ndevreeze/cmdline][cmdline]] library.
+- create a main function with a default implementation to call script-function using the [[https://github.com/ndevreeze/cmdline][cmdline]] library.
 - create a -main function so the script can also be executed by clj. For this it also set :paths [""] in the deps.edn file.
 - create a namespace declaration with references to some popular libraries. You can change this in the template.
 - convert dashes and underscores according to Clojure rules
