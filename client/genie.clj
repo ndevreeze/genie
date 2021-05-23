@@ -81,8 +81,7 @@
    [nil "--nomain" "Do not call main function after loading"]
    [nil "--nonormalize" "Do not normalize parameters to script (rel. paths)"]
    ;; and some admin commands.
-   [nil "--noclose" "Do not send close-session at end"]
-   [nil "--noclosewait" "Do not wait for daemon reply on close"]
+   [nil "--close" "Send close-session at end and wait for response"]
    [nil "--list-sessions" "List currently open/running sessions/scripts"]
    [nil "--kill-sessions SESSIONS" "csv list of (part of) sessions, or 'all'"]
    [nil "--start-daemon" "Start daemon running on port"]
@@ -410,7 +409,7 @@
 
 (defn nrepl-eval
   "Eval a Genie script in a genied/nRepl session"
-  [{:keys [noclose noclosewait] :as opt} {:keys [eval-id] :as ctx} script main-fn script-params]
+  [{:keys [close] :as opt} {:keys [eval-id] :as ctx} script main-fn script-params]
   (let [{:keys [out in]} (connect-nrepl opt)
         _ (write-bencode out {"op" "clone" "id" (msg-id)})
         session (:new-session (read-result in))
@@ -433,10 +432,9 @@
       (catch Exception e
         (warn "Caught exception: " e))
       (finally
-        (when-not noclose
+        (when close
           (write-bencode out {"op" "close" "session" session "id" (msg-id)})
-          (when-not noclosewait
-            (read-result in)))
+          (read-result in))
         (reset! session-atom nil)))))
 
 (defn last-namespace
