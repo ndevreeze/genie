@@ -106,9 +106,9 @@ With the install.clj option --start-on-system-boot, a Windows batch-file (genied
 - check https://www.raymond.cc/blog/hidden-start-runs-batch-files-silently-without-flickering-console/
 - check https://stackoverflow.com/questions/3677773/how-can-i-run-a-windows-batch-file-but-hide-the-command-window
 * Symbolic links
-Symbolic links are always tricky on Windows. Staying within bash/cygwin it works, but e.g. Babashka does not read cygwin symlinks, which is to be expected. Junctions at directory level will work, see junction.exe from SysInternals.
+Symbolic links can be tricky on Windows. Staying within bash/cygwin it works, but e.g. Babashka does not read cygwin symlinks, which is to be expected. Junctions at directory level will work, see [[https://docs.microsoft.com/en-us/sysinternals/downloads/junction][junction.exe]] from SysInternals.
 
-This means a symbolic for java will not work here, Babashka needs to be able to find the actual java.exe. It will do so checking GENIE_JAVA_CMD, JAVA_CMD and then looking in the PATH spec. So set your environment vars accordingly.
+This means a symbolic link for java will not work here, Babashka needs to be able to find the actual java.exe. It will do so checking GENIE_JAVA_CMD, JAVA_CMD and then looking in the PATH spec. So set your environment vars accordingly.
 * Slow startup of the daemon when started from the client
 Even when using an uberjar, there still might be issues starting the daemon from the client on Windows. When the -v (verbose) options is used to investigate, this might slow down the daemon startup process:
 - the daemon process is started from the client.

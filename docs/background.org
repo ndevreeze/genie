@@ -15,16 +15,6 @@ Finding a working solution took quite some time. Here are some pointers:
 
 Currently only Maven/Clojars style libraries are supported. This includes local libraries in your .m2 folder. See [[file:todo.org]]
 
-nRepl supports an operator 'hotload-dependency', but this is disabled for now with message 'Temporarily disabled until a solution for java 10 is found.'
-
-#+begin_src clojure
-(defn ensure-dynamic-classloader []
-  (let [thread (Thread/currentThread)
-        cl (.getContextClassLoader thread)]
-    (when-not (instance? DynamicClassLoader cl)
-      (.setContextClassLoader thread (DynamicClassLoader. cl)))))
-#+end_src
-
 See also the diagnostics.clj source file.
 
 The require function uses load-libs and load-lib, which uses *loaded-libs* and calls clojure.lang.RT/load.
@@ -47,6 +37,8 @@ When setting a new (dynamic) loader, make sure to create it with the parent set 
 When loading/compiling a script, a temporary classloader is created.
 
 To investigate all this, some functionality as given in diagnostics.clj was used. For normal operation it should not be necessary, but it will give detailed classloader-hierarchy information running in --verbose mode. It will then show the information for two trees: one for the current thread, and one for the base-loader.
+
+nRepl supports an operator 'hotload-dependency', but this is disabled for now with message 'Temporarily disabled until a solution for java 10 is found.'
 ** Links
 - https://github.com/nrepl/nrepl/issues/113 - issue with hot class loading and some possible solutions.
 - [[https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/DynamicClassLoader.java][DynamicClassLoader.java]] - these keep a list of loaded classes.
@@ -64,9 +56,9 @@ The second client version runs in Babashka. It is quite big - about 800 lines - 
 - handling input, output and error streams from the environment to the nRepl session in the daemon, including logging and blocking I/O.
 - client logging functions
 - check cmdline options for minimal functionality: noload, nocheckdaemon, nosetloader, nomain, nonormalize
-- admin commands: list-sessions, kill-sessions, start/stop/restart daemon.
-- a few wrappers around the bencode protocol for communicating with nRepl.
-- killing the script daemon-side when a client shutdown signal is received.
+- admin commands: list-sessions, kill-sessions, start/stop/restart daemon
+- a few wrappers around the bencode protocol for communicating with nRepl
+- killing the script daemon-side when a client shutdown signal is received
 ** Protocol versions
 Some preparations have been made to pass and check the protocol versions between client and daemon. This is mainly for future use, if needed.
 * What happens when the daemon starts?
@@ -96,7 +88,7 @@ On the daemon side, when client/exec-script is called:
 - The script is loaded with the standard load-file function:
 - The main function is executed. This is a function called 'main' in the last namespace declaration in the script
 * Logging
-Logging can be somewhat complicated in Clojure. Moreso with client sessions, as the correct *out* and *err* stream needs to be used. Some pointers:
+Logging can be somewhat complicated in Clojure. Moreso with client sessions, as the correct *out* and *err* stream needs to be used. Some notes:
 - We use the [[https://github.com/ndevreeze/logger][logger]] library as a wrapper around log4j. This does not need any config XML.
 - With a new nRepl sessions the dynamic vars *out* and *err* get bound to a new instance.
 - The logger uses this *err* stream

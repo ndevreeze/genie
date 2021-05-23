@@ -27,7 +27,7 @@ Also check periodically if hotload-dependency or standard Clojure functionality 
 
 The sideloader mentioned in nRepl might be handy, although it's the other way around, with the nRepl server process asking the client for libraries: https://nrepl.org/nrepl/design/middleware.html#sideloading
 
-A fixed alternative would be to put all your libraries in the project.clj of genied, and maybe generate a user/specific genied.jar uberjar, so dynamic loading is not needed. This depends on the direction Clojure will take.
+A non-dynamic alternative would be to put all your libraries in the project.clj of genied, and maybe generate a user/specific genied.jar uberjar, so dynamic loading is not needed. This depends on the direction Clojure will take.
 * Classloader handling
 Currently all clients/scripts use the same base/root classloader. This might be problematic if we want to use different versions of a library at the same time, maybe from different scripts. A workaround is to run these scripts in different daemons, listening on different ports. Maybe each script can use a unique classloader that is a child of the current base/root classloader.
 Building a dynamic classpath before starting the daemon might be an option, if more dynamic classloading proves to be problematic. This classpath would then be given on the command line like ' java -jar genied.jar -cp <dynamic-list>'
@@ -52,7 +52,7 @@ Babashka works very well here, but it is a binary of 80MB. Some possible alterna
 - Using https://fennel-lang.org/
 - Run within Closh, if the client can be a part of Closh
 * Support Inlein style dependencies
-In [[http://inlein.org/][Inlein]] scripts the depencies are contained in the script itself, not in a separate deps.edn file. It might be nice to support this as well.
+In [[http://inlein.org/][Inlein]] scripts the depencies are contained in the script itself, not in a separate deps.edn file. Maybe support this as well.
 * Improve stability
 Using Genie in practice on different systems should prove the stability of the solution. Although I have used this on my Lubuntu 18.04 system and Windows 10 laptop for some time, Genie has not been battle-tested on a lot of systems. Some areas for improvement:
 - Adding timeout-handlers for all calls and requests.
@@ -65,4 +65,4 @@ Currently only the active sessions can be listed. Some further options:
 - Some statistics on scripts: number of calls, runtime.
 - Client and protocol versions
 * Preloading scripts
-Currently the genie.edn config file can contain only libraries to be preloaden at daemon start-up time. Preloading scripts might also be useful, and better for runtime performance.
+Currently the genie.edn config file can contain only libraries to be preloaded at daemon start-up time. Preloading scripts might also be useful, and better for runtime performance.

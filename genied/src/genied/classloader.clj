@@ -11,6 +11,7 @@
             [ndevreeze.logger :as log]))
 
 ;; 2021-03-13: this one from discussion in clojure threads.
+;; 2021-05-23: not used currently, maybe remove. It was given as an example.
 (defn ensure-dynamic-classloader
   "Ensure the current thread has a Clojure DynamicClassLoader.
    Return the classloader after possibly changing it."

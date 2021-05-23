@@ -25,7 +25,7 @@ Non-goals:
 - Java (>= v11)
 - Clojure (>= v10)
 - Genie uses [[https://book.babashka.org][Babashka]] for the client and installation. So make sure you have this installed.
-- [[https://leiningen.org][Leiningen]] is used for creating an uberjar. This will reduce daemon startup time.
+- [[https://leiningen.org][Leiningen]] is used for creating an uberjar. Using an uberjar will reduce daemon startup time.
 ** Install with Babashka
 #+begin_src bash :tangle yes
   bb ./install.clj
@@ -81,7 +81,7 @@ export GENIE_TEMPLATE_DIR=~/.config/genie/template
 export GENIE_SCRIPTS_DIR=~/bin
 #+end_src
 ** Start automatically at system boot
-And add a crontab entry so the Genie daemon starts automatically:
+Add a crontab entry so the Genie daemon starts automatically:
 #+begin_src bash
 @reboot /home/your-user-name/tools/genie/genied.sh
 #+end_src
@@ -119,7 +119,7 @@ An example script is shown below.
     (println "ctx: " ctx)
     (data-csv opt ctx))
 
-  ;; expect context/ctx now as first parameter, a map.
+  ;; expect context/ctx as first parameter, a map.
   (defn main [ctx args]
     (cl/check-and-exec "" cli-options script args ctx))
 
@@ -141,16 +141,15 @@ A deps.edn should be in the same directory:
     org.clojure/data.csv {:mvn/version "1.0.0"}}}
 #+end_src
 
-Then execute with clj:
-#+begin_src bash :tangle yes
-clj -m test
-#+end_src
-
-Or with genie:
+Then execute with Genie:
 #+begin_src bash :tangle yes
 genie.clj ./test.clj
 #+end_src
 
+Or with clj:
+#+begin_src bash :tangle yes
+clj -m test
+#+end_src
 ** Command line options
 The genie.clj Babashka client has several options:
 #+begin_src bash :tangle yes
@@ -190,23 +189,7 @@ To create a script and deps.edn file from templates:
 
 This uses template.clj and deps.edn from the template directory (GENIE_TEMPLATE_DIR). For more details see [[file:docs/background.org]].
 * Testing
-See directory test, with these scripts:
-- test.clj - test various parts, including logging and stdout/err handling
-- test_dyn_cl - test dynamic classloading
-- more scripts in the 'test' directory
-
-Also from the 'test' directory:
-#+begin_src bash :tangle yes
-$ test/run-all-tests.clj -h
-run-all-tests.clj - run all genie tests in this directory
-  -p, --port PORT             7887  Genie daemon port number for test
-  -l, --logdir LOGDIR               Directory for client log. Empty: no logging
-  -v, --verbose                     Verbose output
-  -h, --help                        Show help
-      --clj                         Use clj instead of genie to run scripts
-      --no-start-stop-daemon        Do not start a daemon before the tests
-#+end_src
-
+See directory 'test', with these scripts:
 | Test                    | Notes                                              |
 |-------------------------+----------------------------------------------------|
 | run-all-tests.clj       | Start a daemon, run all tests and stop daemon      |
@@ -228,11 +211,23 @@ run-all-tests.clj - run all genie tests in this directory
 | test_stdout_stderr.clj  | Test output to stdout and stderr                   |
 | test_two_namespaces.clj | Test with 2 namespaces in a file                   |
 | test_write_file.clj     | Test writing a text file                           |
+
+To run all these tests in the 'test' directory:
+#+begin_src bash :tangle yes
+$ test/run-all-tests.clj -h
+run-all-tests.clj - run all genie tests in this directory
+  -p, --port PORT             7887  Genie daemon port number for test
+  -l, --logdir LOGDIR               Directory for client log. Empty: no logging
+  -v, --verbose                     Verbose output
+  -h, --help                        Show help
+      --clj                         Use clj instead of genie to run scripts
+      --no-start-stop-daemon        Do not start a daemon before the tests
+#+end_src
 * Security
 The daemon should run under a standard (non-root) user. All scripts are executed under this user's credentials. The daemon only listens on localhost. In theory it should be possible to connect over the (local) network, but you probably do not want this.
 * Todo
 - See [[https://github.com/ndevreeze/genie/issues][Issues on Github]]
-- See [[file:docs/todo.org]] for details.
+- See [[file:docs/todo.org]] for future ideas.
 - More real world using and testing
 * Related projects
 Some Clojure-like languages having fast startup, but not all Clojure/JVM functionality:
@@ -247,7 +242,7 @@ Some Clojure-like languages having fast startup, but not all Clojure/JVM functio
 - [[https://github.com/pixie-lang/pixie][Pixie]] - own VM
 - [[https://planck-repl.org/][Planck]] - JavaScript
 
-Some earlier projects, which do not seem to be actively maintained:
+Earlier projects, some not actively maintained:
 - [[https://leiningen.org/grench.html][Grenchman]] - fast invocation of Clojure code over nREPL
 - [[https://github.com/ninjudd/cake][Cake]] - merged with Leiningen
 - [[https://github.com/ninjudd/drip][Drip]] - Keeps a JVM in reserve.
@@ -260,7 +255,7 @@ Some earlier projects, which do not seem to be actively maintained:
 - [[https://git.sr.ht/~technomancy/shevek/][Shevek]] - nRepl client made with [[https://fennel-lang.org/][Fennel]] (Lua).
 
 And a [[https://www.reddit.com/r/Clojure/comments/3qb9nz/clojure_for_command_line_scripts_idea_feasibility/][Discussion]] about some possibilities from 2016.
-* More docs
+* More documentation
 - [[file:docs/todo.org]]
 - [[file:docs/background.org]] - If you want to know the details, and maybe want contribute
 - [[file:docs/performance.org]]
