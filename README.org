@@ -1,6 +1,5 @@
 #+STARTUP: content indent
 #+title: Genie - Run Clojure scripts with a daemon process
-
 * Introduction
 Another way of mitigating the slow startup of Clojure on the JVM, by starting a daemon in the background. Using the following projects:
 - [[https://nrepl.org/nrepl/index.html][nRepl]] - for running the daemon and providing client connections (using bencode).
@@ -266,6 +265,7 @@ And a [[https://www.reddit.com/r/Clojure/comments/3qb9nz/clojure_for_command_lin
 - [[file:docs/background.org]] - If you want to know the details, and maybe want contribute
 - [[file:docs/performance.org]]
 - [[file:docs/windows.org]] - Specific issues when running on Windows.
+- API docs: TODO
 * License
 Copyright © 2021 Nico de Vreeze
 
