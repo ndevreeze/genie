@@ -6,7 +6,7 @@ Another way of mitigating the slow startup of Clojure on the JVM, by starting a 
 - [[https://nrepl.org/nrepl/index.html][nRepl]] - for running the daemon and providing client connections (using bencode).
 - [[https://github.com/clj-commons/pomegranate][Pomegranate]] - for dynamically loading libraries
 - [[https://book.babashka.org][Babashka]] - for the client and installation script.
-** Genie?
+** Why Genie?
 From https://www.wordnik.com/words/genie:
 - noun - A supernatural creature who does one's bidding when summoned.
 - noun - A fictional magical being that is typically bound to obey the commands of a mortal possessing its container.
@@ -237,21 +237,30 @@ The daemon should run under a standard (non-root) user. All scripts are executed
 - More real world using and testing
 * Related projects
 Some Clojure-like languages having fast startup, but not all Clojure/JVM functionality:
-- [[https://babashka.org/][Babashka]]
-- [[https://github.com/dundalek/closh][Closh]]
-- [[https://janet-lang.org/][Janet]]
-- [[https://github.com/candid82/joker][Joker]]
-- [[https://docs.hylang.org/en/alpha/][Hy]]
-- [[https://github.com/anmonteiro/lumo][Lumo]]
-- [[https://planck-repl.org/][Planck]]
+- [[https://babashka.org/][Babashka]] - Clojure implementation based on SCI.
+- [[https://github.com/dundalek/closh][Closh]] - Shell comparable to Bash
+- [[https://imagej.net/Clojure_Scripting][Fiji]] - from ImageJ, image processing, with Clojure scripting embedded.
+- [[https://www.graalvm.org/java/][GraalVM]] - Compile to platform binaries
+- [[https://janet-lang.org/][Janet]] - own VM
+- [[https://github.com/candid82/joker][Joker]] - implementation in Go
+- [[https://docs.hylang.org/en/alpha/][Hy]] - Python VM
+- [[https://github.com/anmonteiro/lumo][Lumo]] - JavaScript
+- [[https://github.com/pixie-lang/pixie][Pixie]] - own VM
+- [[https://planck-repl.org/][Planck]] - JavaScript
 
 Some earlier projects, which do not seem to be actively maintained:
-- [[https://leiningen.org/grench.html][Grenchman]]
+- [[https://leiningen.org/grench.html][Grenchman]] - fast invocation of Clojure code over nREPL
 - [[https://github.com/ninjudd/cake][Cake]] - merged with Leiningen
 - [[https://github.com/ninjudd/drip][Drip]] - Keeps a JVM in reserve.
 - [[http://inlein.org/][Inlein]] - mostly for setting up classpath, a new JVM is started for each script-run.
 - [[http://icylisper.in/jark][Jark]] - seems offline. But [[https://github.com/scottjad/jark][Jark]] still exists.
-- Nailgun - some info [[https://stackoverflow.com/questions/19107683/speed-up-clojure-startup-time-with-nailgun][here]].
+- [[https://github.com/arohner/lein-daemon][Lein-daemon]] - A leiningen plugin for daemonizing a clojure process (deprecated)
+- [[https://github.com/circleci/lein-jarbin][Lein-jarbin]] - successor of lein-daemon
+- [[https://github.com/facebook/nailgun][Nailgun]] - client, protocol, and server for running Java programs from the command line without incurring the JVM startup overhead. See also the nice [[http://www.martiansoftware.com/nailgun/background.html][background]] information.
+- [[https://github.com/benwbooth/quick-clojure][QuickClojure]] - Python client, somewhat similar to Genie. Last update in 2015.
+- [[https://git.sr.ht/~technomancy/shevek/][Shevek]] - nRepl client made with [[https://fennel-lang.org/][Fennel]] (Lua).
+
+And a [[https://www.reddit.com/r/Clojure/comments/3qb9nz/clojure_for_command_line_scripts_idea_feasibility/][Discussion]] about some possibilities from 2016.
 * More docs
 - [[file:docs/todo.org]]
 - [[file:docs/background.org]] - If you want to know the details, and maybe want contribute

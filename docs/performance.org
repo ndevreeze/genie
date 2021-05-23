@@ -25,3 +25,5 @@ A simple scriptrun takes about 300 milliseconds. Check where this time is spent.
 - Running genie --list-sessions (no new session, no script and library loading)
 * TODO Test memory usage/leaks
 Create a script that use a lot of memory. Run it a few times, check memory. Maybe also script that creates a lot of classes, they used to be harder to GC.
+* TODO Test with rep
+Create the statement to execute with rep. This should provide a good baseline.

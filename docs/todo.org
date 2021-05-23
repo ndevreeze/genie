@@ -21,7 +21,7 @@ Created /home/nico/cljlib/genie/genied/target/uberjar/genied-0.1.0-SNAPSHOT-stan
 
 This probably has something to do with Pomegranate, but further investigation is needed.
 * Other library dependencies
-Currently only Maven/Clojars style libraries are supported. This includes local libraries in your .m2 folder.
+Currently only Maven/Clojars style libraries are supported. This includes local libraries in your .m2 folder. Using libraries in git-repo's is currently not possible.
 
 Also check periodically if hotload-dependency or standard Clojure functionality (clojure.tools.deps.alpha.repl?) is working again.
 
@@ -31,8 +31,14 @@ A fixed alternative would be to put all your libraries in the project.clj of gen
 * Classloader handling
 Currently all clients/scripts use the same base/root classloader. This might be problematic if we want to use different versions of a library at the same time, maybe from different scripts. A workaround is to run these scripts in different daemons, listening on different ports. Maybe each script can use a unique classloader that is a child of the current base/root classloader.
 Building a dynamic classpath before starting the daemon might be an option, if more dynamic classloading proves to be problematic. This classpath would then be given on the command line like ' java -jar genied.jar -cp <dynamic-list>'
+
+For both loading and unloading the Java way-of-working might be useful. See the following links:
+- https://stackoverflow.com/questions/60764/how-to-load-jar-files-dynamically-at-runtime
+- https://techitmore.com/java/dynamically-loading-classes-in-a-jar-file/
+- https://www.nathanbak.com/?p=407
+- https://stackabuse.com/example-loading-a-java-class-at-runtime/
 * Other Repl implementations
-nRepl is very versatile, with great support for sessions and stream-handling. But maybe simpler repl's are faster and/or easier. Distinguishing between stdout and stderr might be an issue then, as well as handling stdin.
+nRepl is very versatile, with great support for sessions and stream-handling. But maybe simpler repl's are faster and/or easier. Distinguishing between stdout and stderr might be an issue then, as well as handling stdin. Web- and app-servers might be useful, also as inspiration.
 * Other wire protocols
 Use bencode over TCP/IP now. Maybe local unix sockets are faster.
 * Other clients
@@ -41,9 +47,10 @@ Babashka works very well here, but it is a binary of 80MB. Some possible alterna
 - Tcl with bencode (or other protocl)
 - Tcl/Tk, for local GUI applications. Tk in Java/Clojure has been tried before, but not really successful or complete.
 - A C implementation (maybe using rep as inspiration)
-- A better C, such as Go or Rust.
+- A better C, such as Go or Rust. Joker might be of use then.
 - Compile the Babashka client to GraalVM binaries (system dependent)
 - Using https://fennel-lang.org/
+- Run within Closh, if the client can be a part of Closh
 * Support Inlein style dependencies
 In [[http://inlein.org/][Inlein]] scripts the depencies are contained in the script itself, not in a separate deps.edn file. It might be nice to support this as well.
 * Improve stability
