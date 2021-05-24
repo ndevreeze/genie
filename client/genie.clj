@@ -409,7 +409,7 @@
 
 (defn nrepl-eval
   "Eval a Genie script in a genied/nRepl session"
-  [{:keys [close closewait] :as opt} {:keys [eval-id] :as ctx} script main-fn script-params]
+  [{:keys [closewait] :as opt} {:keys [eval-id] :as ctx} script main-fn script-params]
   (let [{:keys [out in]} (connect-nrepl opt)
         _ (write-bencode out {"op" "clone" "id" (msg-id)})
         session (:new-session (read-result in))
@@ -663,7 +663,6 @@
   (let [admin-session (connect-nrepl opt)
         session-specs2 (split-sessions admin-session sessions)
         _ (debug "session-specs:" session-specs2)
-        sessions2 (mapcat #(find-session admin-session %) session-specs2)
         sessions (find-sessions admin-session sessions)]
     (doseq [{:keys [session script]} sessions]
       (println (str "Closing session: [" session "] " script))
