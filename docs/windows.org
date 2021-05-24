@@ -122,3 +122,19 @@ Even without periodically checking the TCP port, the daemon prcocess still waits
 This could have something to do with an old, slow and/or encrypted disk, combined with a virusscanner. Without admin-access, it's hard to check further. Again some workarounds:
 - start the daemon from the client without the -v option. Although this leaves you in the dark a bit.
 - start the daemon manually, with or without the -v option
+
+* Downloading libraries from Maven and Clojars
+If lein deps gives you something like:
+#+begin_src bash
+Could not transfer artifact org.apache.httpcomponents:httpcore:jar:4.4.14 from/to central (https://repo1.maven.org/maven2/): PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target
+Could not transfer artifact org.apache.httpcomponents:httpcore:jar:4.4.14 from/to clojars (https://repo.clojars.org/): PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target
+Failed to read artifact descriptor for org.apache.httpcomponents:httpcore:jar:4.4.14
+This could be due to a typo in :dependencies, file system permissions, or network issues.
+If you are behind a proxy, try setting the 'http_proxy' environment variable.
+#+end_src
+
+You need to import the certificates of both Maven and Clojars into your cacerts file. Basically:
+- Visit the URL in your browser and using the lock-icon download the certificate (PEM or CRT)
+- Use the Java keytool to import the certificate
+- See [[https://stackoverflow.com/questions/21076179/pkix-path-building-failed-and-unable-to-find-valid-certification-path-to-requ][here]] for details.
+- Configuring certificates in your Leiningen profiles.clj might also help. See [[https://github.com/technomancy/leiningen/issues/1966]]
