@@ -81,7 +81,7 @@
    [nil "--nomain" "Do not call main function after loading"]
    [nil "--nonormalize" "Do not normalize parameters to script (rel. paths)"]
    ;; and some admin commands.
-   [nil "--close" "Send close-session at end and wait for response"]
+   [nil "--closewait" "Wait on response of close-session at end"]
    [nil "--list-sessions" "List currently open/running sessions/scripts"]
    [nil "--kill-sessions SESSIONS" "csv list of (part of) sessions, or 'all'"]
    [nil "--start-daemon" "Start daemon running on port"]
@@ -409,7 +409,7 @@
 
 (defn nrepl-eval
   "Eval a Genie script in a genied/nRepl session"
-  [{:keys [close] :as opt} {:keys [eval-id] :as ctx} script main-fn script-params]
+  [{:keys [close closewait] :as opt} {:keys [eval-id] :as ctx} script main-fn script-params]
   (let [{:keys [out in]} (connect-nrepl opt)
         _ (write-bencode out {"op" "clone" "id" (msg-id)})
         session (:new-session (read-result in))
@@ -432,8 +432,10 @@
       (catch Exception e
         (warn "Caught exception: " e))
       (finally
-        (when close
-          (write-bencode out {"op" "close" "session" session "id" (msg-id)})
+        ;; always send op=close, does not take extra time.
+        (write-bencode out {"op" "close" "session" session "id" (msg-id)})
+        (when closewait
+          ;; waiting on response can take 140 msec.
           (read-result in))
         (reset! session-atom nil)))))
 
@@ -605,10 +607,15 @@
                                    "code" "(genied.client/list-sessions)"})
                 :value
                 edn/read-string
-                vals)]
+                vals)
+            sessions2 (admin-get-sessions admin-session)]
         (println "Total #sessions:" (count sessions))
         (doseq [{:keys [session script]} sessions]
-          (println (str "[" session "] " script))))
+          (println (str "[" session "] " script)))
+        (when (:verbose opt)
+          (println "Sessions directly from nRepl:")
+          (doseq [session sessions2]
+            (println session))))
       (catch Exception e
         (warn "Caught exception: " e))
       (finally
@@ -627,15 +634,26 @@
   being executed.
    Returns seq of session ids."
   [admin-session spec]
+  (debug "find-session:" spec)
   (let [sessions (-> (do-admin-command admin-session
                                        {"op" "eval"
                                         "code" "(genied.client/list-sessions)"})
                      :value
                      edn/read-string
                      vals)
-        re-pat (re-pattern spec)]
-    (concat (filter #(re-find re-pat (:session %)) sessions)
-            (filter #(re-find re-pat (:script %)) sessions))))
+        re-pat (re-pattern spec)
+        lst1 (filter #(re-find re-pat (:session %)) sessions)
+        lst2 (filter #(re-find re-pat (:script %)) sessions)]
+    (debug "found lst1 (session):" (count lst1) ":" lst1)
+    (debug "found lst2 (script):" (count lst2) ":" lst2)
+    (concat lst1 lst2)))
+
+(defn find-sessions
+  [admin-session spec]
+  (if (= spec "all")
+    (map #(hash-map :session % :script nil) (admin-get-sessions admin-session))
+    (mapcat #(find-session admin-session %)
+            (split-sessions admin-session spec))))
 
 (defn admin-kill-sessions
   "Kill the sessions with the given (part of) ids or (part of) script names.
@@ -643,8 +661,10 @@
   [opt sessions]
   (println "Kill sessions:" sessions)
   (let [admin-session (connect-nrepl opt)
-        session-specs (split-sessions admin-session sessions)
-        sessions (mapcat #(find-session admin-session %) session-specs)]
+        session-specs2 (split-sessions admin-session sessions)
+        _ (debug "session-specs:" session-specs2)
+        sessions2 (mapcat #(find-session admin-session %) session-specs2)
+        sessions (find-sessions admin-session sessions)]
     (doseq [{:keys [session script]} sessions]
       (println (str "Closing session: [" session "] " script))
       ;; giving both interrupt and close results in error messages and
