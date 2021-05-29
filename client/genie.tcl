@@ -52,7 +52,8 @@ proc exec_script {opt argv} {
 proc create_context {opt rep script} {
   set script2 [file normalize $script]
   set cwd [file normalize .]
-  set str "{:cwd [quote_param $cwd] :script [quote_param $script2] :opt [quote_dict $opt]}"
+  set str "{:cwd [quote_param $cwd] :script [quote_param $script2] :opt [quote_dict $opt]
+            :client-version \"0.1.0\" :protocol-version \"0.1.0\"}"
   return $str
 }
 
@@ -139,11 +140,13 @@ proc det_rep {} {
 }
 
 # put double quote around param, unless it's a number
+# 2021-05-29: always add quotes.
 proc quote_param {param} {
   if {[number? $param]} {
-    return $param
+    # return $param
+    return "\"$param\""
   } else {
-    return "\"$param\""  
+    return "\"$param\""
   }
 }
 
