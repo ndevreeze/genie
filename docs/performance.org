@@ -1,9 +1,136 @@
 #+STARTUP: content indent
 #+title: Genie - Performance
-* TODO Some tests and results
-* TODO Client cmdline options
---nosetloader, --nomain, others?
-* TODO Reading and passing stdin lines
+* Measurements
+Some simple and repeated tests were done with the 'time' command. Also some network measurements were taken with Wireshark. This gives some basic ideas about which parts of the process take the most time. Be aware that this is not a rigorous performance analysis.
+** Loading Babashka and the genie.clj client
+Some tests with different scripts and options show the following:
+| test                      |    msec | notes                                   |
+|---------------------------+---------+-----------------------------------------|
+| bb minimal-script         |   21-25 | minimal babashka script, baseline       |
+| bb genie.clj -h           |   51-53 | Loading script, some output, no network |
+| --list-sessions           |   52-54 | Loading script, minor network calls     |
+| test-add-numbers          | 310-320 | No logging, just the output.            |
+| test-add-numers -v client | 324-327 | With logging, not much extra overhead   |
+
+The genie.clj script is quite large (about 800 lines), and takes about 30 msec extra to load, compared to a minimal script. Executing a script takes a lot more time, see below for futher (network) analysis.
+** Full session, including waiting on closed
+A network measurement with Wireshark showed the following packets and timestamps (all msec) on the 'local-wire':
+
+| time | diff | notes                |
+|------+------+----------------------|
+|  216 |      | TCP connect          |
+|  217 |    1 | c:clone              |
+|  220 |    3 | s:session            |
+|  268 |   48 | c:exec               |
+|  291 |   23 | s:answer             |
+|  332 |   41 | s:nil                |
+|  376 |   44 | c:close, no FIN      |
+|  477 |  101 | s:closed, no FIN-ACK |
+|  484 |    7 | c:FIN-ACK            |
+|  484 |    0 | s:FIN-ACK            |
+
+Total execution time here was 316 msec. Network time is 484-216=268 msec. So client overhead = 316 - 268 = 48 msec.
+
+The main delays:
+- prepare the script by the client and send request - 48 msec
+- execute the script - 23 msec
+- return the nil answer at the end - 41 msec
+- prepare the close operation by the client and send request - 44 msec
+- close the session and send reply - 101 msec
+
+** Full session, with close, without waiting on closed
+Without waiting for the closed-reply, it is faster:
+| time | diff | notes             |
+|------+------+-------------------|
+|  287 |      | TCP connect       |
+|  287 |    0 | c:clone           |
+|  289 |    2 | s:session         |
+|  336 |   47 | c:exec            |
+|  359 |   23 | s:answer          |
+|  400 |   41 | s:nil             |
+|  406 |    6 | c:close, incl FIN |
+|  406 |    0 | s:FIN-ACK         |
+
+Total execution here was 165 msec. Network time is 406-287=119 msec. So client overhead = 165 - 119 = 46 msec.
+
+We do need to send the close operation, otherwise the session will be kept alive.
+** Full session with Tcl script and rep binary
+Testing with a Tcl script calling the rep binary of course has more process overhead. But the network session is shorter:
+| time | diff | notes                        |
+|------+------+------------------------------|
+|  601 |      | TCP connect                  |
+|  601 |    0 | c:clone                      |
+|  604 |    3 | s:session                    |
+|  604 |    0 | c:exec                       |
+|  625 |   21 | s:answer                     |
+|  668 |   43 | s:nil (included with answer) |
+|  668 |    0 | c:close, no FIN              |
+|  769 |  101 | s:closed, no FIN-ACK         |
+|  769 |    0 | c:FIN-ACK                    |
+|  770 |    1 | s:FIN-ACK                    |
+
+The only real delays (>5 msec) are now from the server/daemon.
+** Comparison table
+The following table shows how long each part takes in Babashka compared to the Rep binary:
+| action               | diff-bb | diff-rep | notes                       |
+|----------------------+---------+----------+-----------------------------|
+| TCP connect          |         |          |                             |
+| c:clone              |       1 |        0 |                             |
+| s:session            |       3 |        3 |                             |
+| c:exec               |      48 |        0 | bb takes time, rep does not |
+| s:answer             |      23 |       21 | similar in both cases       |
+| s:nil                |      41 |       43 | similar too                 |
+| c:close, no FIN      |      44 |        0 | bb takes time, rep does not |
+| s:closed, no FIN-ACK |     101 |      101 | closing takes a long time   |
+| c:FIN-ACK            |       7 |        0 |                             |
+| s:FIN-ACK            |       0 |        1 |                             |
+
+The cause of the slowness in Babashka (bb) can of course lie both in the Babashka binary and the Genie.clj script. We need to do some further investigation here.
+** Test with rep binary
+Another baseline is direct execution using the rep binary. Also tested on Ubuntu 18.04.
+
+#+begin_src bash
+$ time rep --line='FILE:LINE:COLUMN' --no-print=value -p 7888 "(genied.client/exec-script \"/home/nico/cljlib/genie/test/test_add_numbers.clj\" 'test-add-numbers/main {:cwd \"/home/nico/cljlib/genie/client\" :script \"/home/nico/cljlib/genie/test/test_add_numbers.clj\" :opt {:test \"0\" :noreload \"0\" :main \"\" :port \"7888\" :verbose \"1\" :nocheckserver \"0\" :log-level \"info\"} :client-version \"0.1.0\" :protocol-version \"0.1.0\"} [\"1\" \"2\" \"3\"])"
+The sum of [1 2 3] is 6
+
+real	0m0,172s
+user	0m0,003s
+sys	0m0,001s
+
+#+end_src
+
+Also measured with Wireshark:
+
+| time | diff | notes                |
+|------+------+----------------------|
+|  676 |      | TCP connect          |
+|  676 |    0 | c:clone              |
+|  680 |    4 | s:session            |
+|  680 |    0 | c:exec               |
+|  704 |   24 | s:answer             |
+|  745 |   41 | s:nil                |
+|  745 |    0 | c:close, no FIN      |
+|  847 |  102 | s:closed, no FIN-ACK |
+|  847 |    0 | c:FIN-ACK            |
+|  847 |    0 | s:FIN-ACK            |
+
+So we see no delays caused by the client side here, only on the server side:
+- creating the session - 4 msec
+- loading the script and executing it - 24 msec
+- wait after the final output - 41 msec
+- closing the session - 102 msec
+* Client cmdline options
+The following command line options can help to improve performance, by doing less:
+#+begin_src bash
+      --noload                              Do not load libraries and scripts
+      --nocheckdaemon                       Do not perform daemon checks on errors
+      --nosetloader                         Do not set dynamic classloader
+      --nomain                              Do not call main function after loading
+      --nonormalize                         Do not normalize parameters to script (rel. paths)
+#+end_src
+
+The --nomain option could be useful if you want to preload scripts, without executing them immediately.
+* Reading and passing stdin lines
 A test with reading a file, with max-lines parameter versus total running time:
 
 | max-lines | time (s) |
@@ -17,13 +144,20 @@ A test with reading a file, with max-lines parameter versus total running time:
 |        50 |     1.11 |
 |       100 |     0.84 |
 |      1000 |      0.5 |
-* Client/daemon communication
-Currently TCP socket and bencode are used. Maybe Linux pipes are faster, when available.
-* TODO Analysis current 300 msec
-A simple scriptrun takes about 300 milliseconds. Check where this time is spent. Some testcases:
-- Running genie -h (no communication with daemon)
-- Running genie --list-sessions (no new session, no script and library loading)
-* TODO Test memory usage/leaks
+
+A small --max-lines value causes many more round-trips between client and daemon. Even on a local connection this takes time. The default value is 1024 lines.
+* Further optimisations
+Tests and analysis above suggest the following further optimisations:
+- Test a Tcl client with direct socket connection with bencode. Also close the session from the client but do not wait for the response. And freewraptclsh might help too.
+- Check the 40 msec delay between sending the final output and the nil-response.
+- Check the Babashka client for the cause of the 40 msec delays from the client side. Also check if these are related to the 40 msec server side delay.
+- Create a native binary of the Babashka client with GraalVM.
+- Maybe named pipes, see [[todo.org]]. But nRepl does not yet support this, and keeping track of sessions might be an issue.
+- Reuse sessions - only small improvement expected. Might be useful for keeping state.
+- Other clients based on e.g. Lua, C (compare rep binary), Go or Rust might help.
+- nRepl with TTY protocol?
+* Further testing
+** Test memory usage/leaks
 Create a script that use a lot of memory. Run it a few times, check memory. Maybe also script that creates a lot of classes, they used to be harder to GC.
-* TODO Test with rep
-Create the statement to execute with rep. This should provide a good baseline.
+** Profiling
+Both on server/daemon side with a JVM profiler and dtrace or similar for the client(s).

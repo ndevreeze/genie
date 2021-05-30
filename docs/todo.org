@@ -40,7 +40,7 @@ For both loading and unloading the Java way-of-working might be useful. See the 
 * Other Repl implementations
 nRepl is very versatile, with great support for sessions and stream-handling. But maybe simpler repl's are faster and/or easier. Distinguishing between stdout and stderr might be an issue then, as well as handling stdin. Web- and app-servers might be useful, also as inspiration.
 * Other wire protocols
-Use bencode over TCP/IP now. Maybe local unix sockets are faster.
+Use bencode over TCP/IP now. Maybe local unix sockets or named pipes are faster.
 * Other clients
 Babashka works very well here, but it is a binary of 80MB. Some possible alternatives:
 - Tcl with rep(.exe) - the first implementation. This works, but a 2-process overhead is less than ideal.
@@ -66,3 +66,5 @@ Currently only the active sessions can be listed. Some further options:
 - Client and protocol versions
 * Preloading scripts
 Currently the genie.edn config file can contain only libraries to be preloaded at daemon start-up time. Preloading scripts might also be useful, and better for runtime performance.
+* Improve performance
+See also [[performance.org]]
