@@ -47,7 +47,7 @@ nRepl supports an operator 'hotload-dependency', but this is disabled for now wi
 * Clients
 Two clients are available for communicating with the daemon to start scripts. The second one in Babashka is the most complete one. See [[todo.org]] for ideas on other clients, mainly to improve performance.
 ** Take 1 - Tcl and rep
-The first client was made in Tcl using the [[https://github.com/eraserhd/rep][rep]] binary for communicating with the nRepl server. It is mainly a proof-of-concept, but might serve as a base for future clients. The current versions needs to start two processes (one for Tcl and one for Rep), so will be less efficient.
+The first client was made in Tcl using the [[https://github.com/eraserhd/rep][rep]] binary for communicating with the nRepl server. It is mainly a proof-of-concept, but might serve as a base for future clients. The current version needs to start two processes (one for Tcl and one for Rep), so will be less efficient.
 ** Take 2 - Babashka
 The second client version runs in Babashka. It is quite big - about 800 lines - and implements the following main functionalities:
 - converting local and user (~) based paths to absolute paths
