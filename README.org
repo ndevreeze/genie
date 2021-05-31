@@ -247,9 +247,9 @@ Some Clojure-like languages having fast startup, but not all Clojure/JVM functio
 - [[https://planck-repl.org/][Planck]] - JavaScript
 
 Earlier projects, some not actively maintained:
-- [[https://leiningen.org/grench.html][Grenchman]] - fast invocation of Clojure code over nREPL
 - [[https://github.com/ninjudd/cake][Cake]] - merged with Leiningen
 - [[https://github.com/ninjudd/drip][Drip]] - Keeps a JVM in reserve.
+- [[https://leiningen.org/grench.html][Grenchman]] - fast invocation of Clojure code over nREPL
 - [[http://inlein.org/][Inlein]] - mostly for setting up classpath, a new JVM is started for each script-run.
 - [[http://icylisper.in/jark][Jark]] - seems offline. But [[https://github.com/scottjad/jark][Jark]] still exists.
 - [[https://github.com/arohner/lein-daemon][Lein-daemon]] - A leiningen plugin for daemonizing a clojure process (deprecated)
