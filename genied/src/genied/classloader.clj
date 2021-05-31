@@ -104,6 +104,7 @@
     [nrepl "0.8.3"]
     [clj-commons/pomegranate "1.2.1"]
     [org.apache.httpcomponents/httpclient "4.5.13"]
+    [org.apache.httpcomponents/httpcore "4.4.14"]
     [org.slf4j/slf4j-nop "1.7.30"]
     [org.jsoup/jsoup "1.13.1"]
     [ndevreeze/logger "0.5.1"]
