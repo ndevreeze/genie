@@ -1,6 +1,5 @@
 #! /usr/bin/env bb
 
-;; TODO other locations needed on Windows and Mac?
 (ns install
   "Installer for genie.
    Locations are determined like this:
