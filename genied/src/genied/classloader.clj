@@ -134,7 +134,7 @@
 (defn det-deps-edn
   "Determine deps.edn file based on script and ctx.
    Also check parent dir of script, when default src-dir is used"
-  [{:keys [deps] :as ctx} script]
+  [{:keys [deps]} script]
   (cond deps deps
         (fs/exists? (fs/file (fs/parent script) "deps.edn"))
         (fs/file (fs/parent script) "deps.edn")
