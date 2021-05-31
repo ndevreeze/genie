@@ -14,8 +14,11 @@ So the genie in this case is the daemon process containing the nRepl server, wai
 * Goals
 - Every script that can be executed by clj (using deps.edn) should also be able to be executed using Genie. And therefore you can also develop your script using e.g. CIDER.
 - Fast startup of scripts.
+- Dynamic loading of libraries.
 - Performance similar to Clojure itself, as it is still Clojure on the JVM.
 - Cross-platform: supports Linux, Windows and MacOS.
+- Fast changing and running of scripts. Either develop in a (CIDER) repl, or by changing and running the script.
+- Run multiple scripts simultaneously in one JVM.
 
 Non-goals:
 - The fastest possible startup - running with a client/server setup implies some (local) network overhead.
