@@ -264,7 +264,7 @@ Earlier projects, some not actively maintained:
 - [[https://github.com/benwbooth/quick-clojure][QuickClojure]] - Python client, somewhat similar to Genie. Last update in 2015.
 - [[https://git.sr.ht/~technomancy/shevek/][Shevek]] - nRepl client made with [[https://fennel-lang.org/][Fennel]] (Lua).
 
-And a [[https://www.reddit.com/r/Clojure/comments/3qb9nz/clojure_for_command_line_scripts_idea_feasibility/][Discussion]] about some possibilities from 2016.
+And a [[https://www.reddit.com/r/Clojure/comments/3qb9nz/clojure_for_command_line_scripts_idea_feasibility/][discussion]] about some possibilities from 2016.
 * More documentation
 - [[file:docs/todo.org]]
 - [[file:docs/background.org]] - If you want to know the details, and maybe want contribute
