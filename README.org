@@ -226,6 +226,12 @@ run-all-tests.clj - run all genie tests in this directory
       --clj                         Use clj instead of genie to run scripts
       --no-start-stop-daemon        Do not start a daemon before the tests
 #+end_src
+
+There is also a minimal Midje test for the daemon, calling test.clj as mentioned above:
+#+begin_src bash
+cd genied
+lein midje
+#+end_src
 * Security
 The daemon should run under a standard (non-root) user. All scripts are executed under this user's credentials. The daemon only listens on localhost. In theory it should be possible to connect over the (local) network, but you probably do not want this.
 Also be aware Genie is not secure in a multi-user system: anyone can connect on the local port and the (local) netwerk traffic is not encrypted.
