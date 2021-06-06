@@ -3,14 +3,14 @@
 * Introduction
 Another way of mitigating the slow startup of Clojure on the JVM, by starting a daemon in the background. Using the following projects:
 - [[https://nrepl.org/nrepl/index.html][nRepl]] - for running the daemon and providing client connections (using bencode).
-- [[https://github.com/clj-commons/pomegranate][Pomegranate]] - for dynamically loading libraries
+- [[https://github.com/clj-commons/pomegranate][Pomegranate]] - for dynamically loading libraries.
 - [[https://book.babashka.org][Babashka]] - for the client and installation script.
 ** Why Genie?
 From https://www.wordnik.com/words/genie:
 - noun - A supernatural creature who does one's bidding when summoned.
 - noun - A fictional magical being that is typically bound to obey the commands of a mortal possessing its container.
 
-So the genie in this case is the daemon process containing the nRepl server, waiting to execute Clojure scripts when summoned. It might help to see the daemon as part of the OS.
+So the genie in this case is the daemon process containing the nRepl server, waiting to execute Clojure scripts when summoned. It might help to see the daemon as part of the Operating System.
 * Goals
 - Every script that can be executed by clj (using deps.edn) should also be able to be executed using Genie. And therefore you can also develop your script using e.g. CIDER.
 - Fast startup of scripts.
