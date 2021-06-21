@@ -58,12 +58,12 @@ proc read_msg {s} {
   set bee_done 0
   # after 5000 set bee_done timeout
   # ::bee::decodeChannel $s -command bee_read -exact
-  debug "called decodeChannel"
-  debug "now in vwait for bee_done..."
+  # debug "called decodeChannel"
+  # debug "now in vwait for bee_done..."
   vwait bee_done
-  debug "bee_done is set: $bee_done"
+  # debug "bee_done is set: $bee_done"
   set bee_done 0
-  debug "read msg: $bee_msg"
+  # debug "read msg: $bee_msg"
   set msg $bee_msg
   set bee_msg ""
   return $msg
@@ -71,53 +71,14 @@ proc read_msg {s} {
 
 proc bee_read {signal token {msg ""}} {
   global bee_done bee_msg
-  debug "Callback from read: $signal, $token, $msg"
+  # debug "Callback from read: $signal, $token, $msg"
   if {$signal != "eof"} {
     set bee_done 1
     set bee_msg $msg
   } else {
-    debug "Got EOF callback on socket, with token: $token. Exiting"
+    # debug "Got EOF callback on socket, with token: $token. Exiting"
     exit 0
   }
-}
-
-# read msg from socket and convert to Tcl version
-proc read_msg_1 {s} {
-  set blocked [fblocked $s]
-  debug "fblocked(s) = $blocked"
-  while {!$blocked} {
-    if 0 {
-      debug "calling gets..."
-      set cnt [gets $s msg]
-      debug "called gets"
-    } else {
-      set cnt 1000
-      set tell1 [tell $s]
-      debug "tell1 = $tell1"
-      seek $s 0 start
-      debug "called seek"
-      set tell2 [tell $s]
-      debug "tell2 = $tell2"
-      seek $s $tell1
-      debug "called seek with orig pos: $tell1"
-      set cnt [expr $tell2 - $tell1] ; # maybe 1 more or less.
-      debug "calling read for $cnt chars..."
-      # set msg [read $s]
-      set msg [read $s $cnt]
-      debug "called read"
-      set cnt [string length $msg]
-    }
-
-    debug "<- ***$msg*** (cnt=$cnt)"
-    if {$cnt >= 0} {
-      # TODO - maybe check if still more data available, or if we have a full bencoded message.
-      return [bee::decode $msg]
-    }
-    debug "No bytes yet, wait a bit"
-    after 1000
-    set blocked [fblocked $s]
-  }
-  debug "blocked, returning"
 }
 
 proc read_bencode {sock} {
@@ -133,14 +94,14 @@ proc write_bencode {s data} {
   puts -nonewline $s $data
   flush $s
   debug "-> [bee::decode $data]"
-  debug "-> $data"
+  # debug "-> $data"
 }
 
 proc msg_id {} {
   uuid::uuid generate
 }
 
-proc println_result {result} {
+proc println_result_old {result} {
   debug "<- $result"
 }
 
@@ -189,7 +150,7 @@ proc read_print_result {sock} {
       set done 0
     }
 
-    println_result $result
+    # println_result $result
     flush stdout
     if {$out != ""} {
       puts -nonewline $out
@@ -200,7 +161,7 @@ proc read_print_result {sock} {
       flush stderr
     }
     if {$value != ""} {
-      debug "value: $value"
+      # debug "value: $value"
     }
     if {$ex != ""} {
       puts stderr "ex: $ex"
@@ -242,7 +203,7 @@ proc connect_nrepl {opt} {
 # Make sure it's a valid string passable through nRepl/bencode
 proc exec_expression {clj_ctx script main_fn script_params} {
   set clj_commands "(genied.client/exec-script \"$script\" '$main_fn $clj_ctx \[$script_params\])"
-  debug "clj_commands: $clj_commands"
+  # debug "clj_commands: $clj_commands"
   return $clj_commands
 }
 
@@ -254,7 +215,7 @@ proc clj_dict_set {dct_name key value} {
 
 # Eval a Genie script in a genied/nRepl session
 # TODO - check logic in loop with break and continue.
-proc nrepl_eval {opt clj_ctx tcl_ctx script main_fn script_params} {
+proc nrepl_eval {opt clj_ctx eval_id script main_fn script_params} {
   global stdin
 
   set s [connect_nrepl $opt]
@@ -262,13 +223,13 @@ proc nrepl_eval {opt clj_ctx tcl_ctx script main_fn script_params} {
   set session [dict get [read_result $s] "new-session"]
   # debug "before dict set: ctx=$ctx, session=$session"
   clj_dict_set clj_ctx session $session
-  debug "before dict set: tcl_ctx=$tcl_ctx, session=$session"
-  dict set tcl_ctx session $session
-  debug "Result of dict set: ctx=$tcl_ctx"
+  # debug "before dict set: tcl_ctx=$tcl_ctx, session=$session"
+  # dict set tcl_ctx session $session
+  # debug "Result of dict set: ctx=$tcl_ctx"
   set expr [exec_expression $clj_ctx $script $main_fn $script_params]
-  set eval_id [dict get $tcl_ctx eval_id]
+  # set eval_id [dict get $tcl_ctx eval_id]
   try_eval {
-    debug "nrepl-eval: $expr"
+    # debug "nrepl-eval: $expr"
     set session_atom [dict create session $session eval_id $eval_id out $s in $s s $s]
     write_bencode $s [beeD op [beeS eval] session [beeS $session] \
                           id [beeS $eval_id] code [beeS $expr]]
@@ -276,7 +237,7 @@ proc nrepl_eval {opt clj_ctx tcl_ctx script main_fn script_params} {
     while {1} {
       set res [read_print_result $s]
       if {[dict_get $res "need-input"] == 1} {
-        debug "Need more input!"
+        # debug "Need more input!"
         set lines [read_lines $opt stdin]
         write_bencode $s [beeD session $session id [beeS [msg_id]] \
                               op [beeS stdin] stdin [beeS $lines]]
@@ -388,7 +349,7 @@ proc create_clj_context {opt script eval_id} {
   return $str
 }
 
-proc create_tcl_context {opt script eval_id} {
+proc create_tcl_context_old {opt script eval_id} {
   set script2 [file normalize $script]
   set cwd [file normalize .]
   set str "{:cwd [quote_param $cwd] :script [quote_param $script2] :opt [quote_dict $opt]
@@ -404,19 +365,19 @@ proc exec_main {opt script script_params} {
   global stdout stderr stdin
   set eval_id [msg_id]
   set clj_ctx [create_clj_context $opt $script $eval_id]
-  set tcl_ctx [create_tcl_context $opt $script $eval_id]
-  debug "Created clj context: $clj_ctx"
-  debug "Created tcl context: $tcl_ctx"
+  # set tcl_ctx [create_tcl_context $opt $script $eval_id]
+  # debug "Created clj context: $clj_ctx"
+  # debug "Created tcl context: $tcl_ctx"
   # TODO - maybe create verbose version.
   # set cmd_verbose [det_verbose_opt $opt]
   set script2 [file normalize $script]
   set main_fn [det_main_fn $opt $script]
-  debug "main_fn: $main_fn"
+  # debug "main_fn: $main_fn"
 
   # 2021-03-13: do most of the processing (loading, calling) on
   # server-side; this also helps with classloaders.
 
-  nrepl_eval $opt $clj_ctx $tcl_ctx $script2 $main_fn $script_params
+  nrepl_eval $opt $clj_ctx $eval_id $script2 $main_fn $script_params
   return 0
 }
 
@@ -425,8 +386,8 @@ proc exec_script {opt argv} {
   lassign $argv script
   set script_params [quote_params [normalise_params [lrange $argv 1 end]]]
 
-  debug "Exec: $script"
-  debug "Script params: $script_params"
+  # debug "Exec: $script"
+  # debug "Script params: $script_params"
   exec_main $opt $script $script_params
 }
 
