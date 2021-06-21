@@ -56,14 +56,8 @@ proc warn {msg} {
 proc read_msg {s} {
   global bee_done bee_msg
   set bee_done 0
-  # after 5000 set bee_done timeout
-  # ::bee::decodeChannel $s -command bee_read -exact
-  # debug "called decodeChannel"
-  # debug "now in vwait for bee_done..."
   vwait bee_done
-  # debug "bee_done is set: $bee_done"
   set bee_done 0
-  # debug "read msg: $bee_msg"
   set msg $bee_msg
   set bee_msg ""
   return $msg
@@ -71,12 +65,10 @@ proc read_msg {s} {
 
 proc bee_read {signal token {msg ""}} {
   global bee_done bee_msg
-  # debug "Callback from read: $signal, $token, $msg"
   if {$signal != "eof"} {
     set bee_done 1
     set bee_msg $msg
   } else {
-    # debug "Got EOF callback on socket, with token: $token. Exiting"
     exit 0
   }
 }
@@ -88,13 +80,11 @@ proc read_bencode {sock} {
 }
 
 # Write bencoded data to socket. Possibly write a log line.
+# do not put a newline! Daemon does not understand this, not according to bencode protocol.
 proc write_bencode {s data} {
-  # puts $s $data
-  # maybe with bencode the newlines are problematic?
   puts -nonewline $s $data
   flush $s
   debug "-> [bee::decode $data]"
-  # debug "-> $data"
 }
 
 proc msg_id {} {
@@ -149,8 +139,6 @@ proc read_print_result {sock} {
     } else {
       set done 0
     }
-
-    # println_result $result
     flush stdout
     if {$out != ""} {
       puts -nonewline $out
@@ -186,12 +174,11 @@ proc read_lines {opt rdr} {
   error "TBD: implement read_lines"
 }
 
+# bencode does not use lines, so do not use line buffering.
+# TODO - try with non-blocking.
 proc connect_nrepl {opt} {
   set port [dict_get $opt port]
   set s [socket localhost $port]
-  # TODO - check which socket modes work best.
-  # fconfigure $s -blocking 0 -buffering line
-  # fconfigure $s -blocking 0 -buffering none
   fconfigure $s -blocking 1 -buffering none
 
   # setup callback handler just once.
@@ -203,7 +190,6 @@ proc connect_nrepl {opt} {
 # Make sure it's a valid string passable through nRepl/bencode
 proc exec_expression {clj_ctx script main_fn script_params} {
   set clj_commands "(genied.client/exec-script \"$script\" '$main_fn $clj_ctx \[$script_params\])"
-  # debug "clj_commands: $clj_commands"
   return $clj_commands
 }
 
@@ -221,15 +207,9 @@ proc nrepl_eval {opt clj_ctx eval_id script main_fn script_params} {
   set s [connect_nrepl $opt]
   write_bencode $s [beeD op [beeS clone] id [beeS [msg_id]]]
   set session [dict get [read_result $s] "new-session"]
-  # debug "before dict set: ctx=$ctx, session=$session"
   clj_dict_set clj_ctx session $session
-  # debug "before dict set: tcl_ctx=$tcl_ctx, session=$session"
-  # dict set tcl_ctx session $session
-  # debug "Result of dict set: ctx=$tcl_ctx"
   set expr [exec_expression $clj_ctx $script $main_fn $script_params]
-  # set eval_id [dict get $tcl_ctx eval_id]
   try_eval {
-    # debug "nrepl-eval: $expr"
     set session_atom [dict create session $session eval_id $eval_id out $s in $s s $s]
     write_bencode $s [beeD op [beeS eval] session [beeS $session] \
                           id [beeS $eval_id] code [beeS $expr]]
@@ -237,7 +217,6 @@ proc nrepl_eval {opt clj_ctx eval_id script main_fn script_params} {
     while {1} {
       set res [read_print_result $s]
       if {[dict_get $res "need-input"] == 1} {
-        # debug "Need more input!"
         set lines [read_lines $opt stdin]
         write_bencode $s [beeD session $session id [beeS [msg_id]] \
                               op [beeS stdin] stdin [beeS $lines]]
@@ -349,34 +328,13 @@ proc create_clj_context {opt script eval_id} {
   return $str
 }
 
-proc create_tcl_context_old {opt script eval_id} {
-  set script2 [file normalize $script]
-  set cwd [file normalize .]
-  set str "{:cwd [quote_param $cwd] :script [quote_param $script2] :opt [quote_dict $opt]
-            :client-version \"0.1.0\" :protocol-version \"0.1.0\"}"
-  set dct [dict create cwd [quote_param $cwd] script [quote_param $script] \
-               opt [quote_dict $opt] client_version "0.1.0" protocol_version "0.1.0" \
-               client "tcl" eval_id $eval_id]
-  return $dct
-}
-
 # 2021-03-06: do one call to the server, which arranges the different phases/steps.
 proc exec_main {opt script script_params} {
   global stdout stderr stdin
   set eval_id [msg_id]
   set clj_ctx [create_clj_context $opt $script $eval_id]
-  # set tcl_ctx [create_tcl_context $opt $script $eval_id]
-  # debug "Created clj context: $clj_ctx"
-  # debug "Created tcl context: $tcl_ctx"
-  # TODO - maybe create verbose version.
-  # set cmd_verbose [det_verbose_opt $opt]
   set script2 [file normalize $script]
   set main_fn [det_main_fn $opt $script]
-  # debug "main_fn: $main_fn"
-
-  # 2021-03-13: do most of the processing (loading, calling) on
-  # server-side; this also helps with classloaders.
-
   nrepl_eval $opt $clj_ctx $eval_id $script2 $main_fn $script_params
   return 0
 }
@@ -385,9 +343,6 @@ proc exec_script {opt argv} {
   global stdout stderr stdin
   lassign $argv script
   set script_params [quote_params [normalise_params [lrange $argv 1 end]]]
-
-  # debug "Exec: $script"
-  # debug "Script params: $script_params"
   exec_main $opt $script $script_params
 }
 
