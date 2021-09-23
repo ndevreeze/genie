@@ -27,3 +27,6 @@ fi
 
 # By default max 1GB of memory
 $JAVA -Xmx1g -jar $script_dir/genied.jar > $LOG_DIR/genied-$DATETIME.log 2>&1 &
+
+# for running in verbose mode:
+# $JAVA -Xmx1g -jar $script_dir/genied.jar --verbose > $LOG_DIR/genied-$DATETIME.log 2>&1 &
