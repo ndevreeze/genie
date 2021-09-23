@@ -18,7 +18,7 @@ else
         JAVA=$JAVA_CMD
     else
         if [[ -n "$JAVA_HOME" ]] && [[ -x "$JAVA_HOME/bin/java" ]]; then
-            JAVA_CMD="$JAVA_HOME/bin/java"
+            JAVA="$JAVA_HOME/bin/java"
         else
             JAVA=java
         fi
