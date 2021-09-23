@@ -10,6 +10,12 @@
             [me.raynes.fs :as fs]
             [ndevreeze.logger :as log]))
 
+;; 2021-09-23: copied from client.clj, should be in separate namespace.
+(defn log-daemon-debug
+  "Log a message to the original logger and *err* stream"
+  [& forms]
+  (log/log (log/get-logger (:err (state/get-out-streams))) :debug forms))
+
 ;; 2021-03-13: this one from discussion in clojure threads.
 ;; 2021-05-23: not used currently, maybe remove. It was given as an example.
 (defn ensure-dynamic-classloader
@@ -80,11 +86,11 @@
   ([lib version]
    (load-library lib version (state/get-classloader)))
   ([lib version classloader]
-   (log/debug "Loading library: " lib ", version: " version)
-   (log/debug "Using classloader: " classloader)
+   (log-daemon-debug "Loading library: " lib ", version: " version)
+   (log-daemon-debug "Using classloader: " classloader)
    (let [coord [lib version]]
      (if (state/has-dep? coord)
-       (log/debug "Already loaded: " coord)
+       (log-daemon-debug "Already loaded: " coord)
        (let [res (pom/add-dependencies
                   :classloader classloader
                   :coordinates [coord]
@@ -93,8 +99,32 @@
                                  {"clojars" "https://clojars.org/repo"}))]
          (state/add-dep! coord)
          (log/info (str "Loaded library: " lib ", version: " version))
-         (log/debug "Result of add-dependencies: " res)
+         (log-daemon-debug "Result of add-dependencies: " res)
          res)))))
+
+#_(defn load-library
+    "Dynamically load a library, using Pomegranate for now.
+   Use global classloader as set in init-dynamic-classloader!
+  lib - symbol, eg 'ndevreeze/logger
+  version - string, eg \"0.2.0\""
+    ([lib version]
+     (load-library lib version (state/get-classloader)))
+    ([lib version classloader]
+     (log/debug "Loading library: " lib ", version: " version)
+     (log/debug "Using classloader: " classloader)
+     (let [coord [lib version]]
+       (if (state/has-dep? coord)
+         (log/debug "Already loaded: " coord)
+         (let [res (pom/add-dependencies
+                    :classloader classloader
+                    :coordinates [coord]
+                    :repositories (merge
+                                   cemerick.pomegranate.aether/maven-central
+                                   {"clojars" "https://clojars.org/repo"}))]
+           (state/add-dep! coord)
+           (log/info (str "Loaded library: " lib ", version: " version))
+           (log/debug "Result of add-dependencies: " res)
+           res)))))
 
 (def project-libraries
   "Same list as in project.clj"
@@ -142,11 +172,16 @@
         (fs/exists? (fs/file (fs/parent (fs/parent script)) "deps.edn"))
         (fs/file (fs/parent (fs/parent script)) "deps.edn")))
 
+
+
 (defn load-script-libraries
   "Load libraries as found in deps.edn in script-dir or ctx"
   [ctx script]
   (let [deps-edn (det-deps-edn ctx script)]
-    (when (fs/exists? deps-edn)
+    (if (fs/exists? deps-edn)
       (let [script-opt (edn/read-string (slurp deps-edn))]
-        (load-libraries script-opt)))
+        (log-daemon-debug "Loading libraries from:" deps-edn)
+        (log-daemon-debug "#libs in deps.edn:" (count (:deps script-opt)))
+        (load-libraries script-opt))
+      (log-daemon-debug "deps.edn not found for:" script ", deps-edn:" deps-edn))
     deps-edn))
