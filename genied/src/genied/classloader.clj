@@ -102,30 +102,6 @@
          (log-daemon-debug "Result of add-dependencies: " res)
          res)))))
 
-#_(defn load-library
-    "Dynamically load a library, using Pomegranate for now.
-   Use global classloader as set in init-dynamic-classloader!
-  lib - symbol, eg 'ndevreeze/logger
-  version - string, eg \"0.2.0\""
-    ([lib version]
-     (load-library lib version (state/get-classloader)))
-    ([lib version classloader]
-     (log/debug "Loading library: " lib ", version: " version)
-     (log/debug "Using classloader: " classloader)
-     (let [coord [lib version]]
-       (if (state/has-dep? coord)
-         (log/debug "Already loaded: " coord)
-         (let [res (pom/add-dependencies
-                    :classloader classloader
-                    :coordinates [coord]
-                    :repositories (merge
-                                   cemerick.pomegranate.aether/maven-central
-                                   {"clojars" "https://clojars.org/repo"}))]
-           (state/add-dep! coord)
-           (log/info (str "Loaded library: " lib ", version: " version))
-           (log/debug "Result of add-dependencies: " res)
-           res)))))
-
 (def project-libraries
   "Same list as in project.clj"
   '[[org.clojure/clojure "1.10.3"]
