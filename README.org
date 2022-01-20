@@ -98,6 +98,17 @@ If you want to check out Genie without installing it, assuming you have Babashka
 bb client/genie.clj --start-daemon
 bb client/genie.clj test/test.clj -a
 #+end_src
+** Testing new version
+When you already have a version running, and possibly started at boot but want to try a new version:
+#+begin_src bash
+  genie --stop-daemon
+  cd genied
+  lein run
+
+  # in another terminal:
+  genie test/test.clj -a
+  test/run-all-tests.clj
+#+end_src
 
 * Usage
 An example script is shown below.

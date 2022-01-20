@@ -9,6 +9,8 @@
 (core/pre-init-daemon {} [] {})
 (core/post-init-daemon {} [] {})
 
+(declare =>)
+
 (midje/facts
  "Test calling exec-script with test-scripts"
 
@@ -18,4 +20,5 @@
                                    'test/main
                                    {:protocol-version "0.1.0"
                                     :opt {}} []))
-             => "Just a simple line to stdout\nctx:  {:protocol-version 0.1.0, :opt {}}\n"))
+             => (str "Just a simple line to stdout\nctx:"
+                     "  {:protocol-version 0.1.0, :opt {}}\n")))

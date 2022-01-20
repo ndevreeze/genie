@@ -172,8 +172,6 @@
         (fs/exists? (fs/file (fs/parent (fs/parent script)) "deps.edn"))
         (fs/file (fs/parent (fs/parent script)) "deps.edn")))
 
-
-
 (defn load-script-libraries
   "Load libraries as found in deps.edn in script-dir or ctx"
   [ctx script]
@@ -183,5 +181,6 @@
         (log-daemon-debug "Loading libraries from:" deps-edn)
         (log-daemon-debug "#libs in deps.edn:" (count (:deps script-opt)))
         (load-libraries script-opt))
-      (log-daemon-debug "deps.edn not found for:" script ", deps-edn:" deps-edn))
+      (log-daemon-debug "deps.edn not found for:" script
+                        ", deps-edn:" deps-edn))
     deps-edn))

@@ -30,7 +30,7 @@
 (defn pre-init-daemon
   "Setup daemon.
    Part before starting the server and listen on TCP port"
-  [{:keys [port config verbose] :as opt} arguments ctx]
+  [{:keys [_port config verbose] :as opt} arguments ctx]
   (log/init {:location (log-location opt) :name "genied"
              :level (if verbose :debug :info)})
   (log/debug "genied started")
@@ -53,13 +53,13 @@
 (defn post-init-daemon
   "Setup daemon
    Part after starting the server."
-  [{:keys [port config verbose] :as opt} arguments ctx]
+  [{:keys [_port _config _verbose] :as _opt} _arguments _ctx]
   (client/init) ;; dummy for now, this also makes sure the namespace is loaded.
   (diag/print-diagnostic-info "end of do-script (genied)"))
 
 (defn do-script
   "Main user defined function for genied"
-  [{:keys [port config verbose] :as opt} arguments ctx]
+  [{:keys [port _config _verbose] :as opt} arguments ctx]
   (when (:verbose opt)
     (alter-var-root #'diag/*verbose* (constantly true)))
   (pre-init-daemon opt arguments ctx)

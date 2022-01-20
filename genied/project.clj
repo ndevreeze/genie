@@ -5,14 +5,14 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.10.3"]
                  [org.clojure/tools.cli "1.0.206"]
-                 [clj-commons/fs "1.6.307"]
-                 [nrepl "0.8.3"]
+                 [clj-commons/fs "1.6.310"]
+                 [nrepl "0.9.0"]
                  [clj-commons/pomegranate "1.2.1"] ;; 2021-02-21: for dynamic loading of libraries.
                  [org.apache.httpcomponents/httpclient "4.5.13"] ;; explicit, also 4.5.8 in deps.
-                 [org.apache.httpcomponents/httpcore "4.4.14"] ;; 2021-05-18: also explicit for now, wrt conflicts.
-                 [org.slf4j/slf4j-nop "1.7.30"] ;; 2021-04-04: getting rid of SLF warning
-                 [org.jsoup/jsoup "1.13.1"] ;; 2021-04-04: try to get rid of reflective warning.
-                 [ndevreeze/logger "0.5.1"]
+                 [org.apache.httpcomponents/httpcore "4.4.15"] ;; 2021-05-18: also explicit for now, wrt conflicts.
+                 [org.slf4j/slf4j-nop "1.7.33"] ;; 2021-04-04: getting rid of SLF warning
+                 [org.jsoup/jsoup "1.14.3"] ;; 2021-04-04: try to get rid of reflective warning.
+                 [ndevreeze/logger "0.6.0"]
                  [ndevreeze/cmdline "0.2.0"]]
   :main ^:skip-aot genied.core
   :jvm-opts ["--illegal-access=debug"] ;; 2021-04-04: for lein uberjar, but no more info.
@@ -28,5 +28,5 @@
           :metadata {:doc/format :markdown}
           :source-uri "https://github.com/ndevreeze/genie/blob/main/genied/{filepath}#L{line}"}
 
-  :profiles {:dev {:dependencies [[midje "1.10.3"]]}
+  :profiles {:dev {:dependencies [[midje "1.10.5"]]}
              :uberjar {:aot :all}})
