@@ -57,11 +57,39 @@
   (client/init) ;; dummy for now, this also makes sure the namespace is loaded.
   (diag/print-diagnostic-info "end of do-script (genied)"))
 
+;; see https://stackoverflow.com/questions/6546193/how-to-catch-an-exception-from-a-thread#6548203
+;; and https://stackoverflow.com/questions/15855039/proxying-thread-uncaughtexceptionhandler-from-clojure#15855802
+;; Thread.setDefaultUncaughtExceptionHandler(h)
+(defn set-default-exception-handler
+  "Set default exception handler for threads.
+   Just printing/logging the exception.
+   Wrt daemon process stopping (crashing?) sometimes in relation with raynes/conch,
+   which starts Threads and uses Futures."
+  [_opt]
+  (log/info "Setting default exception handler for threads.")
+  (let [h (reify Thread$UncaughtExceptionHandler
+            (uncaughtException [this t e]
+              (println t ": " e)
+              (log/warn "Uncaught exception in thread:" t ":" e)))]
+    (Thread/setDefaultUncaughtExceptionHandler h)))
+
+(defn keep-alive-loop
+  "Check (and make sure?) that main thread stays alive, even if nrepl or
+  client sub-threads cause issues. E.g. using raynes/conch, that
+  starts Threads and uses Futures."
+  [_opt]
+  (log/info "Starting keep-alive-loop")
+  (while true
+    (log/debug "In keep alive loop, sleeping 10 seconds.")
+    (Thread/sleep 10000))
+  (log/info "After keep-alive-loop (should not happen)"))
+
 (defn do-script
   "Main user defined function for genied"
   [{:keys [port _config _verbose] :as opt} arguments ctx]
   (when (:verbose opt)
     (alter-var-root #'diag/*verbose* (constantly true)))
+
   (pre-init-daemon opt arguments ctx)
 
   (log/debug "Starting daemon on port " port)
@@ -69,7 +97,11 @@
   (log/info "nrepl daemon started on port:" port)
   (diag/print-diagnostic-info "after start-server")
 
-  (post-init-daemon opt arguments ctx))
+  (set-default-exception-handler opt)
+
+  (post-init-daemon opt arguments ctx)
+
+  (keep-alive-loop opt))
 
 (defn -main
   "Main function, starting point"
