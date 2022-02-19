@@ -92,6 +92,13 @@ Add a crontab entry so the Genie daemon starts automatically:
 Check genied.sh for giving java options like -Xmx.
 
 Or, in Windows: see [[file:docs/windows.org]].
+
+On a Macbook, a process started with cron might not have all the rights the logged-in user has, e.g. with Onedrive. An alternative is to use the solution described in https://stackoverflow.com/questions/6442364/running-script-upon-login-mac:
+- Paste the following one-line script into Script Editor: do shell script "$HOME/tools/genie/genied.sh"
+- Then save it as an application.
+- Finally add the application to your login items.
+
+On first use the system will ask you for permissions to access e.g. Onedrive directory.
 * Test without installation
 If you want to check out Genie without installing it, assuming you have Babashka and Leiningen installed (this uses 'lein run'):
 #+begin_src bash :tangle yes
@@ -276,6 +283,8 @@ Earlier projects, some not actively maintained:
 - [[https://git.sr.ht/~technomancy/shevek/][Shevek]] - nRepl client made with [[https://fennel-lang.org/][Fennel]] (Lua).
 
 And a [[https://www.reddit.com/r/Clojure/comments/3qb9nz/clojure_for_command_line_scripts_idea_feasibility/][discussion]] about some possibilities from 2016.
+* Daemon or agent
+Maybe genied is more an agent then a daemon, according to e.g. https://www.aritsltd.com/blog/server/adding-startup-scripts-to-launch-daemon-on-mac-os-x-sierra-10-12-6/. A daemon runs as root, while an agent runs with the same rights as a user. Genied should run with user-rights, not as root.
 * More documentation
 - [[file:docs/todo.org]]
 - [[file:docs/background.org]] - If you want to know the details, and maybe want contribute
