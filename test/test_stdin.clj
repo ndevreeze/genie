@@ -4,7 +4,7 @@
   "test stdin, also with redirection:
   * read as contents from file: cat file | genie test_stdin.clj
   * read as output from another process: ls | genie test_stdin.clj
-  * read as a stream from another process: long-proc | grenie test_stdin.clj"
+  * read as a stream from another process: long-proc | genie test_stdin.clj"
   (:require [ndevreeze.cmdline :as cl]
             [clojure.java.io :as io]
             [clojure.string :as str]))
