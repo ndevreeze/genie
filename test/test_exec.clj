@@ -35,11 +35,19 @@
         res (shl/stream-to-string proc :out)]
     (println "result:" res)))
 
+#_(defn exec-grep-stderr
+    "Execute grep with low-level proc, check stderr result"
+    []
+    (println "Executing grep")
+    (let [proc (shl/proc "/bin/grep" "testtest" "/this/does/not/exist")
+          res (shl/stream-to-string proc :err)]
+      (println "stderr result:" res)))
+
 (defn exec-grep-stderr
   "Execute grep with low-level proc, check stderr result"
   []
   (println "Executing grep")
-  (let [proc (shl/proc "/bin/grep" "testtest" "/this/does/not/exist")
+  (let [proc (shl/proc "grep" "testtest" "/this/does/not/exist")
         res (shl/stream-to-string proc :err)]
     (println "stderr result:" res)))
 
