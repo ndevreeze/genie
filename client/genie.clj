@@ -81,7 +81,8 @@
    [nil "--nomain" "Do not call main function after loading"]
    [nil "--nonormalize" "Do not normalize parameters to script (rel. paths)"]
    ;; and some admin commands.
-   [nil "--closewait" "Wait on response of close-session at end"]
+   [nil "--closewait" "Wait on response of close-session at end (default)"]
+   [nil "--noclosewait" "Do not wait on response of close-session at end"]
    [nil "--list-sessions" "List currently open/running sessions/scripts"]
    [nil "--kill-sessions SESSIONS" "csv list of (part of) sessions, or 'all'"]
    [nil "--start-daemon" "Start daemon running on port"]
@@ -409,7 +410,7 @@
 
 (defn nrepl-eval
   "Eval a Genie script in a genied/nRepl session"
-  [{:keys [closewait] :as opt} {:keys [eval-id] :as ctx} script main-fn script-params]
+  [{:keys [closewait noclosewait] :as opt} {:keys [eval-id] :as ctx} script main-fn script-params]
   (let [{:keys [out in]} (connect-nrepl opt)
         _ (write-bencode out {"op" "clone" "id" (msg-id)})
         session (:new-session (read-result in))
@@ -434,8 +435,9 @@
       (finally
         ;; always send op=close, does not take extra time.
         (write-bencode out {"op" "close" "session" session "id" (msg-id)})
-        (when closewait
-          ;; waiting on response can take 140 msec.
+        (when (or closewait (not noclosewait))
+          ;; waiting on response can take 140 msec, but prevents server errors/stacktraces.
+          ;; 2022-03-19: so made it the default now.
           (read-result in))
         (reset! session-atom nil)))))
 
