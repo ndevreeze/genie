@@ -16,6 +16,11 @@
   [& forms]
   (log/log (log/get-logger (:err (state/get-out-streams))) :debug forms))
 
+(defn log-daemon-warn
+  "Log a message to the original logger and *err* stream"
+  [& forms]
+  (log/log (log/get-logger (:err (state/get-out-streams))) :warn forms))
+
 ;; 2021-03-13: this one from discussion in clojure threads.
 ;; 2021-05-23: not used currently, maybe remove. It was given as an example.
 (defn ensure-dynamic-classloader
@@ -88,19 +93,22 @@
   ([lib version classloader]
    (log-daemon-debug "Loading library: " lib ", version: " version)
    (log-daemon-debug "Using classloader: " classloader)
-   (let [coord [lib version]]
-     (if (state/has-dep? coord)
-       (log-daemon-debug "Already loaded: " coord)
-       (let [res (pom/add-dependencies
-                  :classloader classloader
-                  :coordinates [coord]
-                  :repositories (merge
-                                 cemerick.pomegranate.aether/maven-central
-                                 {"clojars" "https://clojars.org/repo"}))]
-         (state/add-dep! coord)
-         (log/info (str "Loaded library: " lib ", version: " version))
-         (log-daemon-debug "Result of add-dependencies: " res)
-         res)))))
+   (try
+     (let [coord [lib version]]
+       (if (state/has-dep? coord)
+         (log-daemon-debug "Already loaded: " coord)
+         (let [res (pom/add-dependencies
+                    :classloader classloader
+                    :coordinates [coord]
+                    :repositories (merge
+                                   cemerick.pomegranate.aether/maven-central
+                                   {"clojars" "https://clojars.org/repo"}))]
+           (state/add-dep! coord)
+           (log/info (str "Loaded library: " lib ", version: " version))
+           (log-daemon-debug "Result of add-dependencies: " res)
+           res)))
+     (catch Exception e
+       (log-daemon-warn "Exception during load-library: " e)))))
 
 (def project-libraries
   "Same list as in project.clj"
@@ -136,6 +144,7 @@
 (defn load-startup-libraries
   "Load libraries as given in daemon startup config"
   [opt]
+  (log-daemon-debug "Loading startup libraries from:" opt)
   (load-libraries opt))
 
 (defn det-deps-edn
