@@ -469,6 +469,18 @@
         (str namespace "/main")
         "main")))
 
+(defn fs-exists?
+  "Wrapper around fs/exists?, catching exceptions"
+  [path]
+  (debug "fs-exists:" path)
+  (try
+    (let [res (fs/exists? path)]
+      (debug ("result:" res))
+      res)
+    (catch Exception e
+      (debug "Caught erorr:" e)
+      false)))
+
 (defn normalize-param
   "file normalise a parameter, so the daemon-process can find it.
   Even though it has a different current-working-directory (cwd).
@@ -485,7 +497,7 @@
           (= \/ first-char) param
           (= [\. \/] (take 2 param)) (normalized param)
           (= "." param) (normalized param)
-          (fs/exists? param) (normalized param)
+          (fs-exists? param) (normalized param)
           :else param)))
 
 (defn normalize-params
@@ -493,6 +505,7 @@
    Convert relative paths to absolute paths, so daemon can find the dirs/files.
    If --nonormalize given, this conversion is not done."
   [params nonormalize]
+  (debug "normalize-params:" params ", nonormalize:" nonormalize ".")
   (if nonormalize
     params
     (map normalize-param params)))
@@ -505,6 +518,7 @@
 (defn quote-params
   "Quote parameters in 'cmd-line' with double quotes"
   [params]
+  (debug "quote-params:" params)
   (str/join " " (map quote-param params)))
 
 (defn opt-deps
@@ -534,9 +548,11 @@
   (let [ctx (create-context opt script)
         script (normalized script)
         main-fn (det-main-fn opt script)
+        _ (debug "main-fn:" main-fn)
         script-params (-> script-params
                           (normalize-params nonormalize)
                           quote-params)]
+    (debug "script-params:" script-params)
     (nrepl-eval opt ctx script main-fn script-params)))
 
 (defn print-help
@@ -808,6 +824,8 @@
                 (warn "caught exception: " e))))
       ;; do not print/return the result of the last expression:
       nil)))
+
+(debug "Start of genie.clj, just before calling main")
 
 ;; wrt linting with leiningen/bikeshed etc.
 ;; see https://book.babashka.org/#main_file
