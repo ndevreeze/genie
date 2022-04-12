@@ -76,12 +76,13 @@
 (defn keep-alive-loop
   "Check (and make sure?) that main thread stays alive, even if nrepl or
   client sub-threads cause issues. E.g. using raynes/conch, that
-  starts Threads and uses Futures."
+  starts Threads and uses Futures.
+  Sleep for 1 hour now each time - less logging, still useful"
   [_opt]
   (log/info "Starting keep-alive-loop")
   (while true
-    (log/debug "In keep alive loop, sleeping 10 seconds.")
-    (Thread/sleep 10000))
+    (log/debug "In keep alive loop, sleeping 1 hour.")
+    (Thread/sleep 3600000))
   (log/info "After keep-alive-loop (should not happen)"))
 
 (defn do-script
