@@ -24,13 +24,11 @@
 (defn script [opt arguments ctx]
   (log/init {:location :home :name "{{namespace}}" :cwd (:cwd ctx)
              :level (if (:verbose opt) :debug :info)})
-  (println "script: {{script}}")
-  (println opt ctx)
-  (println "arguments: " arguments)
-  (println "ctx: " ctx))
+  (log/debug "script: {{script}}")
+  (log/debug opt ctx)
+  (log/debug "arguments: " arguments)
+  (log/debug "ctx: " ctx))
 
-;; expect context/ctx now as first parameter, a map.
-;; 2021-03-13: now without ampersand before args:
 (defn main [ctx args]
   (cl/check-and-exec "" cli-options script args ctx))
 
