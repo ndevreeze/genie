@@ -112,16 +112,16 @@
 
 (def project-libraries
   "Same list as in project.clj"
-  '[[org.clojure/clojure "1.10.3"]
-    [org.clojure/tools.cli "1.0.206"]
+  '[[org.clojure/clojure "1.11.1"]
+    [org.clojure/tools.cli "1.0.214"]
     [clj-commons/fs "1.6.310"]
-    [nrepl "0.9.0"]
+    [nrepl "1.0.0"]
     [clj-commons/pomegranate "1.2.1"]
-    [org.apache.httpcomponents/httpclient "4.5.13"]
-    [org.apache.httpcomponents/httpcore "4.4.15"]
-    [org.slf4j/slf4j-nop "1.7.33"]
-    [org.jsoup/jsoup "1.14.3"]
-    [ndevreeze/logger "0.6.0"]
+    [org.apache.httpcomponents/httpclient "4.5.14"]
+    [org.apache.httpcomponents/httpcore "4.4.16"]
+    [org.slf4j/slf4j-nop "2.0.6"]
+    [org.jsoup/jsoup "1.15.3"]
+    [ndevreeze/logger "0.6.1"]
     [ndevreeze/cmdline "0.2.0"]])
 
 (defn mark-project-libraries
