@@ -27,7 +27,9 @@
   (log/debug "script: {{script}}")
   (log/debug opt ctx)
   (log/debug "arguments: " arguments)
-  (log/debug "ctx: " ctx))
+  (log/debug "ctx: " ctx)
+  ;; add your script here.
+  (log/close))
 
 (defn main [ctx args]
   (cl/check-and-exec "" cli-options script args ctx))
