@@ -122,7 +122,9 @@
     [org.slf4j/slf4j-nop "2.0.6"]
     [org.jsoup/jsoup "1.15.3"]
     [ndevreeze/logger "0.6.1"]
-    [ndevreeze/cmdline "0.2.0"]])
+    [ndevreeze/cmdline "0.2.0"]
+    [org.tcrawley/dynapath "1.1.0"]
+    [commons-codec "1.15"]])
 
 (defn mark-project-libraries
   "Mark libraries in project.clj as loaded.
