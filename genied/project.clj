@@ -7,7 +7,7 @@
                  [org.clojure/tools.cli "1.0.214"]
                  [clj-commons/fs "1.6.310"]
                  [nrepl "1.0.0"]
-                 [clj-commons/pomegranate "1.2.1"]               ; 2021-02-21: for dynamic loading of libraries.
+                 [clj-commons/pomegranate "1.2.23"]               ; 2021-02-21: for dynamic loading of libraries.
                  [org.apache.httpcomponents/httpclient "4.5.14"] ; explicit, also 4.5.8 in deps.
                  [org.apache.httpcomponents/httpcore "4.4.16"]   ; 2021-05-18: also explicit for now, wrt conflicts.
                  [org.slf4j/slf4j-nop "2.0.6"]                   ; 2021-04-04: getting rid of SLF warning
