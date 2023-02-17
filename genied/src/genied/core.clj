@@ -17,6 +17,8 @@
                    (fs/file (fs/expand-home dir) "genie.edn"))
                  "~/.config/genie/genie.edn")]
    ["-h" "--help" "Show this help"]
+   ["-m" "--mark MARK_LIBRARIES" "Mark libraries from source (default), project_clj, none or external file"
+    :default "source"]
    ["-p" "--port PORT" "TCP port to serve on"
     :default 7888 :parse-fn #(Integer/parseInt %)]
    ["-v" "--verbose" "Diagnostics wrt classloaders; log-level DEBUG"]])
@@ -30,7 +32,7 @@
 (defn pre-init-daemon
   "Setup daemon.
    Part before starting the server and listen on TCP port"
-  [{:keys [_port config verbose] :as opt} arguments ctx]
+  [{:keys [_port config _mark verbose] :as opt} arguments ctx]
   (log/init {:location (log-location opt) :name "genied"
              :level (if verbose :debug :info)})
   (log/debug "genied started")
@@ -45,7 +47,7 @@
   (log/debug "init dynamic classloader done: " (state/get-classloader))
   (diag/print-diagnostic-info "after init-dynamic-classloader!")
 
-  (loader/mark-project-libraries)
+  (loader/mark-project-libraries opt)
   (loader/load-startup-libraries opt)
 
   (state/set-out-streams! *out* *err*))

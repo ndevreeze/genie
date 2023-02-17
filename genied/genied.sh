@@ -38,7 +38,7 @@ echo logging to $LOG_DIR/genied-$DATETIME.log
 echo JAVA: $JAVA
 echo script_dir: $script_dir
 echo LOG_DIR: $LOG_DIR
-# $JAVA -Xmx1g -jar $script_dir/genied.jar > $LOG_DIR/genied-$DATETIME.log 2>&1 &
+$JAVA -Xmx1g -jar $script_dir/genied.jar --mark none > $LOG_DIR/genied-$DATETIME.log 2>&1 &
 
 # for running in verbose mode:
-$JAVA -Xmx1g -jar $script_dir/genied.jar --verbose > $LOG_DIR/genied-$DATETIME.log 2>&1 &
+# $JAVA -Xmx1g -jar $script_dir/genied.jar --verbose > $LOG_DIR/genied-$DATETIME.log 2>&1 &

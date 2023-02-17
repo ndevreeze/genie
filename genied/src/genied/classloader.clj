@@ -12,12 +12,17 @@
 
 ;; 2021-09-23: copied from client.clj, should be in separate namespace.
 (defn log-daemon-debug
-  "Log a message to the original logger and *err* stream"
+  "Log a debug message to the original logger and *err* stream"
   [& forms]
   (log/log (log/get-logger (:err (state/get-out-streams))) :debug forms))
 
+(defn log-daemon-info
+  "Log a info message to the original logger and *err* stream"
+  [& forms]
+  (log/log (log/get-logger (:err (state/get-out-streams))) :info forms))
+
 (defn log-daemon-warn
-  "Log a message to the original logger and *err* stream"
+  "Log a warn message to the original logger and *err* stream"
   [& forms]
   (log/log (log/get-logger (:err (state/get-out-streams))) :warn forms))
 
@@ -116,7 +121,7 @@
     [org.clojure/tools.cli "1.0.214"]
     [clj-commons/fs "1.6.310"]
     [nrepl "1.0.0"]
-    [clj-commons/pomegranate "1.2.1"]
+    [clj-commons/pomegranate "1.2.23"]
     [org.apache.httpcomponents/httpclient "4.5.14"]
     [org.apache.httpcomponents/httpcore "4.4.16"]
     [org.slf4j/slf4j-nop "2.0.6"]
@@ -129,11 +134,14 @@
 (defn mark-project-libraries
   "Mark libraries in project.clj as loaded.
    So they won't be loaded again, either from server or client/script."
-  []
-  ;; copied from project.clj - how to keep in sync?
-  (doseq [coord project-libraries]
-    (log/info (str "Mark as loaded from project.clj: " coord))
-    (state/add-dep! coord)))
+  [{:keys [mark] :as opt}]
+  ;; copied from project.clj - how to keep in sync? -> have sync-script, not ideal.
+  ;; iff mark!=source, assume none for now, see if that works.
+  (if (= mark "source")
+    (doseq [coord project-libraries]
+      (log/info (str "Mark as loaded from project.clj: " coord))
+      (state/add-dep! coord))
+    (log-daemon-info "mark != source given, assume none, do not mark libraries")))
 
 ;; TODO - support other (non-maven) coordinates?
 (defn load-libraries
