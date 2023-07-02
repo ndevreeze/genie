@@ -31,7 +31,7 @@ Non-goals:
 - [[https://leiningen.org][Leiningen]] is used for creating an uberjar. Using an uberjar will reduce daemon startup time.
 ** Install with Babashka
 #+begin_src bash :tangle yes
-  bb ./install.clj
+bb ./install.clj
 #+end_src
 
 Install directories may be given, and some other options:
