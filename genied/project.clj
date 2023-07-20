@@ -15,7 +15,7 @@
                  [ndevreeze/logger "0.6.1"]
                  [ndevreeze/cmdline "0.2.0"]
                  [org.tcrawley/dynapath "1.1.0"]                 ; 2023-01-29: fix lein deps warning
-                 [commons-codec "1.15"]                          ; 2023-01-29: fix lein deps warning
+                 [commons-codec "1.16.0"]                          ; 2023-01-29: fix lein deps warning
 
 
                  ]
