@@ -3,11 +3,15 @@
 # See https://betterdev.blog/minimal-safe-bash-script-template/ for script_dir explanation.
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
-# 2022-03-22: script_dir could contain cygwin format, which java does not understand. So convert to windows-path.
-# use cygpath. If it does not exist, script_dir should stay as is
-script_dir2=$(cygpath -w $script_dir)
-if [[ -n "$script_dir2" ]] ; then
-    script_dir=$script_dir2
+# 2022-03-22: script_dir could contain cygwin format, which java does
+# not understand. So convert to windows-path.  use cygpath. If it does
+# not exist, script_dir should stay as is
+# 2023-08-30: only run cygpath when CYGWIN env var is set.
+if [[ -n "$CYGWIN" ]] ; then
+    script_dir2=$(cygpath -w $script_dir)
+    if [[ -n "$script_dir2" ]] ; then
+        script_dir=$script_dir2
+    fi
 fi
 
 DATETIME=`date +%Y-%m-%d-%H-%M-%S`
