@@ -24,6 +24,7 @@
 (defn script [opt arguments ctx]
   (log/init {:location :home :name "{{namespace}}" :cwd (:cwd ctx)
              :level (if (:verbose opt) :debug :info)})
+  (log/info (format "script: %s" (-> ctx :script)))
   (log/debug "script: {{script}}")
   (log/debug opt ctx)
   (log/debug "arguments: " arguments)
