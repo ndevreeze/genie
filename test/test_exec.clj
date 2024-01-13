@@ -65,7 +65,7 @@
 (defn exec-echo-script-error
   "Execute test-echo.sh in the same dir, with let-programs, check result"
   [{:keys [script]}]
-  (println "Executing test-echo.sh, calling from script:" script)
+  (println "Executing test-echo2.sh (expect ERROR, does not exist), calling from script:" script)
   (sh/let-programs [test-echo (str (fs/file (fs/parent script) "test-echo2.sh"))]
                    (let [res (test-echo "par1" "par2" 3)]
                      (println "result:" res))))
