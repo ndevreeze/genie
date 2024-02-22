@@ -1,17 +1,5 @@
 #! /usr/bin/env bb
 
-;; exit-codes:
-;; 0 - all ok
-;; 1 - error occurred (ex)
-;; 2 - error occurred
-;; 3 - break (C-c) detected, in kill-script. -> removed, causes hang.
-;; 4 - error occurred
-;; 5 - exception in main
-;; 6 - error occurred (root-ex)
-;; 130 - C-c pressed, break (in genie itself, but also in script)
-;; 137 - got kill -9 (in genie itself)
-;; 143 - got kill (-3?, in genie itself, also script)
-
 (ns genie
   "Genie client in Babashka"
   (:require [babashka.process :as p]
@@ -371,17 +359,12 @@
       (when (and value *verbose*)
         (println "value: " value))
       (when ex
-        (println "ex: " ex)
-        (warn "exit 1")
-        (System/exit 1)
-        )
+        (println "ex: " ex))
       (when root-ex
-        (println "root-ex: " root-ex)
-        (warn "exit 6")
-        (System/exit 6))
+        (println "root-ex: " root-ex))
       (if-not (or done need-input)
         (recur (or old-value value))
-        (merge {:done done :need-input need-input :value old-value :error (and ex root-ex)} result)))))
+        (merge {:done done :need-input need-input :value old-value} result)))))
 
 (defn read-lines
   "Read at least one line from reader, possibly more.
@@ -440,9 +423,6 @@
                           "code" expr})
       (loop [it 0]
         (let [res (read-print-result in)]
-          (when (:error res)
-            (warn "Error occurred, exit 4: " res)
-            (System/exit 4))
           (when (:need-input res)
             (debug "Need more input!")
             (let [lines (read-lines opt *in*)]
@@ -451,8 +431,7 @@
               (read-result in) ;; read ack
               (recur (inc it))))))
       (catch Exception e
-        (warn "Caught exception, exit 2: " e)
-        (System/exit 2))
+        (warn "Caught exception: " e))
       (finally
         ;; always send op=close, does not take extra time.
         (write-bencode out {"op" "close" "session" session "id" (msg-id)})
@@ -621,9 +600,7 @@
       (debug "Wrote op=interrupt")
       (do-admin-command admin-session {"op" "close" "session" session
                                        "id" (msg-id)} {:no-read true})
-      (debug "wrote op=close")
-      ;; 2024-02-22: Do not exit here, causes a script hang.
-      )
+      (debug "wrote op=close"))
     (debug "session already closed, do nothing")))
 
 (defn admin-get-sessions
@@ -826,11 +803,6 @@
     (doseq [path (fs/exec-paths)]
       (debug "in PATH:" path))))
 
-(defn loop-inf
-  "Loop infinitely, testing C-c"
-  []
-  (recur))
-
 (defn main
   "Main function"
   []
@@ -840,7 +812,6 @@
     (binding [*verbose* (-> opts :options :verbose)
               *logfile* (log-file (:options opts))]
       (print-context opts opt args)
-      ;; (loop-inf)
       (cond (admin-command? opt)
             (admin-command! opt args)
             (or (:help opt) (:errors opts) (empty? args))
@@ -850,10 +821,9 @@
               (.addShutdownHook (Runtime/getRuntime) (Thread. kill-script))
               (exec-script opt (first args) (rest args))
               (catch Exception e
-                (warn "caught exception, exit 5: " e)
-                (System/exit 5))))
+                (warn "caught exception: " e))))
       ;; do not print/return the result of the last expression:
-      (System/exit 0))))
+      nil)))
 
 (debug "Start of genie.clj, just before calling main")
 
