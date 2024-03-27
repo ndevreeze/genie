@@ -3,10 +3,10 @@
   :url "https://github.com/ndevreeze/genie"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
             :url "https://www.eclipse.org/legal/epl-2.0/"}
-  :dependencies [[org.clojure/clojure "1.11.1"]
-                 [org.clojure/tools.cli "1.0.219"]
-                 [clj-commons/fs "1.6.310"]
-                 [nrepl "1.1.0"]
+  :dependencies [[org.clojure/clojure "1.11.2"]
+                 [org.clojure/tools.cli "1.1.230"]
+                 [clj-commons/fs "1.6.311"]
+                 [nrepl "1.1.1"]
                  [clj-commons/pomegranate "1.2.23"]               ; 2021-02-21: for dynamic loading of libraries.
                  [org.apache.httpcomponents/httpclient "4.5.14"] ; explicit, also 4.5.8 in deps.
                  [org.apache.httpcomponents/httpcore "4.4.16"]   ; 2021-05-18: also explicit for now, wrt conflicts.
