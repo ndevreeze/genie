@@ -124,6 +124,8 @@
       (log-daemon-debug "exec main-fn done: " main-fn)
       (state/remove-session! (:session ctx)))))
 
+;; 2024-04-02: This one also called when running with clj/cider.
+;; *script-dir* is nil in this case, maybe use this fact.
 (defn load-relative-file
   "Load a file relative to the currently loading script"
   [path]
