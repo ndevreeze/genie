@@ -10,7 +10,9 @@
 ;; is a vec of lib and version.
 (def classloader
   "Core/root classloader"
-  (atom {:loader nil :dependencies #{}}))
+  (atom {:loader nil
+         :dependencies #{}
+         :deps-versions {}}))
 
 (defn get-classloader
   "Get the globally set dynamic classloader"
@@ -28,10 +30,17 @@
   [coord]
   (contains? (:dependencies @classloader) coord))
 
+(defn dep-version
+  "Return version of dep currently loaded.
+   nil if none found"
+  [lib]
+  (get (:deps-versions @classloader) lib))
+
 (defn add-dep!
   "Add dependency coordinates to loaded set"
   [coord]
-  (swap! classloader update-in [:dependencies] conj coord))
+  (swap! classloader update-in [:dependencies] conj coord)
+  (swap! classloader update-in [:deps-versions] merge {(first coord) (second coord)}))
 
 ;; Keep system *out* and *err*, so they can be
 ;; distinguished from the dynamic nRepl ones.

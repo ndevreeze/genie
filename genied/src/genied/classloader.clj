@@ -99,9 +99,13 @@
    (log-daemon-debug "Loading library: " lib ", version: " version)
    (log-daemon-debug "Using classloader: " classloader)
    (try
+     (if-let [ver (state/dep-version lib)]
+       (log-daemon-info (format "Lib (%s) already loaded with version: %s" lib ver))
+       (log-daemon-info (format "Lib (%s) not loaded yet" lib)))
      (let [coord [lib version]]
        (if (state/has-dep? coord)
          (log-daemon-debug "Already loaded: " coord)
+         ;; 2024-04-02: Always load lib if requested version != loaded version.
          (let [res (pom/add-dependencies
                     :classloader classloader
                     :coordinates [coord]
@@ -141,7 +145,7 @@
     (doseq [coord project-libraries]
       (log/info (str "Mark as loaded from project.clj: " coord))
       (state/add-dep! coord))
-    (log-daemon-info "mark != source given, assume none, do not mark libraries")))
+    (log-daemon-info (format "mark != source given, assume none, do not mark libraries: %s" mark))))
 
 ;; TODO - support other (non-maven) coordinates?
 (defn load-libraries
@@ -154,8 +158,10 @@
 (defn load-startup-libraries
   "Load libraries as given in daemon startup config"
   [opt]
-  (log-daemon-debug "Loading startup libraries from:" opt)
-  (load-libraries opt))
+  ;; 2024-04-02: Change logging to info, always interesting.
+  (log-daemon-info "Loading startup libraries from:" opt)
+  (load-libraries opt)
+  (log-daemon-info "Loaded startup libraries from:" opt))
 
 (defn det-deps-edn
   "Determine deps.edn file based on script and ctx.
@@ -173,9 +179,11 @@
   (let [deps-edn (det-deps-edn ctx script)]
     (if (fs/exists? deps-edn)
       (let [script-opt (edn/read-string (slurp deps-edn))]
-        (log-daemon-debug "Loading libraries from:" deps-edn)
+        (log-daemon-info "Loading libraries from:" deps-edn)
         (log-daemon-debug "#libs in deps.edn:" (count (:deps script-opt)))
-        (load-libraries script-opt))
-      (log-daemon-debug "deps.edn not found for:" script
-                        ", deps-edn:" deps-edn))
+        (load-libraries script-opt)
+        (log-daemon-info "Loaded libraries from:" deps-edn))
+      ;; 2024-04-02: Change log-level to warning if deps.edn not found for script.
+      (log-daemon-warn "deps.edn not found for:" script
+                       ", deps-edn:" deps-edn))
     deps-edn))
