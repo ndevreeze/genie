@@ -173,6 +173,24 @@
           (println "... Non-zero exit-code:" exit-code)))
       (genie/source-jar))))
 
+(defn install-genied-library!
+  "Install library jar into local maven repo."
+  [opt]
+  (println "Install library to local Maven repo")
+  (when (genie/windows?)
+    (println "Running on Windows, starting Leiningen from"
+             "Babashka/Genie is tricky."
+             "\nIf this fails, try 'cd genied' and 'lein uberjar' manually."))
+  (if (:dryrun opt)
+    (println "  Dry run")
+    (do
+      (println "Starting 'lein install' ...")
+      (let [proc (p/process ['lein 'install] {:dir "genied"})
+            exit-code (:exit (p/check proc))]
+        (if (zero? exit-code)
+          (println "... Success")
+          (println "... Non-zero exit-code:" exit-code))))))
+
 (defn make-uberjar
   "Make uberjar iff it does not exist yet, or --force given.
    Return path of existing or just created uberjar"
@@ -213,7 +231,8 @@
       (do
         (install-file src dest (merge opt {:replace true}))
         (install-file "genied/genied.sh" (fs/file (fs/parent dest) "genied.sh")
-                      (merge opt {:replace true})))
+                      (merge opt {:replace true}))
+        (install-genied-library! opt))
       (println "ERROR: Either src or dest is nil, don't install. src=" src ", dest=" dest))))
 
 (defn install-clients
