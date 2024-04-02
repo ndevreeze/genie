@@ -38,6 +38,9 @@
   (log/debug "genied started")
   (log/info "Using config: " config)
   (log/debug "Opt given: " opt)
+  ;; 2024-04-02: Also info for now, for mark parameter.
+  (log/info "Opt given: " opt)
+
   (log/debug "Rest arguments given: " arguments)
   (log/debug "Context (ctx): " ctx)
 
