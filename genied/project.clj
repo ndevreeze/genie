@@ -3,11 +3,11 @@
   :url "https://github.com/ndevreeze/genie"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
             :url "https://www.eclipse.org/legal/epl-2.0/"}
-  :dependencies [[org.clojure/clojure "1.11.2"]
+  :dependencies [[org.clojure/clojure "1.11.3"]
                  [org.clojure/tools.cli "1.1.230"]
                  [clj-commons/fs "1.6.311"]
                  [nrepl "1.1.1"]
-                 [clj-commons/pomegranate "1.2.23"]              ; 2021-02-21: for dynamic loading of libraries.
+                 [clj-commons/pomegranate "1.2.24"]              ; 2021-02-21: for dynamic loading of libraries.
                  [org.apache.httpcomponents/httpclient "4.5.14"] ; explicit, also 4.5.8 in deps.
                  [org.apache.httpcomponents/httpcore "4.4.16"]   ; 2021-05-18: also explicit for now, wrt conflicts.
                  [org.slf4j/slf4j-nop "2.0.13"]                  ; 2021-04-04: getting rid of SLF warning
@@ -15,7 +15,7 @@
                  [ndevreeze/logger "0.6.2"]                      ; 2024-04-03: 0.6.2 includes java-time 1.4.2 and threeten-extra 1.2.
                  [ndevreeze/cmdline "0.2.0"]
                  [org.tcrawley/dynapath "1.1.0"]                 ; 2023-01-29: fix lein deps warning
-                 [commons-codec "1.16.1"]                        ; 2023-01-29: fix lein deps warning
+                 [commons-codec "1.17.0"]                        ; 2023-01-29: fix lein deps warning
 
                  ;; 2024-04-03: remove here, should be loaded from logger library.
                  ;; [clojure.java-time/clojure.java-time "1.4.2"]   ; 2024-04-03: wrt time/interval in missed-sales.
