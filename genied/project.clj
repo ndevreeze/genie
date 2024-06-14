@@ -6,7 +6,7 @@
   :dependencies [[org.clojure/clojure "1.11.3"]
                  [org.clojure/tools.cli "1.1.230"]
                  [clj-commons/fs "1.6.311"]
-                 [nrepl "1.1.1"]
+                 [nrepl "1.2.0"]
                  [clj-commons/pomegranate "1.2.24"]              ; 2021-02-21: for dynamic loading of libraries.
                  [org.apache.httpcomponents/httpclient "4.5.14"] ; explicit, also 4.5.8 in deps.
                  [org.apache.httpcomponents/httpcore "4.4.16"]   ; 2021-05-18: also explicit for now, wrt conflicts.
