@@ -11,7 +11,7 @@
                  [org.apache.httpcomponents/httpclient "4.5.14"] ; explicit, also 4.5.8 in deps.
                  [org.apache.httpcomponents/httpcore "4.4.16"]   ; 2021-05-18: also explicit for now, wrt conflicts.
                  [org.slf4j/slf4j-nop "2.0.13"]                  ; 2021-04-04: getting rid of SLF warning
-                 [org.jsoup/jsoup "1.17.2"]                      ; 2021-04-04: try to get rid of reflective warning.
+                 [org.jsoup/jsoup "1.18.1"]                      ; 2021-04-04: try to get rid of reflective warning.
                  [ndevreeze/logger "0.6.2"]                      ; 2024-04-03: 0.6.2 includes java-time 1.4.2 and threeten-extra 1.2.
                  [ndevreeze/cmdline "0.2.0"]
                  [org.tcrawley/dynapath "1.1.0"]                 ; 2023-01-29: fix lein deps warning
