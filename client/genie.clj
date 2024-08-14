@@ -375,6 +375,10 @@
         (warn "exit 1")
         (System/exit 1)
         )
+      ;; 2024-08-14: Not sure we want to exit directly here, maybe
+      ;; because script were hanging before, after an exception.
+      ;; at least try to print a stack trace here, similar to daemon code:
+      ;; (with-out-str (clojure.stacktrace/print-stack-trace e))
       (when root-ex
         (println "root-ex: " root-ex)
         (warn "exit 6")
