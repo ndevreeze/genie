@@ -101,6 +101,7 @@
   (log/debug "Starting daemon on port " port)
   (state/set-daemon! (nrepl/start-server :port port))
   (log/info "nrepl daemon started on port:" port)
+  (log/info "genied version:" (client/genied-version))
   (diag/print-diagnostic-info "after start-server")
 
   (set-default-exception-handler opt)
