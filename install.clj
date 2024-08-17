@@ -29,6 +29,7 @@
    [nil "--template TEMPLATE" "Template directory"]
    [nil "--dryrun" "Show what would have been done"]
    [nil "--create-uberjar" "Force (re-)creating uberjar"]
+   [nil "--no-create-uberjar" "Do not (re-)create uberjar (TBD)"]
    [nil "--start-on-system-boot" "Install Windows genied.bat in startup folder"]
    ["-p" "--port PORT" "Genie daemon port number (for start-on-system-boot)"
     :default 7888
@@ -193,7 +194,11 @@
 
 (defn make-uberjar
   "Make uberjar iff it does not exist yet, or --force given.
-   Return path of existing or just created uberjar"
+   Return path of existing or just created uberjar.
+   Uberjar is removed as side-effect of make install,
+   which is also called by this script. So uberjar is always
+   made again. Have a --no-create-uberjar param, but need
+   to implement this one."
   [opt]
   (if-let [uberjar (genie/source-jar)]
     (if (:create-uberjar opt)
