@@ -11,7 +11,7 @@
 (defn genied-version
   "Return version string"
   []
-  "2024-08-14: first version, logs to /tmp/genied-test.txt")
+  "2024-08-17: version 4, cleaned up")
 
 (defn init
   "Init client part, dummy for now"
@@ -90,11 +90,13 @@
   [{:keys [protocol-version]}]
   (= protocol-version (first supported-protocol-versions)))
 
-(defn append-file-log
-  "Dump text to file, without redirection of stderr etc.
+;; 2024-08-17: un-def this one for now. Maybe need again later. Or
+;; clean up at some point.
+#_(defn append-file-log
+    "Dump text to file, without redirection of stderr etc.
    Add a newline at the end."
-  [s]
-  (spit "/tmp/genied-test.txt" (format "%s\n" s) :append true))
+    [s]
+    (spit "/tmp/genied-test.txt" (format "%s\n" s) :append true))
 
 (defn exec-script
   "Wrapper around load-script-libraries, load-file, and call-main."
@@ -125,39 +127,24 @@
     (log-daemon-debug "load-file done: " script)
     ;; main-fn is a symbol given by client. After load-file, eval
     ;; should work.
-    (append-file-log (format "genied version: %s" (genied-version)))
-    (append-file-log (format "Just before eval: %s" main-fn))
     (when-not (:nomain opt)
       ((eval main-fn) ctx script-params))
-    (catch Exception e
+    (catch Throwable e
       ;; 2024-08-10: also want stack-trace.
-      (log-daemon-warn "Exception during script exec: " e)
-      (append-file-log (format "Exception during script exec: %s" e))
+      ;; 2024-08-17: maybe get double stacktraces now. Maybe clean up later.
+      (log-daemon-warn "Throwable during script exec: " e)
       (log-daemon-warn "Stack trace: " (with-out-str (clojure.stacktrace/print-stack-trace e)))
-      (append-file-log (format "Stack trace: %s"
-                               (with-out-str (clojure.stacktrace/print-stack-trace e))))
+      ;; 2024-08-15: also just print error on stdout here, should be visible in the client then
+      (println "Throwable during script exec: " e)
+      (println (format "Stack trace: %s"
+                       (with-out-str (clojure.stacktrace/print-stack-trace e))))
       ;; client needs to know too, should be with stack trace as well:
+      ;; 2024-08-15: do not re-throw error for now, with possible premature exit on client-side.
+      ;; 2024-08-17: do re-throw again.
       (throw e))
     (finally
       (log-daemon-debug "exec main-fn done: " main-fn)
-      (append-file-log (format "exec main-fn done: %s" main-fn))
       (state/remove-session! (:session ctx)))))
-
-(comment
-  (def main-fn "main-fn-2")
-  (try
-    (/ 1 0)
-    (catch Exception e
-      ;; 2024-08-10: also want stack-trace.
-      (println "Exception during script exec: " e)
-      (append-file-log (format "Exception during script exec: %s" e))
-      (println "Stack trace: " (with-out-str (clojure.stacktrace/print-stack-trace e)))
-      (append-file-log (format "Stack trace: %s"
-                               (with-out-str (clojure.stacktrace/print-stack-trace e))))
-      ;; client needs to know too, should be with stack trace as well:
-      (throw e))
-    )
-  ,)
 
 ;; 2024-04-02: This one also called when running with clj/cider.
 ;; *script-dir* is nil in this case, maybe use this fact.
