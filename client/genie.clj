@@ -376,16 +376,19 @@
         (System/exit 1)
         )
       ;; 2024-08-14: Not sure we want to exit directly here, maybe
-      ;; because script were hanging before, after an exception.
+      ;; because scripts were hanging before, after an exception.
       ;; at least try to print a stack trace here, similar to daemon code:
       ;; (with-out-str (clojure.stacktrace/print-stack-trace e))
+      ;; 2024-08-17: Error is printed also, catching all Throwables.
       (when root-ex
         (println "root-ex: " root-ex)
         (warn "exit 6")
         (System/exit 6))
       (if-not (or done need-input)
         (recur (or old-value value))
-        (merge {:done done :need-input need-input :value old-value :error (and ex root-ex)} result)))))
+        (merge {:done done :need-input need-input
+                :value old-value
+                :error (and ex root-ex)} result)))))
 
 (defn read-lines
   "Read at least one line from reader, possibly more.
@@ -857,6 +860,7 @@
                 (warn "caught exception, exit 5: " e)
                 (System/exit 5))))
       ;; do not print/return the result of the last expression:
+      (debug "End of script, doing exit 0 now")
       (System/exit 0))))
 
 (debug "Start of genie.clj, just before calling main")
