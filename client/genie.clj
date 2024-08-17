@@ -758,6 +758,8 @@
 ;; TODO - check if process already started. Although starting twice
 ;; does not seem harmful: (process) returns quickly, old process still
 ;; running.
+;; 2024-08-17: stdout/err for the daemon are not redirected to a file
+;; here. This could be an issue, if not everything is logged.
 (defn admin-start-daemon!
   "Start the daemon process on given port.
    Use environment vars and check directories for locations of java
