@@ -5,7 +5,7 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.12.0"]
                  [org.clojure/tools.cli "1.1.230"]
-                 [commons-io "2.16.1"]                           ; 2024-08-17: for Excel, POI 5.3.0. Make explicit, lein ancient will mention new versions.
+                 [commons-io "2.17.0"]                           ; 2024-08-17: for Excel, POI 5.3.0. Make explicit, lein ancient will mention new versions.
                  [org.apache.commons/commons-compress "1.27.1"]  ; 2024-08-17: this one used commons-io 2.16.1, make explicit
                  [clj-commons/fs "1.6.311"]
                  [nrepl "1.3.0"]
