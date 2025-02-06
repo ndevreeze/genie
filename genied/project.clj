@@ -17,7 +17,7 @@
                  [ndevreeze/logger "0.6.2"]                      ; 2024-04-03: 0.6.2 includes java-time 1.4.2 and threeten-extra 1.2.
                  [ndevreeze/cmdline "0.2.0"]
                  [org.tcrawley/dynapath "1.1.0"]                 ; 2023-01-29: fix lein deps warning
-                 [commons-codec "1.17.2"]                        ; 2023-01-29: fix lein deps warning
+                 [commons-codec "1.18.0"]                        ; 2023-01-29: fix lein deps warning
 
                  ;; 2024-04-03: remove here, should be loaded from logger library.
                  ;; [clojure.java-time/clojure.java-time "1.4.2"]   ; 2024-04-03: wrt time/interval in missed-sales.
