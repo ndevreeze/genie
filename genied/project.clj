@@ -3,17 +3,17 @@
   :url "https://github.com/ndevreeze/genie"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
             :url "https://www.eclipse.org/legal/epl-2.0/"}
-  :dependencies [[org.clojure/clojure "1.12.1"]
+  :dependencies [[org.clojure/clojure "1.12.2"]
                  [org.clojure/tools.cli "1.1.230"]
                  [commons-io "2.20.0"]                           ; 2024-08-17: for Excel, POI 5.3.0. Make explicit, lein ancient will mention new versions.
                  [org.apache.commons/commons-compress "1.28.0"]  ; 2024-08-17: this one used commons-io 2.16.1, make explicit
                  [clj-commons/fs "1.6.312"]
-                 [nrepl "1.3.1"]
+                 [nrepl "1.4.0"]
                  [clj-commons/pomegranate "1.2.25"]              ; 2021-02-21: for dynamic loading of libraries.
                  [org.apache.httpcomponents/httpclient "4.5.14"] ; explicit, also 4.5.8 in deps.
                  [org.apache.httpcomponents/httpcore "4.4.16"]   ; 2021-05-18: also explicit for now, wrt conflicts.
                  [org.slf4j/slf4j-nop "2.0.17"]                  ; 2021-04-04: getting rid of SLF warning
-                 [org.jsoup/jsoup "1.21.1"]                      ; 2021-04-04: try to get rid of reflective warning.
+                 [org.jsoup/jsoup "1.21.2"]                      ; 2021-04-04: try to get rid of reflective warning.
                  [ndevreeze/logger "0.6.2"]                      ; 2024-04-03: 0.6.2 includes java-time 1.4.2 and threeten-extra 1.2.
                  [ndevreeze/cmdline "0.2.0"]
                  [org.tcrawley/dynapath "1.1.0"]                 ; 2023-01-29: fix lein deps warning
