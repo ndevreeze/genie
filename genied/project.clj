@@ -3,12 +3,12 @@
   :url "https://github.com/ndevreeze/genie"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
             :url "https://www.eclipse.org/legal/epl-2.0/"}
-  :dependencies [[org.clojure/clojure "1.12.2"]
-                 [org.clojure/tools.cli "1.1.230"]
+  :dependencies [[org.clojure/clojure "1.12.3"]
+                 [org.clojure/tools.cli "1.2.245"]
                  [commons-io "2.20.0"]                           ; 2024-08-17: for Excel, POI 5.3.0. Make explicit, lein ancient will mention new versions.
                  [org.apache.commons/commons-compress "1.28.0"]  ; 2024-08-17: this one used commons-io 2.16.1, make explicit
                  [clj-commons/fs "1.6.312"]
-                 [nrepl "1.4.0"]
+                 [nrepl "1.5.1"]
                  [clj-commons/pomegranate "1.2.25"]              ; 2021-02-21: for dynamic loading of libraries.
                  [org.apache.httpcomponents/httpclient "4.5.14"] ; explicit, also 4.5.8 in deps.
                  [org.apache.httpcomponents/httpcore "4.4.16"]   ; 2021-05-18: also explicit for now, wrt conflicts.
