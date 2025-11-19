@@ -5,7 +5,7 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.12.3"]
                  [org.clojure/tools.cli "1.2.245"]
-                 [commons-io "2.20.0"]                           ; 2024-08-17: for Excel, POI 5.3.0. Make explicit, lein ancient will mention new versions.
+                 [commons-io "2.21.0"]                           ; 2024-08-17: for Excel, POI 5.3.0. Make explicit, lein ancient will mention new versions.
                  [org.apache.commons/commons-compress "1.28.0"]  ; 2024-08-17: this one used commons-io 2.16.1, make explicit
                  [clj-commons/fs "1.6.312"]
                  [nrepl "1.5.1"]
@@ -17,7 +17,7 @@
                  [ndevreeze/logger "0.6.2"]                      ; 2024-04-03: 0.6.2 includes java-time 1.4.2 and threeten-extra 1.2.
                  [ndevreeze/cmdline "0.2.0"]
                  [org.tcrawley/dynapath "1.1.0"]                 ; 2023-01-29: fix lein deps warning
-                 [commons-codec "1.19.0"]                        ; 2023-01-29: fix lein deps warning
+                 [commons-codec "1.20.0"]                        ; 2023-01-29: fix lein deps warning
 
                  ;; 2024-04-03: remove here, should be loaded from logger library.
                  ;; [clojure.java-time/clojure.java-time "1.4.2"]   ; 2024-04-03: wrt time/interval in missed-sales.
