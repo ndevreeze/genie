@@ -3,7 +3,7 @@
   :url "https://github.com/ndevreeze/genie"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
             :url "https://www.eclipse.org/legal/epl-2.0/"}
-  :dependencies [[org.clojure/clojure "1.12.3"]
+  :dependencies [[org.clojure/clojure "1.12.4"]
                  [org.clojure/tools.cli "1.2.245"]
                  [commons-io "2.21.0"]                           ; 2024-08-17: for Excel, POI 5.3.0. Make explicit, lein ancient will mention new versions.
                  [org.apache.commons/commons-compress "1.28.0"]  ; 2024-08-17: this one used commons-io 2.16.1, make explicit
