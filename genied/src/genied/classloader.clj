@@ -3,7 +3,7 @@
    Mostly related to dynamic class loaders and the system root loader."
   (:gen-class)
   (:require [cemerick.pomegranate :as pom]
-            [cemerick.pomegranate.aether :as aether]
+            ;; [cemerick.pomegranate.aether :as aether]
             [clojure.edn :as edn]
             [genied.diagnostics :as diag]
             [genied.state :as state]
@@ -64,8 +64,8 @@
   "Ensure the system/server has a dynamic classloader.
    And keep it in an atom, so clients may use it. This version uses
   the (dynamic) classloader of ndevreeze.cmdline/check-and-exec"
-  []
-  (state/set-classloader! (bind-root-loader)))
+  [opt]
+  (state/set-classloader! opt (bind-root-loader)))
 
 (defn set-dynamic-classloader!
   "Set global classloader on current (client) thread.
@@ -84,6 +84,14 @@
     (diag/print-baseloader-classloaders "dyn3 - 4:")
     cl))
 
+(defn- det-repos
+  "Determine repositories to pass to Pomegranate based on options.
+   When called from client, these repo's are not know, and given as {:repos :client}"
+  [{:keys [repos]}]
+  (if (= repos :client)
+    (state/get-repos)
+    repos))
+
 ;; TODO - make given repo's more flexible - allow all/other specs
 ;; similar to deps.edn.
 ;; 2021-02-28: current Pomegranate seems the only working version;
@@ -93,9 +101,9 @@
    Use global classloader as set in init-dynamic-classloader!
   lib - symbol, eg 'ndevreeze/logger
   version - string, eg \"0.2.0\""
-  ([lib version]
-   (load-library lib version (state/get-classloader)))
-  ([lib version classloader]
+  ([opt lib version]
+   (load-library opt lib version (state/get-classloader)))
+  ([opt lib version classloader]
    (log-daemon-debug "Loading library: " lib ", version: " version)
    (log-daemon-debug "Using classloader: " classloader)
    (try
@@ -109,9 +117,7 @@
          (let [res (pom/add-dependencies
                     :classloader classloader
                     :coordinates [coord]
-                    :repositories (merge
-                                   cemerick.pomegranate.aether/maven-central
-                                   {"clojars" "https://clojars.org/repo"}))]
+                    :repositories (det-repos opt))]
            (state/add-dep! coord)
            (log/info (str "Loaded library: " lib ", version: " version))
            (log-daemon-debug "Result of add-dependencies: " res)
@@ -138,7 +144,7 @@
 (defn mark-project-libraries
   "Mark libraries in project.clj as loaded.
    So they won't be loaded again, either from server or client/script."
-  [{:keys [mark] :as opt}]
+  [{:keys [mark] :as _opt}]
   ;; copied from project.clj - how to keep in sync? -> have sync-script, not ideal.
   ;; iff mark!=source, assume none for now, see if that works.
   (if (= mark "source")
@@ -153,13 +159,14 @@
    Either at daemon start time or at script exec time"
   [opt]
   (doseq [[lib coordinates] (seq (:deps opt))]
-    (load-library lib (:mvn/version coordinates))))
+    (load-library opt lib (:mvn/version coordinates))))
 
 (defn load-startup-libraries
   "Load libraries as given in daemon startup config"
   [opt]
   ;; 2024-04-02: Change logging to info, always interesting.
   (log-daemon-info "Loading startup libraries from:" opt)
+  (log-daemon-info "Using repos: " (:repos opt))
   (load-libraries opt)
   (log-daemon-info "Loaded startup libraries from:" opt))
 

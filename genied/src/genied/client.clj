@@ -45,7 +45,7 @@
 (defn load-library
   "Wrapper around classloader-ns version"
   [lib version]
-  (loader/load-library lib version))
+  (loader/load-library {:repos :client} lib version))
 
 (def ^:dynamic *script-dir*
   "Dynamic var, set when loading a script-file.
@@ -89,14 +89,6 @@
    Not really used now, may be handy for future versions"
   [{:keys [protocol-version]}]
   (= protocol-version (first supported-protocol-versions)))
-
-;; 2024-08-17: un-def this one for now. Maybe need again later. Or
-;; clean up at some point.
-#_(defn append-file-log
-    "Dump text to file, without redirection of stderr etc.
-   Add a newline at the end."
-    [s]
-    (spit "/tmp/genied-test.txt" (format "%s\n" s) :append true))
 
 (defn exec-script
   "Wrapper around load-script-libraries, load-file, and call-main."

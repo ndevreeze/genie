@@ -45,7 +45,7 @@
   (log/debug "Context (ctx): " ctx)
 
   (diag/print-diagnostic-info "start of do-script (genied)")
-  (loader/init-dynamic-classloader!)
+  (loader/init-dynamic-classloader! opt)
 
   (log/debug "init dynamic classloader done: " (state/get-classloader))
   (diag/print-diagnostic-info "after init-dynamic-classloader!")

@@ -12,18 +12,32 @@
   "Core/root classloader"
   (atom {:loader nil
          :dependencies #{}
-         :deps-versions {}}))
+         :deps-versions {}
+         :opt {}
+         :repos {}}))
 
 (defn get-classloader
   "Get the globally set dynamic classloader"
   []
   (:loader @classloader))
 
+(defn get-repos
+  "Get the repos defined in config.edn"
+  []
+  (:repos @classloader))
+
+(defn get-opt
+  "Get the cmdline opts"
+  []
+  (:opt @classloader))
+
 (defn set-classloader!
   "Set the globally set dynamic classloader
    reset set of loaded packages"
-  [new-val]
-  (reset! classloader {:loader new-val :dependencies #{}}))
+  [opt new-val]
+  (reset! classloader {:loader new-val :dependencies #{}
+                       :opt opt
+                       :repos (:repos opt)}))
 
 (defn has-dep?
   "Return true if dependency is already loaded"
