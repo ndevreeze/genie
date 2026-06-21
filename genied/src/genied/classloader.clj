@@ -117,7 +117,9 @@
          (let [res (pom/add-dependencies
                     :classloader classloader
                     :coordinates [coord]
-                    :repositories (det-repos opt))]
+                    :repositories (det-repos opt)
+                    :offline? (:offline? opt)
+                    :retrieve (:retrieve opt))]
            (state/add-dep! coord)
            (log/info (str "Loaded library: " lib ", version: " version))
            (log-daemon-debug "Result of add-dependencies: " res)
