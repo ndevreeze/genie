@@ -96,6 +96,7 @@
 ;; similar to deps.edn.
 ;; 2021-02-28: current Pomegranate seems the only working version;
 ;; Cider/nrepl and tools.deps versions don't seem to work currently.
+;; 2026-06-23: change back to orig. First keep opt, but maybe remove as well.
 (defn load-library
   "Dynamically load a library, using Pomegranate for now.
    Use global classloader as set in init-dynamic-classloader!
@@ -117,15 +118,48 @@
          (let [res (pom/add-dependencies
                     :classloader classloader
                     :coordinates [coord]
-                    :repositories (det-repos opt)
-                    :offline? (:offline? opt)
-                    :retrieve (:retrieve opt))]
+                    :repositories {"central" "https://repo1.maven.org/maven2/"
+                                   "clojars" "https://clojars.org/repo"}
+                    )]
            (state/add-dep! coord)
            (log/info (str "Loaded library: " lib ", version: " version))
            (log-daemon-debug "Result of add-dependencies: " res)
+           ;; TODO: add log-daemon-debug with params to pom/add-dependencies.
            res)))
      (catch Exception e
        (log-daemon-warn "Exception during load-library: " e)))))
+
+;; new version that uses opt.
+#_(defn load-library
+    "Dynamically load a library, using Pomegranate for now.
+   Use global classloader as set in init-dynamic-classloader!
+  lib - symbol, eg 'ndevreeze/logger
+  version - string, eg \"0.2.0\""
+    ([opt lib version]
+     (load-library opt lib version (state/get-classloader)))
+    ([opt lib version classloader]
+     (log-daemon-debug "Loading library: " lib ", version: " version)
+     (log-daemon-debug "Using classloader: " classloader)
+     (try
+       (if-let [ver (state/dep-version lib)]
+         (log-daemon-info (format "Lib (%s) already loaded with version: %s" lib ver))
+         (log-daemon-info (format "Lib (%s) not loaded yet" lib)))
+       (let [coord [lib version]]
+         (if (state/has-dep? coord)
+           (log-daemon-debug "Already loaded: " coord)
+           ;; 2024-04-02: Always load lib if requested version != loaded version.
+           (let [res (pom/add-dependencies
+                      :classloader classloader
+                      :coordinates [coord]
+                      :repositories (det-repos opt)
+                      :offline? (:offline? opt)
+                      :retrieve (:retrieve opt))]
+             (state/add-dep! coord)
+             (log/info (str "Loaded library: " lib ", version: " version))
+             (log-daemon-debug "Result of add-dependencies: " res)
+             res)))
+       (catch Exception e
+         (log-daemon-warn "Exception during load-library: " e)))))
 
 (def project-libraries
   "Same list as in project.clj"
