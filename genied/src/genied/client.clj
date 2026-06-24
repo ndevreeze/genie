@@ -1,7 +1,8 @@
 (ns genied.client
   "Client namespace - functions called by (babashka) clients"
   (:gen-class)
-  (:require [genied.classloader :as loader]
+  (:require [clojure.stacktrace :as stacktrace]
+            [genied.classloader :as loader]
             [genied.diagnostics :as diag]
             [genied.state :as state]
             [me.raynes.fs :as fs]
@@ -42,10 +43,10 @@
   (diag/print-diagnostic-info
    (str (-> ctx :script (or "") fs/base-name) "/" label)))
 
-(defn load-library
-  "Wrapper around classloader-ns version"
-  [lib version]
-  (loader/load-library {:repos :client} lib version))
+#_(defn load-library
+    "Wrapper around classloader-ns version"
+    [lib version]
+    (loader/load-library {:repos :client} lib version))
 
 (def ^:dynamic *script-dir*
   "Dynamic var, set when loading a script-file.
@@ -79,6 +80,12 @@
   "Log a message to the original logger and *err* stream"
   [& forms]
   (log/log (log/get-logger (:err (state/get-out-streams))) :warn forms))
+
+(defn load-library
+  "Wrapper around classloader-ns version"
+  [lib version]
+  (log-daemon-debug (format "client/load-library called with lib: %s and version: %s" lib version))
+  (loader/load-library (state/get-daemon-opt) lib version))
 
 (def supported-protocol-versions
   "Seq of supported protocol versions"
@@ -125,11 +132,11 @@
       ;; 2024-08-10: also want stack-trace.
       ;; 2024-08-17: maybe get double stacktraces now. Maybe clean up later.
       (log-daemon-warn "Throwable during script exec: " e)
-      (log-daemon-warn "Stack trace: " (with-out-str (clojure.stacktrace/print-stack-trace e)))
+      (log-daemon-warn "Stack trace: " (with-out-str (stacktrace/print-stack-trace e)))
       ;; 2024-08-15: also just print error on stdout here, should be visible in the client then
       (println "Throwable during script exec: " e)
       (println (format "Stack trace: %s"
-                       (with-out-str (clojure.stacktrace/print-stack-trace e))))
+                       (with-out-str (stacktrace/print-stack-trace e))))
       ;; client needs to know too, should be with stack trace as well:
       ;; 2024-08-15: do not re-throw error for now, with possible premature exit on client-side.
       ;; 2024-08-17: do re-throw again.

@@ -26,8 +26,8 @@
   []
   (:repos @classloader))
 
-(defn get-opt
-  "Get the cmdline opts"
+(defn get-daemon-opt
+  "Get the daemon cmdline opts"
   []
   (:opt @classloader))
 
@@ -36,6 +36,7 @@
    reset set of loaded packages"
   [opt new-val]
   (reset! classloader {:loader new-val :dependencies #{}
+                       :deps-versions {}
                        :opt opt
                        :repos (:repos opt)}))
 
