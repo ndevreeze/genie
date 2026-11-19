@@ -8,12 +8,14 @@
    [clojure.java.io :as io]            
    [clojure.set :as set]
    [me.raynes.fs :as fs]
-   [ndevreeze.cmdline :as cl]))
+   [ndevreeze.cmdline :as cl]
+   [ndevreeze.logger :as log]))
 
 (def cli-options
   [["-c" "--config CONFIG" "Config file"
     :default "FILL IN"]
-   ["-p" "--project PROJECT" "Genied project with project.clj"]
+   ["-p" "--project PROJECT" "Genied project with project.clj"
+    :default "~/cljlib/genie/genied"]
    ["-v" "--verbose" "Enable verbose/debug logging"]
    ["-h" "--help" "Show this help"]])
 
@@ -69,26 +71,31 @@
 (defn print-diffs
   "Print differences between 2 dependency lists"
   [prj-deps mark-deps]
-  (println "Warning - project.clj deps list differs from one in classloader.clj")
-  (println "Only in project.clj:")
-  (doseq [coord (only-in-first prj-deps mark-deps)]
-    (println coord))
-  (println "Only in classloader.clj:")
-  (doseq [coord (only-in-first mark-deps prj-deps)]
-    (println coord)))
+  (log/error "project.clj deps list differs from one in classloader.clj")
+  (log/info "")
+  (log/info "Only in project.clj:")
+  (doseq [coord (sort (only-in-first prj-deps mark-deps))]
+    (log/info coord))
+  (log/info "")
+  (log/info "Only in classloader.clj:")
+  (doseq [coord (sort (only-in-first mark-deps prj-deps))]
+    (log/info coord)))
 
-(defn script [opt _arguments _ctx]
-  (if (:project opt)
-    (do
-      (println "project to read: " (str (fs/normalized (:project opt))))
-      (let [prj-deps (read-prj-deps (fs/file (:project opt) "project.clj"))
-            mark-deps (read-mark-deps (fs/file (:project opt) "src/genied/classloader.clj"))]
-        (println "prj-deps: " prj-deps)
-        (println "mark-deps: " mark-deps)
+(defn script [opt _arguments ctx]
+  (log/init {:location :home :name "sync-project-libraries" :cwd (:cwd ctx)
+             :level (if (:verbose opt) :debug :info)})
+  (if-let [project (:project opt)]
+    (let [project (cl/expand-home project)]
+      (log/info "project to read: " project)
+      (let [prj-deps (sort (read-prj-deps (fs/file project "project.clj")))
+            mark-deps (sort (read-mark-deps (fs/file project "src/genied/classloader.clj")))]
+        (log/info "prj-deps: " prj-deps)
+        (log/info "mark-deps: " mark-deps)
         (if (= prj-deps mark-deps)
-          (println "Ok, both dependency lists are the same")
+          (log/info "Ok, both dependency lists are the same")
           (print-diffs prj-deps mark-deps))))
-    (println "--project is mandatory (genied directory)")))
+    (log/error "--project is mandatory (genied directory)"))
+  (log/close))
 
 (defn main [ctx args]
   (cl/check-and-exec "" cli-options script args ctx))

@@ -84,51 +84,12 @@
     (diag/print-baseloader-classloaders "dyn3 - 4:")
     cl))
 
-#_(defn- det-repos
-    "Determine repositories to pass to Pomegranate based on options.
-   When called from client, these repo's are not know, and given as {:repos :client}"
-    [{:keys [repos]}]
-    (if (= repos :client)
-      (state/get-repos)
-      repos))
 
 ;; TODO - make given repo's more flexible - allow all/other specs
 ;; similar to deps.edn.
 ;; 2021-02-28: current Pomegranate seems the only working version;
 ;; Cider/nrepl and tools.deps versions don't seem to work currently.
 ;; 2026-06-23: change back to orig. First keep opt, but maybe remove as well.
-#_(defn load-library
-    "Dynamically load a library, using Pomegranate for now.
-   Use global classloader as set in init-dynamic-classloader!
-  lib - symbol, eg 'ndevreeze/logger
-  version - string, eg \"0.2.0\""
-    ([opt lib version]
-     (load-library opt lib version (state/get-classloader)))
-    ([opt lib version classloader]
-     (log-daemon-debug "Loading library: " lib ", version: " version)
-     (log-daemon-debug "Using classloader: " classloader)
-     (try
-       (if-let [ver (state/dep-version lib)]
-         (log-daemon-info (format "Lib (%s) already loaded with version: %s" lib ver))
-         (log-daemon-info (format "Lib (%s) not loaded yet" lib)))
-       (let [coord [lib version]]
-         (if (state/has-dep? coord)
-           (log-daemon-debug "Already loaded: " coord)
-           ;; 2024-04-02: Always load lib if requested version != loaded version.
-           (let [res (pom/add-dependencies
-                      :classloader classloader
-                      :coordinates [coord]
-                      :repositories {"central" "https://repo1.maven.org/maven2/"
-                                     "clojars" "https://clojars.org/repo"}
-                      )]
-             (state/add-dep! coord)
-             (log/info (str "Loaded library: " lib ", version: " version))
-             (log-daemon-debug "Result of add-dependencies: " res)
-             ;; TODO: add log-daemon-debug with params to pom/add-dependencies.
-             res)))
-       (catch Exception e
-         (log-daemon-warn "Exception during load-library: " e)))))
-
 ;; new version that uses opt.
 (defn load-library
   "Dynamically load a library, using Pomegranate for now.
@@ -164,19 +125,22 @@
 
 (def project-libraries
   "Same list as in project.clj"
-  '[[org.clojure/clojure "1.11.1"]
-    [org.clojure/tools.cli "1.0.214"]
-    [clj-commons/fs "1.6.310"]
-    [nrepl "1.0.0"]
-    [clj-commons/pomegranate "1.2.23"]
+  '[[commons-codec "1.23.0"]
+    [commons-io "2.22.0"]
+    [nrepl "1.8.0"]
+    [clj-commons/fs "1.6.312"]
+    [clj-commons/pomegranate "1.3.27"]
+    [ndevreeze/cmdline "0.2.0"]
+    [ndevreeze/logger "0.6.2"]
+    [org.apache.commons/commons-compress "1.28.0"]
     [org.apache.httpcomponents/httpclient "4.5.14"]
     [org.apache.httpcomponents/httpcore "4.4.16"]
-    [org.slf4j/slf4j-nop "2.0.6"]
-    [org.jsoup/jsoup "1.15.3"]
-    [ndevreeze/logger "0.6.1"]
-    [ndevreeze/cmdline "0.2.0"]
+    [org.clojure/clojure "1.12.6"]
+    [org.clojure/tools.cli "1.4.256"]
+    [org.jsoup/jsoup "1.24.1"]
+    [org.slf4j/slf4j-nop "2.0.20"]
     [org.tcrawley/dynapath "1.1.0"]
-    [commons-codec "1.15"]])
+    ])
 
 (defn mark-project-libraries
   "Mark libraries in project.clj as loaded.
