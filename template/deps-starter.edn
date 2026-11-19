@@ -1,7 +1,7 @@
 ;; 2021-01-25: use maven or clojars refs.
 ;; 2026-08-01: Use starter-lib by default
 {:paths [""] ;; so script will be found in current dir, not in src-subdir.
- :deps {ndevreeze/starter {:mvn/version "0.1.0-SNAPSHOT"}
+ :deps {com.github.ndevreeze/starter {:mvn/version "0.1.0-SNAPSHOT"}
         ndevreeze/genied {:mvn/version "0.1.0-SNAPSHOT"} ;; for running with clj -m report.
         }
  :deps-old
